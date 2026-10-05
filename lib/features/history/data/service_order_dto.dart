@@ -1,6 +1,7 @@
 import 'package:carcare_customer_mobile/core/errors/app_failure.dart';
 import 'package:carcare_customer_mobile/features/history/domain/cancelled_appointment_summary.dart';
 import 'package:carcare_customer_mobile/features/history/domain/diagnostic_report_summary.dart';
+import 'package:carcare_customer_mobile/features/history/domain/order_intake.dart';
 import 'package:carcare_customer_mobile/features/history/domain/service_order.dart';
 import 'package:carcare_customer_mobile/features/history/domain/service_order_detail.dart';
 import 'package:carcare_customer_mobile/features/history/domain/service_order_item.dart';
@@ -9,18 +10,39 @@ import 'package:carcare_customer_mobile/features/history/domain/service_history_
 
 ServiceHistoryPage serviceHistoryPageFromJson(Map<String, dynamic> json) {
   final orders = parseServiceOrderListJson(json['orders']);
-  final cancelled = parseCancelledAppointmentListJson(json['cancelledAppointments']);
+  final cancelled = parseCancelledAppointmentListJson(
+    json['cancelledAppointments'],
+  );
   HistoryPagination parsePage(Object? raw, int fallback) {
-    final map = raw is Map ? Map<String, dynamic>.from(raw) : const <String, dynamic>{};
-    int value(String key, int fallback) => map[key] is num ? (map[key] as num).toInt() : fallback;
-    return HistoryPagination(page: value('page', 1), pageSize: value('pageSize', fallback), total: value('total', fallback), totalPages: value('totalPages', 1), hasPrev: map['hasPrev'] == true, hasNext: map['hasNext'] == true);
+    final map = raw is Map
+        ? Map<String, dynamic>.from(raw)
+        : const <String, dynamic>{};
+    int value(String key, int fallback) =>
+        map[key] is num ? (map[key] as num).toInt() : fallback;
+    return HistoryPagination(
+      page: value('page', 1),
+      pageSize: value('pageSize', fallback),
+      total: value('total', fallback),
+      totalPages: value('totalPages', 1),
+      hasPrev: map['hasPrev'] == true,
+      hasNext: map['hasNext'] == true,
+    );
   }
+
   return ServiceHistoryPage(
     orders: orders,
     cancelledAppointments: cancelled,
     pagination: parsePage(json['pagination'], orders.length),
-    cancelledPagination: parsePage(json['cancelledPagination'], cancelled.length),
-    availableYears: json['availableYears'] is List ? (json['availableYears'] as List).whereType<num>().map((v) => v.toInt()).toList(growable: false) : const [],
+    cancelledPagination: parsePage(
+      json['cancelledPagination'],
+      cancelled.length,
+    ),
+    availableYears: json['availableYears'] is List
+        ? (json['availableYears'] as List)
+              .whereType<num>()
+              .map((v) => v.toInt())
+              .toList(growable: false)
+        : const [],
   );
 }
 
@@ -153,16 +175,45 @@ List<CancelledAppointmentSummary> parseCancelledAppointmentListJson(
       .toList(growable: false);
 }
 
+/// Тоо бол бүхэл км болгоно; бусад (null, string, NaN) нь null.
+int? _mileageFrom(Object? value) {
+  if (value is! num || value.isNaN || value.isInfinite) return null;
+  return value.toInt();
+}
+
+/// `order.intake` → [OrderIntake]. Байхгүй/буруу бол null; буруу зургийг алгасна.
+OrderIntake? _intakeFromJson(Object? raw) {
+  if (raw is! Map) return null;
+  final recordedAt = _dateFromOrNull(raw['recordedAt']);
+  if (recordedAt == null) return null;
+  final photosRaw = raw['photos'];
+  final photos = <OrderIntakePhoto>[];
+  if (photosRaw is List) {
+    for (final p in photosRaw) {
+      if (p is! Map) continue;
+      final id = _optionalString(p['id']);
+      final url = _optionalString(p['url']);
+      if (id == null || id.isEmpty || url == null || url.isEmpty) continue;
+      photos.add(OrderIntakePhoto(id: id, url: url));
+    }
+  }
+  final signature = _optionalString(raw['signatureUrl']);
+  return OrderIntake(
+    recordedAt: recordedAt,
+    notes: _optionalString(raw['notes']),
+    photos: photos,
+    signatureUrl: signature == null || signature.isEmpty ? null : signature,
+    mileageKm: _mileageFrom(raw['mileageKm']),
+  );
+}
+
 ServiceOrderDetail serviceOrderDetailFromJson(Map order) {
   final itemsRaw = order['items'];
   final reportsRaw = order['reports'];
   return ServiceOrderDetail(
     order: serviceOrderFromJson(order),
     items: itemsRaw is List
-        ? itemsRaw
-              .whereType<Map>()
-              .map(_itemFromJson)
-              .toList(growable: false)
+        ? itemsRaw.whereType<Map>().map(_itemFromJson).toList(growable: false)
         : const [],
     note: _optionalString(order['notes']),
     reports: reportsRaw is List
@@ -171,5 +222,6 @@ ServiceOrderDetail serviceOrderDetailFromJson(Map order) {
               .map(_reportFromJson)
               .toList(growable: false)
         : const [],
+    intake: _intakeFromJson(order['intake']),
   );
 }

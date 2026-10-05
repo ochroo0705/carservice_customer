@@ -60,8 +60,8 @@ void main() {
       // BOTH selected keys shows up — all on the same screen, no navigation.
       expect(find.text('Моторын тос солих'), findsOneWidget);
       expect(find.text('Угаалга'), findsOneWidget);
-      // Once tags exist, "add" shrinks into the tag row as a chip.
-      expect(find.widgetWithText(ActionChip, 'Нэмэх'), findsOneWidget);
+      // Once tags exist, "add" steps down to a tonal button under the tags.
+      expect(find.widgetWithText(FilledButton, 'Нэмэх'), findsOneWidget);
       expect(find.text('1 салбар олдлоо'), findsOneWidget);
       expect(
         find.byKey(const ValueKey('service-key-result-auto-doctor-bzd')),

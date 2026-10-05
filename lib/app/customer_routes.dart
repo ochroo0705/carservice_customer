@@ -35,6 +35,7 @@ abstract final class CustomerRoutes {
       '/appointments/$appointmentId/pay';
   static String walkInOrder(String id) => '/walk-in-orders/$id';
   static String order(String id) => '/orders/$id';
+  static String orderIntake(String id) => '/orders/$id/intake';
   static String diagnostic(String id) => '/diagnostics/$id';
   static const notifications = '/notifications';
   static const accountClosure = '/account/close';

@@ -55,19 +55,21 @@ void main() {
       expect(payment.urls.first.label, 'Хаан банк');
     });
 
-    test('falls back to the english name for the label when name_mn is empty',
-        () {
-      final payment = appointmentPaymentFromJson({
-        'status': 'PENDING',
-        'amount': 5000,
-        'currency': 'MNT',
-        'urls': [
-          {'name': 'Pocket', 'name_mn': '', 'link': 'pocket://q'},
-        ],
-      });
+    test(
+      'falls back to the english name for the label when name_mn is empty',
+      () {
+        final payment = appointmentPaymentFromJson({
+          'status': 'PENDING',
+          'amount': 5000,
+          'currency': 'MNT',
+          'urls': [
+            {'name': 'Pocket', 'name_mn': '', 'link': 'pocket://q'},
+          ],
+        });
 
-      expect(payment!.urls.single.label, 'Pocket');
-    });
+        expect(payment!.urls.single.label, 'Pocket');
+      },
+    );
   });
 
   test('parses a full appointment matching the published contract', () {
@@ -142,6 +144,44 @@ void main() {
     expect(appointment.serviceProgress!.items, hasLength(2));
     expect(appointment.serviceProgress!.completedItemCount, 1);
     expect(appointment.serviceProgress!.items.last.name, 'Тоормос шалгах');
+  });
+
+  group('hasIntake', () {
+    Map<String, dynamic> apt(Map<String, dynamic> order) => {
+      'id': 'apt-i',
+      'status': 'CONFIRMED',
+      'requestedAt': '2026-09-02T09:00:00.000Z',
+      'tenant': {'name': 'Инфосистемс', 'slug': 'infosystems'},
+      'branch': {'name': 'Үндсэн салбар'},
+      'serviceOrder': order,
+    };
+
+    test('parsed on the appointment linked order; missing -> false', () {
+      final on = AppointmentDto.fromJson(
+        apt({'id': 'o1', 'status': 'IN_PROGRESS', 'hasIntake': true}),
+      ).toDomain();
+      final off = AppointmentDto.fromJson(
+        apt({'id': 'o1', 'status': 'IN_PROGRESS'}),
+      ).toDomain();
+      expect(on.serviceProgress!.hasIntake, isTrue);
+      expect(off.serviceProgress!.hasIntake, isFalse);
+    });
+
+    test('parsed on walk-in orders; missing -> false', () {
+      Map<String, dynamic> walkIn(Map<String, dynamic> extra) => {
+        'id': 'w1',
+        'status': 'IN_PROGRESS',
+        'tenant': {'name': 'Инфосистемс', 'slug': 'infosystems'},
+        'branch': {'name': 'Үндсэн салбар'},
+        ...extra,
+      };
+      final parsed = parseWalkInOrderListJson([
+        walkIn({'hasIntake': true}),
+        walkIn({'id': 'w2'}),
+      ]).map((d) => d.toDomain()).toList();
+      expect(parsed[0].progress.hasIntake, isTrue);
+      expect(parsed[1].progress.hasIntake, isFalse);
+    });
   });
 
   test('maps an unrecognized status to unknown rather than throwing', () {

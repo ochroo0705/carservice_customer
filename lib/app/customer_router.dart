@@ -16,7 +16,9 @@ import 'package:carcare_customer_mobile/features/discovery/presentation/screens/
 import 'package:carcare_customer_mobile/features/discovery/presentation/screens/organization_detail_screen.dart';
 import 'package:carcare_customer_mobile/features/discovery/presentation/screens/service_key_picker_screen.dart';
 import 'package:carcare_customer_mobile/features/diagnostics/presentation/screens/diagnostic_detail_screen.dart';
+import 'package:carcare_customer_mobile/features/history/domain/order_intake.dart';
 import 'package:carcare_customer_mobile/features/history/presentation/screens/history_screen.dart';
+import 'package:carcare_customer_mobile/features/history/presentation/screens/order_intake_screen.dart';
 import 'package:carcare_customer_mobile/features/history/presentation/screens/service_order_detail_screen.dart';
 import 'package:carcare_customer_mobile/features/notifications/presentation/screens/notifications_screen.dart';
 import 'package:carcare_customer_mobile/features/profile/presentation/screens/account_closure_screen.dart';
@@ -38,7 +40,10 @@ bool isProtectedLocation(Uri uri) {
     ['appointments', _] || ['appointments', _, 'pay'] => true,
     ['vehicles', 'add'] => false,
     ['vehicles', _] => true,
-    ['orders', _] || ['diagnostics', _] || ['walk-in-orders', _] => true,
+    ['orders', _] ||
+    ['orders', _, 'intake'] ||
+    ['diagnostics', _] ||
+    ['walk-in-orders', _] => true,
     ['notifications'] => true,
     ['account', 'close'] => true,
     _ => false,
@@ -360,6 +365,7 @@ GoRouter buildCustomerRouter(
               appointmentId: state.pathParameters['id']!,
               organizationRepository: services.organizationRepository,
               onBack: () => context.pop(),
+              historyRepository: services.historyRepository,
               onPay: (appointment) => context.push(
                 CustomerRoutes.payment(appointment.id),
                 extra: appointment.payment,
@@ -397,6 +403,7 @@ GoRouter buildCustomerRouter(
             child: WalkInOrderDetailScreen(
               orderId: state.pathParameters['id']!,
               onBack: () => context.pop(),
+              historyRepository: services.historyRepository,
               onReportSelected: (id) =>
                   context.push(CustomerRoutes.diagnostic(id)),
             ),
@@ -420,6 +427,24 @@ GoRouter buildCustomerRouter(
             ),
           ),
         ),
+        routes: [
+          GoRoute(
+            path: 'intake',
+            // OrderIntake `extra`-аар ирнэ; deep link / сэргээсэн төлөвт
+            // `extra` байхгүй бол захиалгын дэлгэрэнгүй рүү буцаана.
+            redirect: (context, state) => state.extra is OrderIntake
+                ? null
+                : CustomerRoutes.order(state.pathParameters['id']!),
+            pageBuilder: (context, state) => MaterialPage(
+              key: state.pageKey,
+              child: _ProtectedRoute(
+                auth: services.authController,
+                onSessionEnded: (context) => context.go(CustomerRoutes.shell),
+                child: OrderIntakeScreen(intake: state.extra! as OrderIntake),
+              ),
+            ),
+          ),
+        ],
       ),
       GoRoute(
         path: '/diagnostics/:id',

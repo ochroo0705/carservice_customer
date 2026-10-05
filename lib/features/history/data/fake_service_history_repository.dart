@@ -1,11 +1,15 @@
 import 'package:carcare_customer_mobile/core/errors/app_failure.dart';
 import 'package:carcare_customer_mobile/features/history/domain/cancelled_appointment_summary.dart';
 import 'package:carcare_customer_mobile/features/history/domain/diagnostic_report_summary.dart';
+import 'package:carcare_customer_mobile/features/history/domain/order_intake.dart';
 import 'package:carcare_customer_mobile/features/history/domain/service_history_repository.dart';
 import 'package:carcare_customer_mobile/features/history/domain/service_order.dart';
 import 'package:carcare_customer_mobile/features/history/domain/service_order_detail.dart';
 import 'package:carcare_customer_mobile/features/history/domain/service_order_item.dart';
 import 'package:carcare_customer_mobile/features/history/domain/service_order_status.dart';
+
+/// Fake mode-н идэвхтэй walk-in захиалгын id (intake-тэй).
+const fakeActiveOrderWithIntakeId = 'seed-walkin-1';
 
 class FakeServiceHistoryRepository implements ServiceHistoryRepository {
   FakeServiceHistoryRepository() : _now = DateTime.now();
@@ -181,14 +185,40 @@ class FakeServiceHistoryRepository implements ServiceHistoryRepository {
 
   @override
   Future<ServiceOrderDetail> getServiceOrderDetail(String id) async {
+    if (id == fakeActiveOrderWithIntakeId) {
+      // Идэвхтэй (түүхэнд харагдахгүй) захиалга — FakeAppointmentRepository-н
+      // `hasIntake: true` walk-in захиалгатай тохирно.
+      return ServiceOrderDetail(
+        order: ServiceOrder(
+          id: id,
+          tenantName: 'Инфосистемс',
+          tenantSlug: 'infosystems',
+          branchName: 'Үндсэн салбар',
+          completedAt: _now,
+          status: ServiceOrderStatus.unpaid,
+          totalAmount: 0,
+          paidAmount: 0,
+        ),
+        items: const [],
+        reports: const [],
+        intake: _intake,
+      );
+    }
     final order = _orders.where((order) => order.id == id).firstOrNull;
     if (order == null) throw const NotFoundFailure();
     return ServiceOrderDetail(
       order: order,
       items: _items[id] ?? const [],
       reports: _reports[id] ?? const [],
+      intake: id == 'seed-history-1' ? _intake : null,
     );
   }
+
+  /// Fake mode-д «Хүлээн авах» бүртгэлийн жишээ.
+  late final OrderIntake _intake = OrderIntake(
+    recordedAt: _now.subtract(const Duration(days: 30)),
+    notes: 'Урд бампер дээр зураас байсан. Дотор цэвэрхэн.',
+  );
 
   /// Fake mode-д оношилгооны тайлангийн хэсгийг харуулах цөөн жишээ.
   late final Map<String, List<DiagnosticReportSummary>> _reports = {

@@ -619,7 +619,8 @@ class _TagsBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     // Nothing picked yet: choosing is the only next step, so it gets the
-    // page's primary button. Once tags exist it shrinks into the tag row.
+    // page's primary button. Once tags exist it steps down to a tonal button
+    // pinned under the tags, so it never moves as the selection changes.
     if (keys.isEmpty) {
       return SizedBox(
         width: double.infinity,
@@ -631,37 +632,34 @@ class _TagsBar extends StatelessWidget {
         ),
       );
     }
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      crossAxisAlignment: WrapCrossAlignment.center,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        for (final key in keys)
-          Chip(
-            key: ValueKey('service-key-tag-${key.id}'),
-            label: Text(key.name),
-            onDeleted: () => onRemove(key.id),
-            deleteIcon: const Icon(Icons.close, size: 16),
-            deleteIconColor: scheme.onSurfaceVariant,
-            deleteButtonTooltipMessage: 'Хасах',
-            materialTapTargetSize: MaterialTapTargetSize.padded,
-            visualDensity: VisualDensity.compact,
-            backgroundColor: scheme.primary.withValues(alpha: 0.1),
-            side: BorderSide(color: scheme.primary.withValues(alpha: 0.3)),
-          ),
-        ActionChip(
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final key in keys)
+              Chip(
+                key: ValueKey('service-key-tag-${key.id}'),
+                label: Text(key.name),
+                onDeleted: () => onRemove(key.id),
+                deleteIcon: const Icon(Icons.close, size: 16),
+                deleteIconColor: scheme.onSurfaceVariant,
+                deleteButtonTooltipMessage: 'Хасах',
+                materialTapTargetSize: MaterialTapTargetSize.padded,
+                visualDensity: VisualDensity.compact,
+                backgroundColor: scheme.primary.withValues(alpha: 0.1),
+                side: BorderSide(color: scheme.primary.withValues(alpha: 0.3)),
+              ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        FilledButton.tonalIcon(
           key: const ValueKey('service-key-add'),
-          avatar: Icon(Icons.add_rounded, size: 18, color: scheme.primary),
-          label: const Text('Нэмэх'),
-          labelStyle: TextStyle(
-            color: scheme.primary,
-            fontWeight: FontWeight.w700,
-          ),
           onPressed: onAdd,
-          materialTapTargetSize: MaterialTapTargetSize.padded,
-          visualDensity: VisualDensity.compact,
-          backgroundColor: scheme.primary.withValues(alpha: 0.1),
-          side: BorderSide(color: scheme.primary.withValues(alpha: 0.5)),
+          icon: const Icon(Icons.add_rounded),
+          label: const Text('Нэмэх'),
         ),
       ],
     );

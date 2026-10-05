@@ -262,6 +262,7 @@ AppointmentServiceProgress? serviceProgressFromJson(Object? value) {
     statusHistory: List.unmodifiable(statusHistory),
     scheduledReturnAt: _optionalDateTime(json['scheduledReturnAt']),
     reports: List.unmodifiable(reports),
+    hasIntake: json['hasIntake'] == true,
   );
 }
 

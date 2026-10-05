@@ -7,6 +7,7 @@ import 'package:carcare_customer_mobile/features/history/domain/service_order_it
 import 'package:carcare_customer_mobile/features/history/presentation/controllers/history_controller.dart';
 import 'package:carcare_customer_mobile/features/history/presentation/format_amount.dart';
 import 'package:carcare_customer_mobile/features/history/presentation/widgets/diagnostic_report_row.dart';
+import 'package:carcare_customer_mobile/features/history/presentation/widgets/order_intake_tile.dart';
 import 'package:carcare_customer_mobile/features/history/presentation/widgets/service_order_status_chip.dart';
 import 'package:flutter/material.dart';
 
@@ -211,6 +212,10 @@ class _DetailBody extends StatelessWidget {
             ],
           ),
         ),
+        if (detail.intake != null) ...[
+          const SizedBox(height: 16),
+          OrderIntakeTile(orderId: order.id, intake: detail.intake!),
+        ],
         const SizedBox(height: 16),
         Text(
           'Дэлгэрэнгүй',

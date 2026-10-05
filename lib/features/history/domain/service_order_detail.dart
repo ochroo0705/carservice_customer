@@ -1,4 +1,5 @@
 import 'package:carcare_customer_mobile/features/history/domain/diagnostic_report_summary.dart';
+import 'package:carcare_customer_mobile/features/history/domain/order_intake.dart';
 import 'package:carcare_customer_mobile/features/history/domain/service_order.dart';
 import 'package:carcare_customer_mobile/features/history/domain/service_order_item.dart';
 
@@ -10,6 +11,7 @@ class ServiceOrderDetail {
     required this.items,
     this.note,
     this.reports = const [],
+    this.intake,
   });
 
   final ServiceOrder order;
@@ -18,4 +20,7 @@ class ServiceOrderDetail {
 
   /// Хавсаргасан оношилгооны тайлангууд (байхгүй байж болно).
   final List<DiagnosticReportSummary> reports;
+
+  /// «Хүлээн авах» бүртгэл — захиалгад бүртгээгүй бол `null`.
+  final OrderIntake? intake;
 }

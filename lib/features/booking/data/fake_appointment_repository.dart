@@ -4,6 +4,7 @@ import 'package:carcare_customer_mobile/features/booking/domain/appointment_paym
 import 'package:carcare_customer_mobile/features/booking/domain/appointment_repository.dart';
 import 'package:carcare_customer_mobile/features/booking/domain/appointment_status.dart';
 import 'package:carcare_customer_mobile/features/booking/domain/availability.dart';
+import 'package:carcare_customer_mobile/features/booking/domain/service_progress.dart';
 import 'package:carcare_customer_mobile/features/booking/domain/walk_in_order.dart';
 
 /// A small checkerboard placeholder, clearly not a real QPay QR — this is
@@ -162,7 +163,22 @@ class FakeAppointmentRepository implements AppointmentRepository {
       List.unmodifiable(_appointments);
 
   @override
-  Future<List<WalkInOrder>> getWalkInOrders() async => const [];
+  Future<List<WalkInOrder>> getWalkInOrders() async => [_walkInOrder];
+
+  /// Fake mode-д «Хүлээн авах» бүртгэлтэй идэвхтэй walk-in захиалгын жишээ
+  /// (дэлгэрэнгүйг нь `FakeServiceHistoryRepository` өгнө).
+  late final WalkInOrder _walkInOrder = const WalkInOrder(
+    tenantName: 'Инфосистемс',
+    tenantSlug: 'infosystems',
+    branchName: 'Үндсэн салбар',
+    progress: AppointmentServiceProgress(
+      id: 'seed-walkin-1',
+      number: 'WO-0001',
+      status: ServiceProgressStatus.inProgress,
+      items: [],
+      hasIntake: true,
+    ),
+  );
 
   @override
   Future<void> cancelAppointment(String id) async {

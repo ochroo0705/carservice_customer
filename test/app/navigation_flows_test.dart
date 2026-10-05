@@ -321,6 +321,15 @@ void main() {
       // The section header text ('Оношилгооны тайлан') is not itself
       // tappable — the actual `InkWell` lives on the `DiagnosticReportRow`
       // below it (see `diagnostic_report_row.dart`), so target that widget.
+      // Intake tile pushes the report row below the fold of the lazy list.
+      await tester.scrollUntilVisible(
+        find.byType(DiagnosticReportRow),
+        200,
+        scrollable: find.descendant(
+          of: find.byType(ServiceOrderDetailScreen),
+          matching: find.byType(Scrollable),
+        ),
+      );
       expect(find.text('Оношилгооны тайлан'), findsOneWidget);
       expect(find.byType(DiagnosticReportRow), findsOneWidget);
       await tester.tap(find.byType(DiagnosticReportRow));

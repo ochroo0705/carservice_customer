@@ -31,6 +31,7 @@ void main() {
         '/appointments/a1/pay',
         '/vehicles/v1',
         '/orders/o1',
+        '/orders/o1/intake',
         '/diagnostics/d1',
         '/walk-in-orders/w1',
         '/notifications',

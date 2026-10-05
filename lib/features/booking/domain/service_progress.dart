@@ -152,6 +152,7 @@ class AppointmentServiceProgress {
     this.statusHistory = const [],
     this.scheduledReturnAt,
     this.reports = const [],
+    this.hasIntake = false,
   });
 
   final String id;
@@ -188,6 +189,9 @@ class AppointmentServiceProgress {
   // Ажил дуусахаас өмнө ч бэлэн болмогц шууд харагдана — захиалгын төлвөөр
   // шүүгддэггүй (жиш: захиалга гараад дараа нь оношилгоо хийгдэж болно).
   final List<DiagnosticReportSummary> reports;
+  // «Хүлээн авах» бүртгэл хийгдсэн эсэх (`hasIntake`; хуучин server-д байхгүй
+  // бол false). Агуулга нь жагсаалтад ирэхгүй — `GET /orders/:id`-ээр татна.
+  final bool hasIntake;
 
   int get completedItemCount =>
       items.where((item) => item.status.isCompleted).length;

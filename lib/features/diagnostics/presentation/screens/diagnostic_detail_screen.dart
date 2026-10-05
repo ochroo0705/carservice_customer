@@ -286,21 +286,18 @@ class _ToneFilterRow extends StatelessWidget {
           isSelected: selected == null,
           onTap: () => onChanged(null),
         ),
-        _ToneChip(
-          label: 'Хэвийн (${counts[CheckTone.good]})',
-          isSelected: selected == CheckTone.good,
-          onTap: () => onChanged(CheckTone.good),
-        ),
-        _ToneChip(
-          label: 'Анхаарах (${counts[CheckTone.warn]})',
-          isSelected: selected == CheckTone.warn,
-          onTap: () => onChanged(CheckTone.warn),
-        ),
-        _ToneChip(
-          label: 'Солих (${counts[CheckTone.bad]})',
-          isSelected: selected == CheckTone.bad,
-          onTap: () => onChanged(CheckTone.bad),
-        ),
+        // 0 тоотой тонын chip-ийг нуух — дарахад хоосон жагсаалт гарна.
+        for (final (tone, name) in const [
+          (CheckTone.good, 'Хэвийн'),
+          (CheckTone.warn, 'Анхаарах'),
+          (CheckTone.bad, 'Солих'), 
+        ])
+          if ((counts[tone] ?? 0) > 0)
+            _ToneChip(
+              label: '$name (${counts[tone]})',
+              isSelected: selected == tone,
+              onTap: () => onChanged(tone),
+            ),
       ],
     );
   }

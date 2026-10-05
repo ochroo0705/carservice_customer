@@ -1,3 +1,5 @@
+import 'package:carcare_customer_mobile/features/history/presentation/widgets/order_intake_tile.dart';
+import 'package:carcare_customer_mobile/features/history/domain/service_history_repository.dart';
 import 'package:carcare_customer_mobile/app/theme/app_surfaces.dart';
 import 'package:carcare_customer_mobile/core/widgets/skeletons.dart';
 import 'package:carcare_customer_mobile/features/booking/domain/walk_in_order.dart';
@@ -18,12 +20,15 @@ class WalkInOrderDetailScreen extends StatelessWidget {
     required this.orderId,
     required this.onBack,
     this.onReportSelected,
+    this.historyRepository,
     super.key,
   });
 
   final String orderId;
   final VoidCallback onBack;
   final ValueChanged<String>? onReportSelected;
+  // «Хүлээн авах» бүртгэлийг дарахад татахад ашиглана; null бол tile нуугдана.
+  final ServiceHistoryRepository? historyRepository;
 
   WalkInOrder? _find(AppointmentsController controller) {
     for (final order in controller.state.walkInOrders) {
@@ -53,6 +58,7 @@ class WalkInOrderDetailScreen extends StatelessWidget {
               order: order,
               onRefresh: controller.load,
               onReportSelected: onReportSelected,
+              historyRepository: historyRepository,
             ),
             (null, true) => const SkeletonDetail(),
             (null, false) => _NotFound(onBack: onBack),
@@ -68,11 +74,13 @@ class _WalkInOrderDetailBody extends StatelessWidget {
     required this.order,
     required this.onRefresh,
     this.onReportSelected,
+    this.historyRepository,
   });
 
   final WalkInOrder order;
   final Future<void> Function() onRefresh;
   final ValueChanged<String>? onReportSelected;
+  final ServiceHistoryRepository? historyRepository;
 
   @override
   Widget build(BuildContext context) {
@@ -106,6 +114,13 @@ class _WalkInOrderDetailBody extends StatelessWidget {
             progress: order.progress,
             onReportSelected: onReportSelected,
           ),
+          if (order.progress.hasIntake && historyRepository != null) ...[
+            const SizedBox(height: 14),
+            OrderIntakeTile(
+              orderId: order.progress.id,
+              repository: historyRepository,
+            ),
+          ],
         ],
       ),
     );

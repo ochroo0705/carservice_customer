@@ -1,3 +1,6 @@
+import 'package:carcare_customer_mobile/features/history/presentation/widgets/order_intake_tile.dart';
+import 'package:carcare_customer_mobile/features/history/domain/service_history_repository.dart';
+
 import 'dart:async';
 
 import 'package:carcare_customer_mobile/app/theme/app_surfaces.dart';
@@ -36,6 +39,7 @@ class AppointmentDetailScreen extends StatefulWidget {
     required this.onBack,
     required this.onPay,
     this.onReportSelected,
+    this.historyRepository,
     super.key,
   });
 
@@ -54,6 +58,8 @@ class AppointmentDetailScreen extends StatefulWidget {
   /// Opens a diagnostic report's detail screen. Same callback the history
   /// screens use — wired by the router to the shared diagnostics detail page.
   final ValueChanged<String>? onReportSelected;
+  // «Хүлээн авах» бүртгэлийг татахад ашиглана; null бол tile нуугдана.
+  final ServiceHistoryRepository? historyRepository;
 
   @override
   State<AppointmentDetailScreen> createState() =>
@@ -140,6 +146,7 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen>
                   ? () => widget.onPay(appointment)
                   : null,
               onReportSelected: widget.onReportSelected,
+              historyRepository: widget.historyRepository,
             ),
             (null, true) => const SkeletonDetail(),
             (null, false) => _NotFound(onBack: widget.onBack),
@@ -189,6 +196,7 @@ class _AppointmentDetailBody extends StatelessWidget {
     this.onCancel,
     this.onPay,
     this.onReportSelected,
+    this.historyRepository,
   });
 
   final Appointment appointment;
@@ -198,6 +206,7 @@ class _AppointmentDetailBody extends StatelessWidget {
   final VoidCallback? onCancel;
   final VoidCallback? onPay;
   final ValueChanged<String>? onReportSelected;
+  final ServiceHistoryRepository? historyRepository;
 
   @override
   Widget build(BuildContext context) {
@@ -333,6 +342,14 @@ class _AppointmentDetailBody extends StatelessWidget {
               progress: appointment.serviceProgress!,
               onReportSelected: onReportSelected,
             ),
+            if (appointment.serviceProgress!.hasIntake &&
+                historyRepository != null) ...[
+              const SizedBox(height: 14),
+              OrderIntakeTile(
+                orderId: appointment.serviceProgress!.id,
+                repository: historyRepository,
+              ),
+            ],
           ],
           const SizedBox(height: 24),
           _BranchInfoCard(
