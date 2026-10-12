@@ -71,6 +71,12 @@ class AuthController extends ChangeNotifier {
   /// side effects that need the still-live token (see `AppRouter`); signing
   /// out after a 401 skips this since the token is already invalid there.
   Future<void> Function()? beforeSignOut;
+
+  /// Runs after the OTP is verified but before [account] is set, so anything
+  /// the router checks on sign-in is already true when it re-evaluates. Set
+  /// by `CustomerAppServices` to record the terms acceptance that the login
+  /// page's "by continuing you agree" line stands for.
+  Future<void> Function(Account account)? beforeSignIn;
   Account? _account;
   Account? get account => _account;
   set account(Account? value) {
@@ -173,9 +179,13 @@ class AuthController extends ChangeNotifier {
 
   Future<void> _verify(String code) async {
     final result = await _repository.verifyOtp(phone: phone, code: code);
+    await beforeSignIn?.call(result.account);
     account = result.account;
     sessionEvent = result.reactivated ? SessionEvent.reactivated : null;
-    _resetLoginFlow();
+    // The form is deliberately NOT reset here: the login page is still on
+    // screen until `CustomerNavigation` closes it, and resetting would flash
+    // the phone step (or strand the user on it if the close ever failed).
+    // Each login page resets the flow when it opens instead.
   }
 
   /// Account closure OTP хүсэж, masked утасны дугаар буцаана. Алдаа гарвал

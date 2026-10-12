@@ -1,7 +1,9 @@
 import 'dart:async';
 
 import 'package:carcare_customer_mobile/app/theme/app_surfaces.dart';
+import 'package:carcare_customer_mobile/app/theme/app_theme.dart';
 import 'package:carcare_customer_mobile/features/auth/presentation/auth_controller.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -9,15 +11,22 @@ import 'package:provider/provider.dart';
 /// Phone + OTP login, mirroring the web customer login page's copy and
 /// step structure (static title/subtitle over a card whose form content
 /// swaps between the phone step and the code step).
+///
+/// Closing the page after a successful sign-in is not this screen's job:
+/// `CustomerNavigation` does it for every entry point, off the auth session.
 class LoginScreen extends StatefulWidget {
   const LoginScreen({
-    required this.onAuthenticated,
     required this.onBack,
+    required this.onOpenTerms,
+    required this.onOpenPrivacy,
     super.key,
   });
 
-  final VoidCallback onAuthenticated;
   final VoidCallback onBack;
+
+  /// Open the bundled legal pages from the code step's terms line.
+  final VoidCallback onOpenTerms;
+  final VoidCallback onOpenPrivacy;
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -30,9 +39,23 @@ class _LoginScreenState extends State<LoginScreen> {
   final _codeController = TextEditingController();
   Timer? _resendTimer;
   int _resendSecondsRemaining = 0;
+  late final TapGestureRecognizer _termsTap = TapGestureRecognizer()
+    ..onTap = widget.onOpenTerms;
+  late final TapGestureRecognizer _privacyTap = TapGestureRecognizer()
+    ..onTap = widget.onOpenPrivacy;
+
+  @override
+  void initState() {
+    super.initState();
+    // Every login page starts on the phone step. Silent (no notify), so it is
+    // safe here, and verifyOtp leaves the code step up until the page closes.
+    context.read<AuthController>().resetFlow();
+  }
 
   @override
   void dispose() {
+    _termsTap.dispose();
+    _privacyTap.dispose();
     _resendTimer?.cancel();
     _phoneController.dispose();
     _codeController.dispose();
@@ -145,6 +168,12 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       if (controller.step == AuthStep.otp) ...[
+                        const SizedBox(height: 12),
+                        _TermsNotice(
+                          termsTap: _termsTap,
+                          privacyTap: _privacyTap,
+                        ),
+                        const SizedBox(height: 4),
                         Center(
                           child: TextButton(
                             onPressed:
@@ -182,9 +211,6 @@ class _LoginScreenState extends State<LoginScreen> {
         !controller.isAuthenticated &&
         mounted) {
       _startResendCooldown();
-    }
-    if (success && controller.isAuthenticated && mounted) {
-      widget.onAuthenticated();
     }
   }
 
@@ -247,6 +273,51 @@ class _MongolianPhoneFormatter extends TextInputFormatter {
     return TextEditingValue(
       text: digits,
       selection: TextSelection.collapsed(offset: digits.length),
+    );
+  }
+}
+
+/// "Нэвтэрснээр ... зөвшөөрнө" — signing in is the terms acceptance (recorded
+/// by `AuthController.beforeSignIn`), so the names link to the bundled pages.
+class _TermsNotice extends StatelessWidget {
+  const _TermsNotice({required this.termsTap, required this.privacyTap});
+
+  final TapGestureRecognizer termsTap;
+  final TapGestureRecognizer privacyTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final base = theme.textTheme.bodySmall?.copyWith(
+      color: theme.colorScheme.onSurfaceVariant,
+      height: 1.5,
+    );
+    final link = base?.copyWith(
+      color: AppColors.readable(AppColors.accent, theme.brightness),
+      fontWeight: FontWeight.w600,
+      decoration: TextDecoration.underline,
+    );
+    return Text.rich(
+      key: const ValueKey('login-terms-notice'),
+      textAlign: TextAlign.center,
+      TextSpan(
+        style: base,
+        children: [
+          const TextSpan(text: 'Нэвтэрснээр та '),
+          TextSpan(
+            text: 'Үйлчилгээний нөхцөл',
+            style: link,
+            recognizer: termsTap,
+          ),
+          const TextSpan(text: ' болон '),
+          TextSpan(
+            text: 'Нууцлалын бодлого',
+            style: link,
+            recognizer: privacyTap,
+          ),
+          const TextSpan(text: '-г зөвшөөрч байна.'),
+        ],
+      ),
     );
   }
 }

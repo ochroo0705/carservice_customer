@@ -16,6 +16,7 @@ import 'package:carcare_customer_mobile/features/discovery/domain/organization_r
 import 'package:carcare_customer_mobile/features/discovery/presentation/controllers/discovery_controller.dart';
 import 'package:carcare_customer_mobile/features/discovery/presentation/controllers/organization_detail_controller.dart';
 import 'package:carcare_customer_mobile/features/history/domain/service_history_repository.dart';
+import 'package:carcare_customer_mobile/features/legal/data/legal_consent_store.dart';
 import 'package:carcare_customer_mobile/features/history/presentation/controllers/history_controller.dart';
 import 'package:carcare_customer_mobile/features/notifications/domain/notifications_repository.dart';
 import 'package:carcare_customer_mobile/features/notifications/presentation/controllers/notifications_controller.dart';
@@ -43,7 +44,9 @@ class CustomerAppServices with WidgetsBindingObserver {
     required this.deviceIdStore,
     required this.connectivityService,
     required this.cacheStore,
-  }) : discoveryController = DiscoveryController(
+    LegalConsentStore? legalConsentStore,
+  }) : legalConsentStore = legalConsentStore ?? LegalConsentStore.instance,
+       discoveryController = DiscoveryController(
          organizationRepository,
          cache: cacheStore,
        )..load() {
@@ -94,6 +97,11 @@ class CustomerAppServices with WidgetsBindingObserver {
       sessionRestored: sessionRestored,
     );
     authController.beforeSignOut = push.removeDeviceForSignOut;
+    // Signing in on the login page is the acceptance (see its terms line), so
+    // the consent gate never interrupts — and never resets — the stack the
+    // customer signed in from.
+    authController.beforeSignIn = (account) =>
+        this.legalConsentStore.accept(account.id);
     _connectivitySubscription = connectivityService.onConnectivityChanged
         .listen(_onConnectivityChanged);
   }
@@ -116,6 +124,7 @@ class CustomerAppServices with WidgetsBindingObserver {
   final DeviceIdStore deviceIdStore;
   final ConnectivityService connectivityService;
   final CacheStore cacheStore;
+  final LegalConsentStore legalConsentStore;
   late final PushCoordinator push;
   late final StreamSubscription<bool> _connectivitySubscription;
   late final ReloadCoordinator reload;
@@ -132,8 +141,13 @@ class CustomerAppServices with WidgetsBindingObserver {
   ValueListenable<int> get reconnects => reload.reconnects;
   bool _wasAuthenticated = false;
 
-  /// The ONLY listenable navigation may rebuild on (31dcc14 invariant).
-  Listenable get routerRefresh => authController.session;
+  /// The ONLY listenable navigation may rebuild on (31dcc14 invariant): the
+  /// signed-in account changing, or the terms being accepted. One instance, so
+  /// callers can remove the listener they added.
+  late final Listenable routerRefresh = Listenable.merge([
+    authController.session,
+    legalConsentStore,
+  ]);
 
   /// Set by the navigation layer; called for OS push taps (background +
   /// cold start). Services never navigates itself.

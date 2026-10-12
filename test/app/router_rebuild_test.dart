@@ -105,7 +105,9 @@ void main() {
     await services.authController.signOut();
     await pumpEventQueue();
 
-    expect(rebuilds, 2);
+    // Plus one: the first sign-in records the terms acceptance just before
+    // `account` is set (a no-op redirect — still signed out at that point).
+    expect(rebuilds, 3);
 
     services.routerRefresh.removeListener(count);
     services.dispose();

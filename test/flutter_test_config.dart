@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:carcare_customer_mobile/features/legal/data/legal_consent_store.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -24,5 +25,12 @@ Future<void> testExecutable(FutureOr<void> Function() testMain) async {
         _mapChannel,
         (call) async => call.method == 'isConfigured' ? false : null,
       );
+  // Signing in now lands on the terms page until the user accepts. Tests that
+  // are about something else sign in as one of these accounts (see
+  // `signedInAuthRepository`, `FakeAuthRepository`), so they start accepted;
+  // consent tests use their own `LegalConsentStore`, not this one.
+  for (final userId in const ['1', 'fake-account', 'a']) {
+    LegalConsentStore.instance.accept(userId).ignore();
+  }
   await testMain();
 }

@@ -17,6 +17,8 @@ class ProfileScreen extends StatelessWidget {
     required this.onAddVehicle,
     this.onVehicleSelected,
     this.onAccountClosureRequested,
+    this.onTermsRequested,
+    this.onPrivacyRequested,
     super.key,
   });
 
@@ -27,6 +29,11 @@ class ProfileScreen extends StatelessWidget {
   /// Opens the account-closure page on the router delegate's stack. The tile
   /// is hidden when null.
   final VoidCallback? onAccountClosureRequested;
+
+  /// Open the bundled Үйлчилгээний нөхцөл / Нууцлалын бодлого pages. Each tile
+  /// is hidden when its callback is null.
+  final VoidCallback? onTermsRequested;
+  final VoidCallback? onPrivacyRequested;
 
   @override
   Widget build(BuildContext context) {
@@ -51,8 +58,14 @@ class ProfileScreen extends StatelessWidget {
                   onSignOut: authController.signOut,
                   onVehicleSelected: onVehicleSelected,
                   onAccountClosureRequested: onAccountClosureRequested,
+                  onTermsRequested: onTermsRequested,
+                  onPrivacyRequested: onPrivacyRequested,
                 )
-              : _UnauthenticatedPrompt(onLoginRequested: onLoginRequested),
+              : _UnauthenticatedPrompt(
+                  onLoginRequested: onLoginRequested,
+                  onTermsRequested: onTermsRequested,
+                  onPrivacyRequested: onPrivacyRequested,
+                ),
         ),
       ),
     );
@@ -60,13 +73,21 @@ class ProfileScreen extends StatelessWidget {
 }
 
 class _UnauthenticatedPrompt extends StatelessWidget {
-  const _UnauthenticatedPrompt({required this.onLoginRequested});
+  const _UnauthenticatedPrompt({
+    required this.onLoginRequested,
+    this.onTermsRequested,
+    this.onPrivacyRequested,
+  });
 
   final VoidCallback onLoginRequested;
 
+  /// The legal pages stay readable before sign-in.
+  final VoidCallback? onTermsRequested;
+  final VoidCallback? onPrivacyRequested;
+
   @override
   Widget build(BuildContext context) => Center(
-    child: Padding(
+    child: SingleChildScrollView(
       padding: const EdgeInsets.all(32),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -98,6 +119,24 @@ class _UnauthenticatedPrompt extends StatelessWidget {
             icon: const Icon(Icons.login_rounded),
             label: const Text('Нэвтрэх'),
           ),
+          if (onTermsRequested != null) ...[
+            const SizedBox(height: 28),
+            _ProfileLinkTile(
+              key: const ValueKey('profile-terms-tile'),
+              icon: Icons.description_outlined,
+              label: 'Үйлчилгээний нөхцөл',
+              onTap: onTermsRequested!,
+            ),
+          ],
+          if (onPrivacyRequested != null) ...[
+            const SizedBox(height: 12),
+            _ProfileLinkTile(
+              key: const ValueKey('profile-privacy-tile'),
+              icon: Icons.privacy_tip_outlined,
+              label: 'Нууцлалын бодлого',
+              onTap: onPrivacyRequested!,
+            ),
+          ],
         ],
       ),
     ),
@@ -111,6 +150,8 @@ class _ProfileBody extends StatelessWidget {
     required this.onSignOut,
     this.onVehicleSelected,
     this.onAccountClosureRequested,
+    this.onTermsRequested,
+    this.onPrivacyRequested,
   });
 
   final VehiclesController controller;
@@ -118,6 +159,8 @@ class _ProfileBody extends StatelessWidget {
   final VoidCallback onSignOut;
   final ValueChanged<Vehicle>? onVehicleSelected;
   final VoidCallback? onAccountClosureRequested;
+  final VoidCallback? onTermsRequested;
+  final VoidCallback? onPrivacyRequested;
 
   @override
   Widget build(BuildContext context) {
@@ -172,6 +215,20 @@ class _ProfileBody extends StatelessWidget {
             ),
         ],
       },
+      if (onTermsRequested != null)
+        _ProfileLinkTile(
+          key: const ValueKey('profile-terms-tile'),
+          icon: Icons.description_outlined,
+          label: 'Үйлчилгээний нөхцөл',
+          onTap: onTermsRequested!,
+        ),
+      if (onPrivacyRequested != null)
+        _ProfileLinkTile(
+          key: const ValueKey('profile-privacy-tile'),
+          icon: Icons.privacy_tip_outlined,
+          label: 'Нууцлалын бодлого',
+          onTap: onPrivacyRequested!,
+        ),
       if (account != null && onAccountClosureRequested != null)
         _AccountClosureTile(onTap: onAccountClosureRequested!),
     ];
@@ -274,6 +331,35 @@ class _ProfileHeader extends StatelessWidget {
       ),
     );
   }
+}
+
+class _ProfileLinkTile extends StatelessWidget {
+  const _ProfileLinkTile({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    super.key,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => GlassSurface(
+    onTap: onTap,
+    child: Row(
+      children: [
+        Icon(icon, color: Theme.of(context).colorScheme.onSurfaceVariant),
+        const SizedBox(width: 12),
+        Expanded(child: Text(label)),
+        Icon(
+          Icons.chevron_right_rounded,
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
+      ],
+    ),
+  );
 }
 
 class _AccountClosureTile extends StatelessWidget {

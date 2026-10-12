@@ -20,6 +20,9 @@ import 'package:carcare_customer_mobile/features/history/domain/order_intake.dar
 import 'package:carcare_customer_mobile/features/history/presentation/screens/history_screen.dart';
 import 'package:carcare_customer_mobile/features/history/presentation/screens/order_intake_screen.dart';
 import 'package:carcare_customer_mobile/features/history/presentation/screens/service_order_detail_screen.dart';
+import 'package:carcare_customer_mobile/features/legal/presentation/screens/privacy_policy_screen.dart';
+import 'package:carcare_customer_mobile/features/legal/presentation/screens/terms_consent_screen.dart';
+import 'package:carcare_customer_mobile/features/legal/presentation/screens/terms_of_service_screen.dart';
 import 'package:carcare_customer_mobile/features/notifications/presentation/screens/notifications_screen.dart';
 import 'package:carcare_customer_mobile/features/profile/presentation/screens/account_closure_screen.dart';
 import 'package:carcare_customer_mobile/features/profile/presentation/screens/profile_screen.dart';
@@ -53,11 +56,41 @@ bool isProtectedLocation(Uri uri) {
 /// Pure function so it is unit-testable without a widget tree. Sends a
 /// signed-out customer from any protected location to `/login?from=<it>`, and
 /// forwards `/login?from=` once signed in.
-String? customerRedirect({required bool isAuthenticated, required Uri uri}) {
-  if (!isAuthenticated && isProtectedLocation(uri)) {
-    return CustomerRoutes.login(from: uri.toString());
+///
+/// [consentPending] is true for a signed-in customer who has not accepted the
+/// current terms: they are held on `/terms-consent` (with `from` carrying
+/// where they were going) until they accept, apart from the two bundled legal
+/// pages the consent page links to. Guests are never asked.
+String? customerRedirect({
+  required bool isAuthenticated,
+  required Uri uri,
+  bool consentPending = false,
+}) {
+  final atConsent = uri.path == CustomerRoutes.termsConsentPath;
+  if (!isAuthenticated) {
+    // The consent page only makes sense for a signed-in customer.
+    if (atConsent) return CustomerRoutes.shell;
+    if (isProtectedLocation(uri)) {
+      return CustomerRoutes.login(from: uri.toString());
+    }
+    return null;
   }
-  if (uri.path == '/login' && isAuthenticated) {
+  if (consentPending) {
+    if (atConsent ||
+        uri.path == CustomerRoutes.terms ||
+        uri.path == CustomerRoutes.privacy) {
+      return null;
+    }
+    final from = uri.path == '/login'
+        ? safeReturnLocation(uri.queryParameters['from'])
+        : (uri.path == CustomerRoutes.shell ? null : uri.toString());
+    return CustomerRoutes.termsConsent(from: from);
+  }
+  if (atConsent) {
+    return safeReturnLocation(uri.queryParameters['from']) ??
+        CustomerRoutes.shell;
+  }
+  if (uri.path == '/login') {
     return safeReturnLocation(uri.queryParameters['from']);
   }
   return null;
@@ -72,7 +105,9 @@ String? safeReturnLocation(String? from) {
   }
   final uri = Uri.tryParse(from);
   if (uri == null || uri.hasScheme || uri.hasAuthority) return null;
-  if (uri.path == '/login') return null;
+  if (uri.path == '/login' || uri.path == CustomerRoutes.termsConsentPath) {
+    return null;
+  }
   return from;
 }
 
@@ -106,10 +141,16 @@ GoRouter buildCustomerRouter(
   return GoRouter(
     initialLocation: CustomerRoutes.shell,
     refreshListenable: services.routerRefresh,
-    redirect: (context, state) => customerRedirect(
-      isAuthenticated: services.authController.isAuthenticated,
-      uri: state.uri,
-    ),
+    redirect: (context, state) {
+      final account = services.authController.account;
+      return customerRedirect(
+        isAuthenticated: services.authController.isAuthenticated,
+        uri: state.uri,
+        consentPending:
+            account != null &&
+            !services.legalConsentStore.hasAccepted(account.id),
+      );
+    },
     // An unknown path lands on the shell, as the old parser's
     // `DiscoveryRoutePath` fallback did. Do not also set `errorBuilder`;
     // go_router asserts if both are set.
@@ -167,6 +208,8 @@ GoRouter buildCustomerRouter(
                     context.push(CustomerRoutes.vehicle(v.id), extra: v),
                 onAccountClosureRequested: () =>
                     context.push(CustomerRoutes.accountClosure),
+                onTermsRequested: () => context.push(CustomerRoutes.terms),
+                onPrivacyRequested: () => context.push(CustomerRoutes.privacy),
               ),
             ],
           ),
@@ -269,9 +312,38 @@ GoRouter buildCustomerRouter(
         },
       ),
       GoRoute(
+        path: CustomerRoutes.termsConsentPath,
+        pageBuilder: (context, state) => MaterialPage(
+          key: state.pageKey,
+          child: TermsConsentScreen(
+            onAccept: () async {
+              final account = services.authController.account;
+              // The router listens to the store and moves on by itself.
+              if (account != null) {
+                await services.legalConsentStore.accept(account.id);
+              }
+            },
+            onDecline: services.authController.signOut,
+          ),
+        ),
+      ),
+      GoRoute(
+        path: CustomerRoutes.terms,
+        pageBuilder: (context, state) => MaterialPage(
+          key: state.pageKey,
+          child: const TermsOfServiceScreen(),
+        ),
+      ),
+      GoRoute(
+        path: CustomerRoutes.privacy,
+        pageBuilder: (context, state) => MaterialPage(
+          key: state.pageKey,
+          child: const PrivacyPolicyScreen(),
+        ),
+      ),
+      GoRoute(
         path: '/login',
         pageBuilder: (context, state) {
-          final from = safeReturnLocation(state.uri.queryParameters['from']);
           return MaterialPage(
             key: state.pageKey,
             child: LoginScreen(
@@ -279,28 +351,8 @@ GoRouter buildCustomerRouter(
                 services.authController.resetFlow();
                 context.pop();
               },
-              onAuthenticated: () {
-                // Deferred to the next frame: `notifyListeners()` from
-                // `verifyOtp` (which flips `isAuthenticated`) reaches
-                // go_router's own `refreshListenable` listener before this
-                // callback runs (both are listeners on the same
-                // `AuthController`, and go_router's redirect re-evaluation is
-                // scheduled as a microtask that beats the awaited
-                // `verifyOtp()` future's own continuation back here). That
-                // in-flight refresh transiently invalidates the current
-                // `BuildContext`/route match, so a `pop()`/`pushReplacement()`
-                // issued synchronously in this callback is silently lost —
-                // the login page then never closes. Posting to the next
-                // frame lets go_router's own refresh settle first.
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  if (!context.mounted) return;
-                  if (from == null) {
-                    context.pop();
-                  } else {
-                    context.pushReplacement(from);
-                  }
-                });
-              },
+              onOpenTerms: () => context.push(CustomerRoutes.terms),
+              onOpenPrivacy: () => context.push(CustomerRoutes.privacy),
             ),
           );
         },
@@ -497,8 +549,9 @@ GoRouter buildCustomerRouter(
 /// would otherwise stay on screen (with stale data) after sign-out. This
 /// listens to [AuthController.session] (identity changes only) and, once per
 /// session end, runs [onSessionEnded] on the next frame -- deferred for the
-/// same reason the login route's `onAuthenticated` is: acting inside the
-/// same `notifyListeners()` go_router is also reacting to can be lost.
+/// same reason `CustomerNavigation` closes login on the next frame: acting
+/// inside the same `notifyListeners()` go_router is also reacting to can be
+/// lost.
 class _ProtectedRoute extends StatefulWidget {
   const _ProtectedRoute({
     required this.auth,

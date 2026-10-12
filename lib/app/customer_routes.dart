@@ -23,10 +23,8 @@ abstract final class CustomerRoutes {
     },
   ).toString();
 
-  static String login({String? from}) => Uri(
-    path: '/login',
-    queryParameters: {'from': ?from},
-  ).toString();
+  static String login({String? from}) =>
+      Uri(path: '/login', queryParameters: {'from': ?from}).toString();
 
   static const addVehicle = '/vehicles/add';
   static String vehicle(String id) => '/vehicles/$id';
@@ -39,4 +37,13 @@ abstract final class CustomerRoutes {
   static String diagnostic(String id) => '/diagnostics/$id';
   static const notifications = '/notifications';
   static const accountClosure = '/account/close';
+  static const terms = '/terms';
+  static const termsConsentPath = '/terms-consent';
+  static const privacy = '/privacy';
+
+  /// The post-login terms page; [from] is where acceptance resumes.
+  static String termsConsent({String? from}) => Uri(
+    path: termsConsentPath,
+    queryParameters: from == null ? null : {'from': from},
+  ).toString();
 }

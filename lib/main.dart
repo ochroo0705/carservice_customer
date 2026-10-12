@@ -7,6 +7,7 @@ import 'package:carcare_customer_mobile/core/notifications/local_push_service.da
 import 'package:carcare_customer_mobile/core/notifications/remote_push_service.dart';
 import 'package:carcare_customer_mobile/data/cache/cache_database.dart';
 import 'package:carcare_customer_mobile/data/cache/drift_cache_store.dart';
+import 'package:carcare_customer_mobile/features/legal/data/legal_consent_store.dart';
 import 'package:carcare_customer_mobile/features/onboarding/data/onboarding_store.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
@@ -50,6 +51,8 @@ void main() async {
     remotePushService: FirebaseRemotePushService(),
     analytics: FirebaseAnalyticsService(),
   );
+  // Who accepted the terms, checked by the router after sign-in.
+  await LegalConsentStore.instance.init();
   runApp(CarCareCustomerApp.fromDependencies(dependencies));
 
   // Deferred until after the first frame so launch is never gated on them.

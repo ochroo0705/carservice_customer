@@ -16,7 +16,11 @@ void main() {
           value: controller,
           child: MaterialApp(
             theme: AppTheme.dark,
-            home: LoginScreen(onAuthenticated: () {}, onBack: () {}),
+            home: LoginScreen(
+              onBack: () {},
+              onOpenTerms: () {},
+              onOpenPrivacy: () {},
+            ),
           ),
         ),
       );
@@ -25,9 +29,9 @@ void main() {
         '+976 9911 2233',
       );
       final field = tester.widget<TextField>(
-      find.byKey(const ValueKey('login-phone')),
-    );
-    expect(field.controller!.text, '99112233');
+        find.byKey(const ValueKey('login-phone')),
+      );
+      expect(field.controller!.text, '99112233');
     },
   );
 
@@ -40,7 +44,11 @@ void main() {
         value: controller,
         child: MaterialApp(
           theme: AppTheme.dark,
-          home: LoginScreen(onAuthenticated: () {}, onBack: () {}),
+          home: LoginScreen(
+            onBack: () {},
+            onOpenTerms: () {},
+            onOpenPrivacy: () {},
+          ),
         ),
       ),
     );

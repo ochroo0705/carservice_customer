@@ -343,13 +343,14 @@ void main() {
       },
     );
 
-    test('verifyOtp and signOut reset the login flow', () async {
+    test('verifyOtp keeps the code step up; signOut resets the flow', () async {
       final controller = AuthController(_FlowRepo());
       expect(await controller.requestOtp('99112233'), isTrue);
       expect(controller.step, AuthStep.otp);
       expect(await controller.verifyOtp('123456'), isTrue);
-      expect(controller.step, AuthStep.phone);
-      expect(controller.phone, '');
+      // The login page stays on the code step until navigation closes it;
+      // the next login page resets the flow when it opens.
+      expect(controller.step, AuthStep.otp);
 
       controller.step = AuthStep.otp;
       controller.phone = '99112233';

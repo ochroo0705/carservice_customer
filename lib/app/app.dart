@@ -24,6 +24,7 @@ import 'package:carcare_customer_mobile/features/history/data/fake_service_histo
 import 'package:carcare_customer_mobile/features/history/domain/service_history_repository.dart';
 import 'package:carcare_customer_mobile/features/notifications/data/fake_notifications_repository.dart';
 import 'package:carcare_customer_mobile/features/notifications/domain/notifications_repository.dart';
+import 'package:carcare_customer_mobile/features/legal/data/legal_consent_store.dart';
 import 'package:carcare_customer_mobile/features/onboarding/presentation/onboarding_gate.dart';
 import 'package:carcare_customer_mobile/features/splash/presentation/splash_gate.dart';
 import 'package:carcare_customer_mobile/features/vehicles/data/fake_vehicle_repository.dart';
@@ -67,6 +68,7 @@ class CarCareCustomerApp extends StatefulWidget {
     DeviceIdStore? deviceIdStore,
     ConnectivityService? connectivityService,
     CacheStore? cacheStore,
+    this.legalConsentStore,
     super.key,
   }) : authRepository = authRepository ?? FakeAuthRepository(),
        appointmentRepository =
@@ -98,6 +100,9 @@ class CarCareCustomerApp extends StatefulWidget {
   final ConnectivityService connectivityService;
   final CacheStore cacheStore;
 
+  /// Tests inject their own; null means the app-wide store.
+  final LegalConsentStore? legalConsentStore;
+
   @override
   State<CarCareCustomerApp> createState() => _CarCareCustomerAppState();
 }
@@ -127,6 +132,7 @@ class _CarCareCustomerAppState extends State<CarCareCustomerApp> {
       deviceIdStore: widget.deviceIdStore,
       connectivityService: widget.connectivityService,
       cacheStore: widget.cacheStore,
+      legalConsentStore: widget.legalConsentStore,
     );
     _services.showMessage = (m) =>
         _messengerKey.currentState?.showSnackBar(SnackBar(content: Text(m)));
@@ -146,6 +152,7 @@ class _CarCareCustomerAppState extends State<CarCareCustomerApp> {
       ..removeListener(_onThemeChanged)
       ..dispose();
     LocalPushService.instance.onTap = null;
+    _navigation.dispose();
     _router.dispose();
     _services.dispose();
     super.dispose();

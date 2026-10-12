@@ -1,4 +1,5 @@
 import 'package:carcare_customer_mobile/app/customer_app_services.dart';
+import 'package:carcare_customer_mobile/app/customer_router.dart';
 import 'package:carcare_customer_mobile/app/customer_routes.dart';
 import 'package:carcare_customer_mobile/app/customer_shell.dart';
 import 'package:carcare_customer_mobile/features/booking/domain/appointment_repository.dart';
@@ -14,9 +15,43 @@ import 'package:go_router/go_router.dart';
 /// returns, since the router itself needs a `CustomerNavigation` to close
 /// the circular reference.
 class CustomerNavigation {
-  CustomerNavigation(this.services);
+  CustomerNavigation(this.services) {
+    services.authController.session.addListener(_onSessionChanged);
+  }
 
   final CustomerAppServices services;
+
+  void dispose() =>
+      services.authController.session.removeListener(_onSessionChanged);
+
+  /// The single owner of "signed in → leave the login page", for every way
+  /// login opens (onboarding, a guarded page, a booking 401, a push tap, a
+  /// redirect). Driven by the session, not by the login page's own
+  /// `BuildContext`, so a router rebuild during sign-in cannot lose it.
+  /// Deferred a frame so go_router's own refresh (same notification) settles.
+  void _onSessionChanged() {
+    if (!services.authController.isAuthenticated) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) => _closeLogin());
+  }
+
+  void _closeLogin() {
+    final config = router.routerDelegate.currentConfiguration;
+    if (config.isEmpty || config.last.matchedLocation != '/login') return;
+    final last = config.last;
+    final loginUri = last is ImperativeRouteMatch
+        ? last.matches.uri
+        : config.uri;
+    final from = safeReturnLocation(loginUri.queryParameters['from']);
+    if (from != null) {
+      router.pushReplacement(from);
+    } else if (router.canPop()) {
+      router.pop();
+    } else {
+      // Login is the whole stack (e.g. a deep link straight to it).
+      router.go(CustomerRoutes.shell);
+    }
+  }
+
   final shellKey = GlobalKey<CustomerShellState>();
 
   /// Matches `CustomerShell`'s `destinations` order (Хайх · Захиалах ·
@@ -30,7 +65,20 @@ class CustomerNavigation {
   ///
   /// Ignored while a login page is already open (a double tap, or a booking
   /// 401 racing a tap); [from] is where a successful sign-in resumes.
-  void requestLogin({String? from}) {
+  void requestLogin({String? from, int attempt = 0}) {
+    // Onboarding hands off in the same frame it reveals the app, before the
+    // Router widget has mounted and loaded its first page. A push then would
+    // become the whole stack (login with nothing under it, an empty URI), so
+    // wait for the router's first frame. Bounded so it can never spin.
+    if (router.routerDelegate.currentConfiguration.isEmpty) {
+      if (attempt >= 10) return;
+      WidgetsBinding.instance
+        ..addPostFrameCallback(
+          (_) => requestLogin(from: from, attempt: attempt + 1),
+        )
+        ..scheduleFrame();
+      return;
+    }
     // Derived from the router, not a flag cleared on the push's future:
     // go_router drops that future on `pushReplacement`/`go`. `_pushing` only
     // covers the same-frame window before the router state reflects the push.
