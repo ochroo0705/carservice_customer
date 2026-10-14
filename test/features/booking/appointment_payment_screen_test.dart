@@ -1,4 +1,5 @@
 import 'package:carcare_customer_mobile/app/theme/app_theme.dart';
+import 'package:carcare_customer_mobile/core/errors/app_failure.dart';
 import 'package:carcare_customer_mobile/features/booking/domain/appointment.dart';
 import 'package:carcare_customer_mobile/features/booking/domain/appointment_payment.dart';
 import 'package:carcare_customer_mobile/features/booking/domain/appointment_repository.dart';
@@ -34,6 +35,29 @@ class _RetryRepository extends Fake implements AppointmentRepository {
   @override
   Future<AppointmentPaymentCheckResult> checkPayment(String id) async =>
       const AppointmentPaymentCheckResult(paid: false);
+  @override
+  Future<List<Appointment>> getAppointments() async => const [];
+  @override
+  Future<List<WalkInOrder>> getWalkInOrders() async => const [];
+  @override
+  Future<void> cancelAppointment(String id) async {}
+}
+
+/// check returns paid:true with a server message; retry throws a 409.
+class _DeadBookingRepository extends Fake implements AppointmentRepository {
+  @override
+  Future<AppointmentPaymentCheckResult> checkPayment(String id) async =>
+      const AppointmentPaymentCheckResult(
+        paid: true,
+        message: 'Төлбөр хүлээж авсан ч энэ цаг цуцлагдсан байсан.',
+      );
+  @override
+  Future<AppointmentPayment?> retryPayment(String id) async =>
+      throw const ConflictFailure(
+        'Энэ цаг цуцлагдсан тул хураамж төлөх боломжгүй.',
+      );
+  @override
+  Future<AppointmentPayment?> getPayment(String id) async => null;
   @override
   Future<List<Appointment>> getAppointments() async => const [];
   @override
@@ -95,26 +119,68 @@ Future<void> _pumpPayment(
 }
 
 void main() {
-  testWidgets('auto-polls a pending fee and flips to paid without a manual tap',
-      (tester) async {
-    final repository = _PaysAfterRepository(paidAfter: 2);
-    var updated = 0;
-    await _pumpPayment(tester, repository, onPaymentUpdated: () => updated++);
-
-    // Not paid yet — the check button is visible, no success banner.
-    expect(find.text('Төлбөр амжилттай төлөгдсөн.'), findsNothing);
-
-    // First poll tick: still unpaid.
+  testWidgets('paid:true with a message shows the server message', (
+    tester,
+  ) async {
+    await _pumpPayment(tester, _DeadBookingRepository());
     await tester.pump(const Duration(seconds: 4));
     await tester.pump();
-    expect(find.text('Төлбөр амжилттай төлөгдсөн.'), findsNothing);
-
-    // Second poll tick: paid — the screen flips on its own.
-    await tester.pump(const Duration(seconds: 4));
-    await tester.pump();
-    expect(find.text('Төлбөр амжилттай төлөгдсөн.'), findsOneWidget);
-    expect(updated, 1);
+    expect(
+      find.text('Төлбөр хүлээж авсан ч энэ цаг цуцлагдсан байсан.'),
+      findsOneWidget,
+    );
   });
+
+  testWidgets('a 409 on retry shows the server message', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light,
+        home: AppointmentPaymentScreen(
+          appointmentId: 'apt-1',
+          repository: _DeadBookingRepository(),
+          initialPayment: const AppointmentPayment(
+            status: AppointmentFeeStatus.failed,
+            amount: 5000,
+            currency: 'MNT',
+          ),
+          onBack: () {},
+        ),
+      ),
+    );
+    await tester.pump();
+    final retry = find.byType(FilledButton);
+    expect(retry, findsWidgets);
+    await tester.tap(retry.first);
+    await tester.pump();
+    await tester.pump();
+    expect(
+      find.text('Энэ цаг цуцлагдсан тул хураамж төлөх боломжгүй.'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets(
+    'auto-polls a pending fee and flips to paid without a manual tap',
+    (tester) async {
+      final repository = _PaysAfterRepository(paidAfter: 2);
+      var updated = 0;
+      await _pumpPayment(tester, repository, onPaymentUpdated: () => updated++);
+
+      // Not paid yet — the check button is visible, no success banner.
+      expect(find.text('Төлбөр амжилттай төлөгдсөн.'), findsNothing);
+
+      // First poll tick: still unpaid.
+      await tester.pump(const Duration(seconds: 4));
+      await tester.pump();
+      expect(find.text('Төлбөр амжилттай төлөгдсөн.'), findsNothing);
+
+      // Second poll tick: paid — the screen flips on its own.
+      await tester.pump(const Duration(seconds: 4));
+      await tester.pump();
+      expect(find.text('Төлбөр амжилттай төлөгдсөн.'), findsOneWidget);
+      expect(updated, 1);
+    },
+  );
 
   testWidgets('stops polling once paid — no further checks', (tester) async {
     final repository = _PaysAfterRepository(paidAfter: 1);
@@ -173,6 +239,56 @@ void main() {
     expect(repository.retries, 1);
     // New invoice is pending now — the failed banner is gone.
     expect(find.text('Invoice үүсгэхэд алдаа гарсан байна.'), findsNothing);
+  });
+
+  testWidgets('a refunded fee shows the refunded banner: no retry, no QR, no '
+      'polling', (tester) async {
+    final repository = _PaysAfterRepository(paidAfter: 1);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light,
+        home: AppointmentPaymentScreen(
+          appointmentId: 'apt-1',
+          repository: repository,
+          initialPayment: const AppointmentPayment(
+            status: AppointmentFeeStatus.refunded,
+            amount: 5000,
+            currency: 'MNT',
+          ),
+          onBack: () {},
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 10));
+
+    expect(find.text('Энэ хураамж буцаагдсан байна.'), findsOneWidget);
+    expect(find.text('Дахин оролдох'), findsNothing);
+    expect(find.text('Invoice үүсгэхэд алдаа гарсан байна.'), findsNothing);
+    expect(find.text('Төлбөр амжилттай төлөгдсөн.'), findsNothing);
+    expect(repository.checks, 0);
+  });
+
+  testWidgets('a pending fee without a QR still offers the retry '
+      'affordance', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light,
+        home: AppointmentPaymentScreen(
+          appointmentId: 'apt-1',
+          repository: _PaysAfterRepository(paidAfter: 99),
+          initialPayment: const AppointmentPayment(
+            status: AppointmentFeeStatus.pending,
+            amount: 5000,
+            currency: 'MNT',
+          ),
+          onBack: () {},
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('Дахин оролдох'), findsOneWidget);
   });
 
   testWidgets('shows the bank-picker button and lists banks when the payment '

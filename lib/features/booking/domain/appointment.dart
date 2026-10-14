@@ -51,7 +51,8 @@ class Appointment {
   bool get canPayFee =>
       status.isActive &&
       payment != null &&
-      payment!.status != AppointmentFeeStatus.paid;
+      payment!.status != AppointmentFeeStatus.paid &&
+      payment!.status != AppointmentFeeStatus.refunded;
 
   /// Цуцлах товчийг харуулах эсэх — UI-ийн цорын ганц эх сурвалж.
   ///

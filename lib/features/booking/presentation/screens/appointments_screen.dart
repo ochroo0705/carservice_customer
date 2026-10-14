@@ -851,6 +851,31 @@ class _AppointmentCard extends StatelessWidget {
             ),
           ),
         ],
+        if (appointment.payment?.status == AppointmentFeeStatus.refunded) ...[
+          const SizedBox(height: 12),
+          Container(
+            key: ValueKey('fee-refunded-${appointment.id}'),
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: AppColors.accent.withValues(alpha: 0.12),
+              border: Border.all(
+                color: AppColors.accent.withValues(alpha: 0.35),
+              ),
+              borderRadius: BorderRadius.circular(AppRadii.medium),
+            ),
+            child: Text(
+              'Хураамж буцаагдсан',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: AppColors.readable(
+                  AppColors.accent,
+                  Theme.of(context).brightness,
+                ),
+              ),
+            ),
+          ),
+        ],
         if (onCancel != null) ...[
           const SizedBox(height: 12),
           Align(

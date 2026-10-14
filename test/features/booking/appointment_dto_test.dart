@@ -1,10 +1,31 @@
 import 'package:carcare_customer_mobile/features/booking/data/appointment_dto.dart';
+import 'package:carcare_customer_mobile/features/booking/domain/appointment_payment.dart';
 import 'package:carcare_customer_mobile/features/booking/domain/appointment_status.dart';
 import 'package:carcare_customer_mobile/features/booking/domain/service_progress.dart';
 import 'package:carcare_customer_mobile/core/errors/app_failure.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  group('appointment fee status mapping', () {
+    test('maps REFUNDED explicitly (not pending/paid)', () {
+      expect(
+        appointmentFeeStatusFromApi('REFUNDED'),
+        AppointmentFeeStatus.refunded,
+      );
+      expect(appointmentFeeStatusFromApi('PAID'), AppointmentFeeStatus.paid);
+    });
+
+    test('a refunded fee parses and is not payable', () {
+      final payment = appointmentPaymentFromJson({
+        'status': 'REFUNDED',
+        'amount': 5000,
+        'currency': 'MNT',
+      });
+      expect(payment!.status, AppointmentFeeStatus.refunded);
+      expect(payment.qrImageBase64, isNull);
+    });
+  });
+
   group('appointmentPaymentFromJson QPay urls', () {
     test('parses the bank deep-link list from a pending fee', () {
       final payment = appointmentPaymentFromJson({

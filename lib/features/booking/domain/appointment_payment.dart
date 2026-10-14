@@ -1,4 +1,6 @@
-enum AppointmentFeeStatus { pending, paid, underpaid, failed }
+/// `refunded` — хураамж төлөгдөөд дараа нь буцаагдсан (API `REFUNDED`, additive).
+/// Дахин төлөх/Retry санал болгохгүй, "төлөгдсөн" гэж харуулахгүй.
+enum AppointmentFeeStatus { pending, paid, underpaid, failed, refunded }
 
 AppointmentFeeStatus appointmentFeeStatusFromApi(String value) =>
     switch (value) {
@@ -6,6 +8,7 @@ AppointmentFeeStatus appointmentFeeStatusFromApi(String value) =>
       'PAID' => AppointmentFeeStatus.paid,
       'UNDERPAID' => AppointmentFeeStatus.underpaid,
       'FAILED' => AppointmentFeeStatus.failed,
+      'REFUNDED' => AppointmentFeeStatus.refunded,
       _ => AppointmentFeeStatus.pending,
     };
 

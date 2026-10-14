@@ -336,6 +336,31 @@ class _AppointmentDetailBody extends StatelessWidget {
             const SizedBox(height: 16),
             _FeePaidBadge(key: ValueKey('detail-fee-paid-${appointment.id}')),
           ],
+          if (appointment.payment?.status == AppointmentFeeStatus.refunded) ...[
+            const SizedBox(height: 16),
+            Container(
+              key: ValueKey('detail-fee-refunded-${appointment.id}'),
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: AppColors.accent.withValues(alpha: 0.12),
+                border: Border.all(
+                  color: AppColors.accent.withValues(alpha: 0.35),
+                ),
+                borderRadius: BorderRadius.circular(AppRadii.medium),
+              ),
+              child: Text(
+                'Хураамж буцаагдсан',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.readable(
+                    AppColors.accent,
+                    Theme.of(context).brightness,
+                  ),
+                ),
+              ),
+            ),
+          ],
           if (appointment.serviceProgress != null) ...[
             const SizedBox(height: 24),
             ServiceProgressSection(

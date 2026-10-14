@@ -53,6 +53,15 @@ class _AppointmentPaymentScreenState extends State<AppointmentPaymentScreen>
   String? _message;
   bool _checking = false; // manual check in flight — drives the button label
   bool _retrying = false;
+  // A manual "check" tapped while an auto-poll is in flight is queued (and the
+  // button shows its spinner) instead of being silently dropped.
+  bool _manualCheckQueued = false;
+  // The server holds the slot for 15 minutes from booking. Approximated from
+  // when this screen opened (it is opened right after booking); when it fires
+  // a notice tells the user a late payment is recorded but may cancel the booking.
+  Timer? _holdTimer;
+  bool _holdExpired = false;
+  static const _holdDuration = Duration(minutes: 15);
 
   // Auto-confirm (A): while the fee is still open, quietly poll the same
   // server-verified, idempotent `checkPayment` the button calls, so a user who
@@ -89,6 +98,7 @@ class _AppointmentPaymentScreenState extends State<AppointmentPaymentScreen>
   @override
   void dispose() {
     _stopPolling();
+    _holdTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -107,8 +117,13 @@ class _AppointmentPaymentScreenState extends State<AppointmentPaymentScreen>
   void _maybeStartPolling() {
     if (!_isPollable) {
       _stopPolling();
+      _holdTimer?.cancel();
+      _holdTimer = null;
       return;
     }
+    _holdTimer ??= Timer(_holdDuration, () {
+      if (mounted && _isPollable) setState(() => _holdExpired = true);
+    });
     if (_pollTimer != null) return; // already polling
     _pollDeadline = DateTime.now().add(_pollMaxDuration);
     _pollTimer = Timer.periodic(_pollInterval, (_) => _autoPoll());
@@ -163,7 +178,13 @@ class _AppointmentPaymentScreenState extends State<AppointmentPaymentScreen>
   /// button spinner and the "not paid yet"/error snackbars (a poll every few
   /// seconds must not spam the user); state transitions still apply.
   Future<void> _runCheck({required bool silent}) async {
-    if (_checkInFlight) return;
+    if (_checkInFlight) {
+      if (!silent && !_manualCheckQueued) {
+        _manualCheckQueued = true;
+        setState(() => _checking = true);
+      }
+      return;
+    }
     _checkInFlight = true;
     if (!silent) setState(() => _checking = true);
     try {
@@ -179,6 +200,12 @@ class _AppointmentPaymentScreenState extends State<AppointmentPaymentScreen>
         });
         _stopPolling();
         widget.onPaymentUpdated?.call();
+        // Paid on a cancelled booking / lost capacity: the server explains why
+        // the booking is not active — never show a bare "paid successfully".
+        final paidMessage = result.message;
+        if (paidMessage != null && paidMessage.isNotEmpty) {
+          _showSnack(paidMessage, isError: true);
+        }
       } else if (result.underpaidAmount != null) {
         final current = _payment;
         if (current != null) {
@@ -214,6 +241,10 @@ class _AppointmentPaymentScreenState extends State<AppointmentPaymentScreen>
     } finally {
       _checkInFlight = false;
       if (mounted && !silent) setState(() => _checking = false);
+      if (_manualCheckQueued) {
+        _manualCheckQueued = false;
+        if (mounted) unawaited(_runCheck(silent: false));
+      }
     }
   }
 
@@ -337,6 +368,7 @@ class _AppointmentPaymentScreenState extends State<AppointmentPaymentScreen>
                   onRetry: _retry,
                   onPickBank: _pickBank,
                   onDone: widget.onBack,
+                  holdExpired: _holdExpired,
                 ),
               ],
             ),
@@ -385,8 +417,10 @@ class _PaymentPanel extends StatelessWidget {
     required this.onRetry,
     required this.onPickBank,
     required this.onDone,
+    this.holdExpired = false,
   });
 
+  final bool holdExpired;
   final AppointmentPayment payment;
   final bool checking;
   final bool retrying;
@@ -398,8 +432,11 @@ class _PaymentPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    // Any non-terminal fee without a QR offers retry (unchanged behaviour);
+    // refunded is terminal and handled before this branch.
     final failed =
         payment.status != AppointmentFeeStatus.paid &&
+        payment.status != AppointmentFeeStatus.refunded &&
         payment.qrImageBase64 == null;
     return GlassSurface(
       child: Column(
@@ -442,7 +479,31 @@ class _PaymentPanel extends StatelessWidget {
                     'Үлдэгдлийг дахин уншуулж нөхнө үү.',
               ),
             ),
-          if (payment.status == AppointmentFeeStatus.paid) ...[
+          if (holdExpired && payment.status != AppointmentFeeStatus.paid)
+            const Padding(
+              padding: EdgeInsets.only(bottom: 16),
+              child: _Banner(
+                color: AppColors.accent,
+                text:
+                    'Төлбөрийн 15 минутын хугацаа дууссан байж магадгүй. '
+                    'Төлсөн бол «Төлбөр шалгах» дарна уу; хожуу ирсэн төлбөр '
+                    'бүртгэгдэх боловч цаг цуцлагдсан байж болно.',
+              ),
+            ),
+          if (payment.status == AppointmentFeeStatus.refunded) ...[
+            const _Banner(
+              color: AppColors.accent,
+              text: 'Энэ хураамж буцаагдсан байна.',
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: onDone,
+                child: const Text('Дуусгах'),
+              ),
+            ),
+          ] else if (payment.status == AppointmentFeeStatus.paid) ...[
             const _Banner(
               color: AppColors.green,
               text: 'Төлбөр амжилттай төлөгдсөн.',
