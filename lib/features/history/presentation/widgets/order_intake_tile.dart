@@ -1,8 +1,9 @@
-import 'package:carcare_customer_mobile/app/customer_routes.dart';
-import 'package:carcare_customer_mobile/app/theme/app_surfaces.dart';
-import 'package:carcare_customer_mobile/core/errors/app_failure.dart';
-import 'package:carcare_customer_mobile/features/history/domain/order_intake.dart';
-import 'package:carcare_customer_mobile/features/history/domain/service_history_repository.dart';
+import 'package:carservice_customer/app/app_messages.dart';
+import 'package:carservice_customer/app/customer_routes.dart';
+import 'package:carservice_customer/app/theme/app_surfaces.dart';
+import 'package:carservice_customer/core/errors/app_failure.dart';
+import 'package:carservice_customer/features/history/domain/order_intake.dart';
+import 'package:carservice_customer/features/history/domain/service_history_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -53,7 +54,6 @@ class _OrderIntakeTileState extends State<OrderIntakeTile> {
       context.push(CustomerRoutes.orderIntake(widget.orderId), extra: known);
       return;
     }
-    final messenger = ScaffoldMessenger.maybeOf(context);
     setState(() => _loading = true);
     String? error;
     OrderIntake? loaded;
@@ -73,7 +73,7 @@ class _OrderIntakeTileState extends State<OrderIntakeTile> {
     if (loaded != null) {
       context.push(CustomerRoutes.orderIntake(widget.orderId), extra: loaded);
     } else {
-      messenger?.showSnackBar(SnackBar(content: Text(error!)));
+      AppMessages.show(error!);
     }
   }
 

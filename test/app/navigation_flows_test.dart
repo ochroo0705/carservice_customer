@@ -1,21 +1,21 @@
-import 'package:carcare_customer_mobile/app/bootstrap_flags.dart';
-import 'package:carcare_customer_mobile/core/errors/app_failure.dart';
-import 'package:carcare_customer_mobile/features/auth/data/fake_auth_repository.dart';
-import 'package:carcare_customer_mobile/features/auth/presentation/auth_controller.dart';
-import 'package:carcare_customer_mobile/features/auth/presentation/login_screen.dart';
-import 'package:carcare_customer_mobile/features/booking/data/fake_appointment_repository.dart';
-import 'package:carcare_customer_mobile/features/booking/domain/appointment_repository.dart';
-import 'package:carcare_customer_mobile/features/booking/presentation/screens/appointment_detail_screen.dart';
-import 'package:carcare_customer_mobile/features/booking/presentation/screens/appointment_payment_screen.dart';
-import 'package:carcare_customer_mobile/features/booking/presentation/screens/booking_request_screen.dart';
-import 'package:carcare_customer_mobile/features/discovery/presentation/screens/organization_detail_screen.dart';
-import 'package:carcare_customer_mobile/features/history/presentation/screens/service_order_detail_screen.dart';
-import 'package:carcare_customer_mobile/features/history/presentation/widgets/diagnostic_report_row.dart';
-import 'package:carcare_customer_mobile/features/diagnostics/presentation/screens/diagnostic_detail_screen.dart';
-import 'package:carcare_customer_mobile/features/notifications/presentation/screens/notifications_screen.dart';
-import 'package:carcare_customer_mobile/features/profile/presentation/screens/account_closure_screen.dart';
-import 'package:carcare_customer_mobile/features/vehicles/presentation/screens/add_vehicle_screen.dart';
-import 'package:carcare_customer_mobile/features/vehicles/presentation/screens/vehicle_detail_screen.dart';
+import 'package:carservice_customer/app/bootstrap_flags.dart';
+import 'package:carservice_customer/core/errors/app_failure.dart';
+import 'package:carservice_customer/features/booking/auth/data/fake_auth_repository.dart';
+import 'package:carservice_customer/features/booking/auth/presentation/auth_controller.dart';
+import 'package:carservice_customer/features/booking/auth/presentation/login_screen.dart';
+import 'package:carservice_customer/features/booking/data/fake_appointment_repository.dart';
+import 'package:carservice_customer/features/booking/domain/appointment_repository.dart';
+import 'package:carservice_customer/features/booking/presentation/screens/appointment_detail_screen.dart';
+import 'package:carservice_customer/features/booking/presentation/screens/appointment_payment_screen.dart';
+import 'package:carservice_customer/features/booking/presentation/screens/booking_request_screen.dart';
+import 'package:carservice_customer/features/discovery/presentation/screens/organization_detail_screen.dart';
+import 'package:carservice_customer/features/history/presentation/screens/service_order_detail_screen.dart';
+import 'package:carservice_customer/features/history/presentation/widgets/diagnostic_report_row.dart';
+import 'package:carservice_customer/features/diagnostics/presentation/screens/diagnostic_detail_screen.dart';
+import 'package:carservice_customer/features/notifications/presentation/screens/notifications_screen.dart';
+import 'package:carservice_customer/features/profile/presentation/screens/account_closure_screen.dart';
+import 'package:carservice_customer/features/vehicles/presentation/screens/add_vehicle_screen.dart';
+import 'package:carservice_customer/features/vehicles/presentation/screens/vehicle_detail_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
@@ -28,8 +28,7 @@ import 'support/app_harness.dart';
 /// then behaves like the base fake for every call after. Used to exercise
 /// `BookingRequestScreen.onUnauthenticated` → the router's login-then-resume
 /// path, which `FakeAppointmentRepository` alone never triggers.
-class _UnauthenticatedOnceAppointmentRepository
-    extends FakeAppointmentRepository {
+class _UnauthenticatedOnceAppointmentRepository extends FakeAppointmentRepository {
   bool _thrown = false;
 
   @override
@@ -80,9 +79,7 @@ void main() {
     final now = DateTime.now();
     final targetDate = DateTime(now.year, now.month + 1, 10);
     final dateFinder = find.byKey(
-      ValueKey(
-        'booking-date-${targetDate.year}-${targetDate.month}-${targetDate.day}',
-      ),
+      ValueKey('booking-date-${targetDate.year}-${targetDate.month}-${targetDate.day}'),
     );
     await tester.ensureVisible(dateFinder);
     await tester.pumpAndSettle();
@@ -97,8 +94,7 @@ void main() {
   }
 
   group('Explore booking', () {
-    testWidgets('detail → book → back returns to detail, back again to shell',
-        (tester) async {
+    testWidgets('detail → book → back returns to detail, back again to shell', (tester) async {
       await pumpApp(tester);
       await openOrganization(tester);
       await tester.tap(find.byKey(const ValueKey('detail-book-button')));
@@ -125,8 +121,7 @@ void main() {
     // other route in the table, so the tap now does what it always should
     // have: send the customer to `LoginScreen` (with `from` set to the
     // booking URL) instead of doing nothing.
-    testWidgets(
-        'signed out: tapping book now shows LoginScreen (bug fix — the old '
+    testWidgets('signed out: tapping book now shows LoginScreen (bug fix — the old '
         'button was dead)', (tester) async {
       await pumpApp(tester, auth: FakeAuthRepository());
       await openOrganization(tester);
@@ -143,8 +138,7 @@ void main() {
     // `pushReplacement`s that same page with the booking page). One
     // `pageBack` must therefore return straight to `OrganizationDetailScreen`
     // — not to a second booking page, and not back to LoginScreen.
-    testWidgets(
-        'signed out → book → login → OTP: lands on BookingRequestScreen with '
+    testWidgets('signed out → book → login → OTP: lands on BookingRequestScreen with '
         'exactly one page pushed', (tester) async {
       await pumpApp(tester, auth: FakeAuthRepository());
       await openOrganization(tester);
@@ -152,8 +146,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byType(LoginScreen), findsOneWidget);
 
-      await tester.enterText(
-          find.byKey(const ValueKey('login-phone')), '99112233');
+      await tester.enterText(find.byKey(const ValueKey('login-phone')), '99112233');
       await tester.tap(find.text('Код авах →'));
       await tester.pumpAndSettle();
       await tester.enterText(find.byKey(const ValueKey('login-otp')), '123456');
@@ -167,10 +160,7 @@ void main() {
       // stacking a new page on top of one that was never popped).
       // `skipOffstage: false` checks the whole page stack, not just what's
       // currently visible.
-      expect(
-        find.byType(BookingRequestScreen, skipOffstage: false),
-        findsOneWidget,
-      );
+      expect(find.byType(BookingRequestScreen, skipOffstage: false), findsOneWidget);
 
       await tester.pageBack();
       await tester.pumpAndSettle();
@@ -179,13 +169,9 @@ void main() {
       expect(find.byType(OrganizationDetailScreen), findsOneWidget);
     });
 
-    testWidgets(
-        'submit failing with UnauthenticatedFailure shows login; logging in '
+    testWidgets('submit failing with UnauthenticatedFailure shows login; logging in '
         'resumes into booking', (tester) async {
-      await pumpApp(
-        tester,
-        appointments: _UnauthenticatedOnceAppointmentRepository(),
-      );
+      await pumpApp(tester, appointments: _UnauthenticatedOnceAppointmentRepository());
       await openOrganization(tester);
       await tester.tap(find.byKey(const ValueKey('detail-book-button')));
       await tester.pumpAndSettle();
@@ -203,8 +189,7 @@ void main() {
       // field, not by a keyboard "done" action. The brief's
       // `receiveAction(TextInputAction.done)` steps were a no-op against the
       // real screen; fixed to tap the button instead.
-      await tester.enterText(
-          find.byKey(const ValueKey('login-phone')), '99112233');
+      await tester.enterText(find.byKey(const ValueKey('login-phone')), '99112233');
       await tester.tap(find.text('Код авах →'));
       await tester.pumpAndSettle();
       await tester.enterText(find.byKey(const ValueKey('login-otp')), '123456');
@@ -216,10 +201,7 @@ void main() {
       // resumes via a `pop()` back to the booking page that was already
       // mounted underneath `LoginScreen` (not a `pushReplacement`), so
       // check the whole stack, not just what's on top.
-      expect(
-        find.byType(BookingRequestScreen, skipOffstage: false),
-        findsOneWidget,
-      );
+      expect(find.byType(BookingRequestScreen, skipOffstage: false), findsOneWidget);
 
       await tester.pageBack();
       await tester.pumpAndSettle();
@@ -230,8 +212,7 @@ void main() {
   });
 
   group('Service-key booking', () {
-    testWidgets('back from booking skips detail and lands on the shell',
-        (tester) async {
+    testWidgets('back from booking skips detail and lands on the shell', (tester) async {
       await pumpApp(tester);
       await tester.tap(find.text('Захиалах'));
       await tester.pumpAndSettle();
@@ -241,8 +222,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const ValueKey('service-key-apply')));
       await tester.pumpAndSettle();
-      await tester.tap(
-          find.byKey(const ValueKey('service-key-result-auto-doctor-bzd')));
+      await tester.tap(find.byKey(const ValueKey('service-key-result-auto-doctor-bzd')));
       await tester.pumpAndSettle();
       expect(find.byType(BookingRequestScreen), findsOneWidget);
       expect(find.byType(OrganizationDetailScreen), findsNothing);
@@ -255,9 +235,9 @@ void main() {
   });
 
   group('Booking completion', () {
-    testWidgets(
-        'submit lands on Appointments tab → new appointment detail → payment',
-        (tester) async {
+    testWidgets('submit lands on Appointments tab → new appointment detail → payment', (
+      tester,
+    ) async {
       await pumpApp(tester);
       await openOrganization(tester);
       await tester.tap(find.byKey(const ValueKey('detail-book-button')));
@@ -285,8 +265,7 @@ void main() {
   });
 
   group('Detail pages', () {
-    testWidgets('history order → diagnostic → back twice to history',
-        (tester) async {
+    testWidgets('history order → diagnostic → back twice to history', (tester) async {
       await pumpApp(tester);
       await tester.tap(find.text('Түүх'));
       await tester.pumpAndSettle();
@@ -297,8 +276,7 @@ void main() {
       // desc`), which puts seed-history-1 (completedAt: now-20d) 4th of 5
       // orders, below seed-history-4 (2d), seed-history-2 (8d) and the
       // unpaid seed-history-5 (15d) — so scroll it into view first.
-      final historyOrderTile =
-          find.byKey(const ValueKey('history-order-seed-history-1'));
+      final historyOrderTile = find.byKey(const ValueKey('history-order-seed-history-1'));
       final historyListScrollable = find.descendant(
         of: find.byKey(const PageStorageKey('history-list')),
         matching: find.byType(Scrollable),
@@ -307,11 +285,7 @@ void main() {
       // still sit just past the viewport edge, inside the list's cache
       // extent), so follow up with ensureVisible to actually bring it fully
       // on screen before tapping.
-      await tester.scrollUntilVisible(
-        historyOrderTile,
-        200,
-        scrollable: historyListScrollable,
-      );
+      await tester.scrollUntilVisible(historyOrderTile, 200, scrollable: historyListScrollable);
       await tester.ensureVisible(historyOrderTile);
       await tester.pumpAndSettle();
       await tester.tap(historyOrderTile);
@@ -344,8 +318,7 @@ void main() {
       expect(find.byKey(const ValueKey('history-tab-bar')), findsOneWidget);
     });
 
-    testWidgets('profile → add vehicle → back; vehicle detail → back',
-        (tester) async {
+    testWidgets('profile → add vehicle → back; vehicle detail → back', (tester) async {
       await pumpApp(tester);
       await openListView(tester);
       await tester.tap(find.byKey(const ValueKey('shell-avatar')));
@@ -381,8 +354,7 @@ void main() {
   });
 
   group('Push deep link over an open stack', () {
-    testWidgets('clears whatever is open, then shows the appointment',
-        (tester) async {
+    testWidgets('clears whatever is open, then shows the appointment', (tester) async {
       final push = ControllablePush();
       await pumpApp(tester, push: push);
       await openOrganization(tester);
@@ -412,25 +384,25 @@ void main() {
     // happens; closure has no outgoing links, so nothing can ever be pushed
     // on top of it in the real app, and there is deliberately no test for
     // that unreachable case.
-    testWidgets('signing out while the closure page is open removes it',
-        (tester) async {
+    testWidgets('signing out while the closure page is open removes it', (tester) async {
       await pumpApp(tester);
       await openListView(tester);
       await tester.tap(find.byKey(const ValueKey('shell-avatar')));
       await tester.pumpAndSettle();
 
       final tile = find.byKey(const ValueKey('profile-account-closure-tile'));
-      await tester.scrollUntilVisible(
-        tile,
-        200,
-        scrollable: find.byType(Scrollable).last,
-      );
+      await tester.scrollUntilVisible(tile, 200, scrollable: find.byType(Scrollable).last);
+      // Closure is the last tile: scroll to the end so the list's bottom
+      // padding lifts it clear of the "Машин нэмэх" FAB before tapping.
+      await tester.drag(find.byType(Scrollable).last, const Offset(0, -300));
+      await tester.pumpAndSettle();
       await tester.tap(tile);
       await tester.pumpAndSettle();
       expect(find.byType(AccountClosureScreen), findsOneWidget);
 
-      final authController =
-          tester.element(find.byType(AccountClosureScreen)).read<AuthController>();
+      final authController = tester
+          .element(find.byType(AccountClosureScreen))
+          .read<AuthController>();
       await authController.signOut();
       await tester.pumpAndSettle();
 
@@ -441,8 +413,7 @@ void main() {
     // the app bar's back arrow uses (`Navigator.maybePop` under the hood),
     // so a pushed page closes on system back exactly like it does on a
     // widget-level `pageBack()`.
-    testWidgets('Android system back from a pushed page returns',
-        (tester) async {
+    testWidgets('Android system back from a pushed page returns', (tester) async {
       await pumpApp(tester);
       await openListView(tester);
       await tester.tap(find.byKey(const ValueKey('shell-notifications')));

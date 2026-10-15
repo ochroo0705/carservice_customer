@@ -1,7 +1,7 @@
-import 'package:carcare_customer_mobile/app/bootstrap_flags.dart';
-import 'package:carcare_customer_mobile/app/app.dart';
-import 'package:carcare_customer_mobile/features/auth/data/fake_auth_repository.dart';
-import 'package:carcare_customer_mobile/features/discovery/data/fake_organization_repository.dart';
+import 'package:carservice_customer/app/bootstrap_flags.dart';
+import 'package:carservice_customer/app/app.dart';
+import 'package:carservice_customer/features/booking/auth/data/fake_auth_repository.dart';
+import 'package:carservice_customer/features/discovery/data/fake_organization_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -23,10 +23,7 @@ void main() {
 
     await tester.tap(find.byKey(const ValueKey('shell-login')));
     await tester.pumpAndSettle();
-    await tester.enterText(
-      find.byKey(const ValueKey('login-phone')),
-      '99112233',
-    );
+    await tester.enterText(find.byKey(const ValueKey('login-phone')), '99112233');
     await tester.tap(find.text('Код авах →'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byKey(const ValueKey('login-otp')), '123456');
@@ -34,51 +31,41 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets(
-    'a reactivating sign-in shows the welcome-back snackbar once, and '
-    'resets the flag',
-    (tester) async {
-      final auth = FakeAuthRepository()..nextVerifyReactivated = true;
-      await tester.pumpWidget(
-        CarCareCustomerApp(
-          organizationRepository: FakeOrganizationRepository(
-            delay: Duration.zero,
-          ),
-          authRepository: auth,
-        ),
-      );
-      await tester.pumpAndSettle();
+  testWidgets('a reactivating sign-in shows the welcome-back snackbar once, and '
+      'resets the flag', (tester) async {
+    final auth = FakeAuthRepository()..nextVerifyReactivated = true;
+    await tester.pumpWidget(
+      CarserviceApp(
+        organizationRepository: FakeOrganizationRepository(delay: Duration.zero),
+        authRepository: auth,
+      ),
+    );
+    await tester.pumpAndSettle();
 
-      await signIn(tester);
+    await signIn(tester);
 
-      expect(find.text('Бүртгэл тань сэргээгдлээ'), findsOneWidget);
+    expect(find.text('Бүртгэл тань сэргээгдлээ'), findsOneWidget);
 
-      // The SnackBar is one-shot: it must not still be showing (or reappear)
-      // once its display duration elapses — that would mean the flag was
-      // never reset.
-      await tester.pump(const Duration(seconds: 5));
-      await tester.pumpAndSettle();
-      expect(find.text('Бүртгэл тань сэргээгдлээ'), findsNothing);
-    },
-  );
+    // The SnackBar is one-shot: it must not still be showing (or reappear)
+    // once its display duration elapses — that would mean the flag was
+    // never reset.
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
+    expect(find.text('Бүртгэл тань сэргээгдлээ'), findsNothing);
+  });
 
-  testWidgets(
-    'an ordinary (non-reactivating) sign-in never shows the snackbar',
-    (tester) async {
-      final auth = FakeAuthRepository()..nextVerifyReactivated = false;
-      await tester.pumpWidget(
-        CarCareCustomerApp(
-          organizationRepository: FakeOrganizationRepository(
-            delay: Duration.zero,
-          ),
-          authRepository: auth,
-        ),
-      );
-      await tester.pumpAndSettle();
+  testWidgets('an ordinary (non-reactivating) sign-in never shows the snackbar', (tester) async {
+    final auth = FakeAuthRepository()..nextVerifyReactivated = false;
+    await tester.pumpWidget(
+      CarserviceApp(
+        organizationRepository: FakeOrganizationRepository(delay: Duration.zero),
+        authRepository: auth,
+      ),
+    );
+    await tester.pumpAndSettle();
 
-      await signIn(tester);
+    await signIn(tester);
 
-      expect(find.text('Бүртгэл тань сэргээгдлээ'), findsNothing);
-    },
-  );
+    expect(find.text('Бүртгэл тань сэргээгдлээ'), findsNothing);
+  });
 }

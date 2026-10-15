@@ -1,8 +1,8 @@
-import 'package:carcare_customer_mobile/core/errors/app_failure.dart';
-import 'package:carcare_customer_mobile/core/network/api_client.dart';
-import 'package:carcare_customer_mobile/features/diagnostics/data/diagnostic_report_dto.dart';
-import 'package:carcare_customer_mobile/features/diagnostics/domain/diagnostic_report_detail.dart';
-import 'package:carcare_customer_mobile/features/diagnostics/domain/diagnostics_repository.dart';
+import 'package:carservice_customer/core/errors/app_failure.dart';
+import 'package:carservice_customer/core/network/api_client.dart';
+import 'package:carservice_customer/features/diagnostics/data/diagnostic_report_dto.dart';
+import 'package:carservice_customer/features/diagnostics/domain/diagnostic_report_detail.dart';
+import 'package:carservice_customer/features/diagnostics/domain/diagnostics_repository.dart';
 
 /// `GET /api/v1/app/diagnostics` + `/diagnostics/[id]`-ийн эсрэг ажилладаг
 /// бодит хэрэгжүүлэлт (харах: `CUSTOMER_API_CONTRACT.md` "Оношилгоо").

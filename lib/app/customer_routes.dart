@@ -37,6 +37,7 @@ abstract final class CustomerRoutes {
   static String diagnostic(String id) => '/diagnostics/$id';
   static const notifications = '/notifications';
   static const accountClosure = '/account/close';
+  static const accountPassword = '/account/password';
   static const terms = '/terms';
   static const termsConsentPath = '/terms-consent';
   static const privacy = '/privacy';

@@ -1,10 +1,10 @@
-import 'package:carcare_customer_mobile/core/errors/app_failure.dart';
-import 'package:carcare_customer_mobile/core/network/api_client.dart';
-import 'package:carcare_customer_mobile/features/auth/data/secure_session_store.dart';
-import 'package:carcare_customer_mobile/features/auth/domain/account.dart';
-import 'package:carcare_customer_mobile/features/auth/domain/auth_repository.dart';
+import 'package:carservice_customer/core/errors/app_failure.dart';
+import 'package:carservice_customer/core/network/api_client.dart';
+import 'package:carservice_customer/features/booking/auth/data/secure_session_store.dart';
+import 'package:carservice_customer/features/booking/auth/domain/account.dart';
+import 'package:carservice_customer/features/booking/auth/domain/auth_repository.dart';
 
-/// Account realm-ийн phone + OTP authentication adapter.
+/// Account realm-ийн phone + OTP / нууц үгийн authentication adapter.
 ///
 /// OTP амжилттай бол server-ийн access token болон Account-ийг нэг session
 /// болгон secure storage-д хадгална. Customer API нь refresh endpoint-гүй тул
@@ -41,6 +41,26 @@ class RemoteAuthRepository implements AuthRepository {
       'code': code,
       if (name != null && name.trim().isNotEmpty) 'name': name.trim(),
     });
+    return _startSession(json);
+  }
+
+  @override
+  Future<({Account account, bool reactivated})> loginWithPassword({
+    required String phone,
+    required String password,
+  }) async {
+    final json = await _client.postJson('/auth/login-password', {
+      'phone': phone,
+      'password': password,
+    });
+    return _startSession(json);
+  }
+
+  /// `verify-otp` болон `login-password` ижил хариу буцаана: token болон
+  /// account-ийг шалгаж нэг session болгон хадгална.
+  Future<({Account account, bool reactivated})> _startSession(
+    Map<String, dynamic> json,
+  ) async {
     final token = json['accessToken'];
     final accountJson = json['account'];
     if (token is! String || token.isEmpty || accountJson is! Map) {
@@ -68,6 +88,37 @@ class RemoteAuthRepository implements AuthRepository {
   /// Local session-г цэвэрлэнэ. Device registration removal нь тусдаа
   /// best-effort урсгалд хийгддэг бөгөөд authentication logout-ийг блоклохгүй.
   Future<void> signOut() => _sessionStore.clear();
+
+  @override
+  Future<bool> hasPassword() async {
+    final json = await _client.getJson('/account/password');
+    return json['hasPassword'] == true;
+  }
+
+  @override
+  Future<String> requestPasswordOtp() async {
+    final json = await _client.postJson(
+      '/account/password/request-otp',
+      const {},
+    );
+    return json['maskedPhone'] as String? ?? '';
+  }
+
+  @override
+  Future<void> setPassword({
+    required String code,
+    required String password,
+  }) async {
+    await _client.putJson('/account/password', {
+      'code': code,
+      'password': password,
+    });
+  }
+
+  @override
+  Future<void> removePassword(String code) async {
+    await _client.deleteJson('/account/password', {'code': code});
+  }
 
   @override
   Future<String> requestClosureOtp() async {

@@ -1,4 +1,4 @@
-import 'package:carcare_customer_mobile/app/theme/app_theme.dart';
+import 'package:carservice_customer/app/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -144,7 +144,7 @@ class _LegalCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = CarCareTheme.of(context);
+    final theme = CarserviceTheme.of(context);
     return Material(
       color: theme.shellSurface,
       shape: RoundedRectangleBorder(
@@ -297,7 +297,7 @@ class LegalItemCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
-    final muted = CarCareTheme.of(context).mutedText;
+    final muted = CarserviceTheme.of(context).mutedText;
     final accent = _accent(context);
     return _LegalCard(
       onTap: onTap,
@@ -413,7 +413,7 @@ class LegalKeyValueCard extends StatelessWidget {
                 Text(
                   r.$2,
                   style: text.bodyMedium?.copyWith(
-                    color: CarCareTheme.of(context).mutedText,
+                    color: CarserviceTheme.of(context).mutedText,
                   ),
                 ),
               ],
@@ -450,7 +450,7 @@ class LegalLinkRow extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Icon(icon, size: 18, color: CarCareTheme.of(context).mutedText),
+              Icon(icon, size: 18, color: CarserviceTheme.of(context).mutedText),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(

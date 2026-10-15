@@ -1,11 +1,13 @@
 import 'dart:async';
 
-import 'package:carcare_customer_mobile/core/errors/app_failure.dart';
-import 'package:carcare_customer_mobile/features/auth/domain/account.dart';
-import 'package:carcare_customer_mobile/features/auth/domain/auth_repository.dart';
+import 'package:carservice_customer/core/errors/app_failure.dart';
+import 'package:carservice_customer/features/booking/auth/domain/account.dart';
+import 'package:carservice_customer/features/booking/auth/domain/auth_repository.dart';
 import 'package:flutter/foundation.dart';
 
-enum AuthStep { phone, otp }
+/// Login form steps. [password] is the phone + password form, an
+/// alternative to requesting a code from [phone].
+enum AuthStep { phone, otp, password }
 
 /// Why the session just started or ended, so `CustomerAppServices` can show
 /// the right notice (and decide about device removal) exactly once. Set
@@ -45,7 +47,8 @@ class _SessionNotifier extends ChangeNotifier {
   }
 }
 
-/// Account realm-ийн OTP flow болон app-ийн authenticated state-г удирдана.
+/// Account realm-ийн OTP / нууц үгийн flow болон app-ийн authenticated
+/// state-г удирдана.
 /// UI зөвхөн энэ state-ийг ажиглана; token хадгалалт, server contract-ийг
 /// [AuthRepository] хэрэгжүүлдэг.
 class AuthController extends ChangeNotifier {
@@ -135,9 +138,7 @@ class AuthController extends ChangeNotifier {
     if (!isAuthenticated) return;
     // Set before signing out: the storage clear fires the invalidation stream
     // and listeners may observe `account == null` before this method resumes.
-    sessionEvent = deleted
-        ? SessionEvent.remoteDeleted
-        : SessionEvent.remoteDeactivated;
+    sessionEvent = deleted ? SessionEvent.remoteDeleted : SessionEvent.remoteDeactivated;
     await _repository.signOut();
     account = null;
     notifyListeners();
@@ -178,7 +179,38 @@ class AuthController extends ChangeNotifier {
   }
 
   Future<void> _verify(String code) async {
-    final result = await _repository.verifyOtp(phone: phone, code: code);
+    await _completeSignIn(
+      await _repository.verifyOtp(phone: phone, code: code),
+    );
+  }
+
+  /// Утас + нууц үгээр нэвтэрнэ. Амжилттай бол OTP-тэй яг ижил байдлаар
+  /// session эхэлнэ (terms acceptance, reactivated мэдэгдэл).
+  Future<bool> loginWithPassword(String phoneValue, String password) async {
+    final normalized = phoneValue.replaceAll(RegExp(r'\s+'), '');
+    if (!RegExp(r'^\d{8}$').hasMatch(normalized)) {
+      errorMessage = '8 оронтой утасны дугаар оруулна уу.';
+      notifyListeners();
+      return false;
+    }
+    if (password.isEmpty) {
+      errorMessage = 'Нууц үгээ оруулна уу.';
+      notifyListeners();
+      return false;
+    }
+    return _run(() async {
+      final result = await _repository.loginWithPassword(
+        phone: normalized,
+        password: password,
+      );
+      phone = normalized;
+      await _completeSignIn(result);
+    });
+  }
+
+  Future<void> _completeSignIn(
+    ({Account account, bool reactivated}) result,
+  ) async {
     await beforeSignIn?.call(result.account);
     account = result.account;
     sessionEvent = result.reactivated ? SessionEvent.reactivated : null;
@@ -212,10 +244,7 @@ class AuthController extends ChangeNotifier {
   /// Deactivate (`deleteForever: false`) эсвэл delete forever
   /// (`deleteForever: true`) хийж, амжилттай бол local session-г гаргана.
   /// Буруу код өгвөл session хэвээр үлдэж [errorMessage] тавигдана.
-  Future<bool> closeAccount({
-    required bool deleteForever,
-    required String code,
-  }) => _run(() async {
+  Future<bool> closeAccount({required bool deleteForever, required String code}) => _run(() async {
     _closingAccount = true;
     _invalidatedWhileClosing = false;
     try {
@@ -235,9 +264,7 @@ class AuthController extends ChangeNotifier {
       // belt-and-suspenders check so a transition is never fired, and the
       // flag never set, for a sign-out this call didn't actually cause.
       if (account != null) {
-        sessionEvent = deleteForever
-            ? SessionEvent.deleted
-            : SessionEvent.deactivated;
+        sessionEvent = deleteForever ? SessionEvent.deleted : SessionEvent.deactivated;
         account = null;
       }
     } finally {
@@ -257,6 +284,16 @@ class AuthController extends ChangeNotifier {
     errorMessage = null;
     notifyListeners();
   }
+
+  /// Switches the login form to phone + password.
+  void usePassword() {
+    step = AuthStep.password;
+    errorMessage = null;
+    notifyListeners();
+  }
+
+  /// Switches the login form back to requesting a code.
+  void useOtp() => editPhone();
 
   void resetFlow() => _resetLoginFlow();
 

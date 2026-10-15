@@ -1,8 +1,8 @@
-import 'package:carcare_customer_mobile/app/bootstrap_flags.dart';
-import 'package:carcare_customer_mobile/app/app.dart';
-import 'package:carcare_customer_mobile/features/booking/presentation/screens/booking_request_screen.dart';
-import 'package:carcare_customer_mobile/features/discovery/data/fake_organization_repository.dart';
-import 'package:carcare_customer_mobile/features/discovery/presentation/screens/organization_detail_screen.dart';
+import 'package:carservice_customer/app/bootstrap_flags.dart';
+import 'package:carservice_customer/app/app.dart';
+import 'package:carservice_customer/features/booking/presentation/screens/booking_request_screen.dart';
+import 'package:carservice_customer/features/discovery/data/fake_organization_repository.dart';
+import 'package:carservice_customer/features/discovery/presentation/screens/organization_detail_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -18,7 +18,7 @@ void main() {
     'inline, and booking locks the matching categories',
     (tester) async {
       await tester.pumpWidget(
-        CarCareCustomerApp(
+        CarserviceApp(
           organizationRepository: FakeOrganizationRepository(
             delay: Duration.zero,
           ),
@@ -95,7 +95,7 @@ void main() {
     'branch list',
     (tester) async {
       await tester.pumpWidget(
-        CarCareCustomerApp(
+        CarserviceApp(
           organizationRepository: FakeOrganizationRepository(
             delay: Duration.zero,
           ),
@@ -135,7 +135,7 @@ void main() {
     'detail screen the flow skipped',
     (tester) async {
       await tester.pumpWidget(
-        CarCareCustomerApp(
+        CarserviceApp(
           organizationRepository: FakeOrganizationRepository(
             delay: Duration.zero,
           ),
@@ -182,7 +182,7 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(
-      CarCareCustomerApp(
+      CarserviceApp(
         organizationRepository: FakeOrganizationRepository(
           delay: Duration.zero,
         ),

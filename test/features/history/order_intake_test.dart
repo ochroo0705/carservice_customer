@@ -1,12 +1,12 @@
-import 'package:carcare_customer_mobile/app/theme/app_theme.dart';
-import 'package:carcare_customer_mobile/features/history/data/fake_service_history_repository.dart';
-import 'package:carcare_customer_mobile/features/history/data/service_order_dto.dart';
-import 'package:carcare_customer_mobile/features/history/domain/order_intake.dart';
-import 'package:carcare_customer_mobile/features/history/domain/service_order_detail.dart';
-import 'package:carcare_customer_mobile/features/history/domain/upload_url.dart';
-import 'package:carcare_customer_mobile/features/history/presentation/controllers/history_controller.dart';
-import 'package:carcare_customer_mobile/features/history/presentation/screens/order_intake_screen.dart';
-import 'package:carcare_customer_mobile/features/history/presentation/screens/service_order_detail_screen.dart';
+import 'package:carservice_customer/app/theme/app_theme.dart';
+import 'package:carservice_customer/features/history/data/fake_service_history_repository.dart';
+import 'package:carservice_customer/features/history/data/service_order_dto.dart';
+import 'package:carservice_customer/features/history/domain/order_intake.dart';
+import 'package:carservice_customer/features/history/domain/service_order_detail.dart';
+import 'package:carservice_customer/features/history/domain/upload_url.dart';
+import 'package:carservice_customer/features/history/presentation/controllers/history_controller.dart';
+import 'package:carservice_customer/features/history/presentation/screens/order_intake_screen.dart';
+import 'package:carservice_customer/features/history/presentation/screens/service_order_detail_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -121,11 +121,11 @@ void main() {
   });
 
   group('resolveUploadUrl', () {
-    const base = 'https://api.carcare.mn:8443/api/v1/app';
+    const base = 'https://api.carservice.mn:8443/api/v1/app';
     test('prefixes relative paths with the API origin', () {
       expect(
         resolveUploadUrl('/uploads/a.jpg', baseUrl: base),
-        'https://api.carcare.mn:8443/uploads/a.jpg',
+        'https://api.carservice.mn:8443/uploads/a.jpg',
       );
       expect(
         resolveUploadUrl(

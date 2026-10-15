@@ -1,11 +1,11 @@
 import 'dart:async';
 
-import 'package:carcare_customer_mobile/app/app.dart';
-import 'package:carcare_customer_mobile/core/notifications/remote_push_service.dart';
-import 'package:carcare_customer_mobile/features/auth/domain/auth_repository.dart';
-import 'package:carcare_customer_mobile/features/booking/data/fake_appointment_repository.dart';
-import 'package:carcare_customer_mobile/features/booking/domain/appointment_repository.dart';
-import 'package:carcare_customer_mobile/features/discovery/data/fake_organization_repository.dart';
+import 'package:carservice_customer/app/app.dart';
+import 'package:carservice_customer/core/notifications/remote_push_service.dart';
+import 'package:carservice_customer/features/booking/auth/domain/auth_repository.dart';
+import 'package:carservice_customer/features/booking/data/fake_appointment_repository.dart';
+import 'package:carservice_customer/features/booking/domain/appointment_repository.dart';
+import 'package:carservice_customer/features/discovery/data/fake_organization_repository.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -22,8 +22,7 @@ class ControllablePush extends Fake implements RemotePushService {
 
   void tap(Map<String, dynamic> data) => _opened.add(RemoteMessage(data: data));
 
-  void arrive(Map<String, dynamic> data) =>
-      _incoming.add(RemoteMessage(data: data));
+  void arrive(Map<String, dynamic> data) => _incoming.add(RemoteMessage(data: data));
 
   @override
   Stream<RemoteMessage> get onMessageOpenedApp => _opened.stream;
@@ -48,7 +47,7 @@ Future<void> pumpApp(
   AppointmentRepository? appointments,
 }) async {
   await tester.pumpWidget(
-    CarCareCustomerApp(
+    CarserviceApp(
       organizationRepository: FakeOrganizationRepository(delay: Duration.zero),
       authRepository: auth ?? signedInAuthRepository(),
       appointmentRepository: appointments ?? FakeAppointmentRepository(),

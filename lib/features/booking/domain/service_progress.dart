@@ -1,5 +1,5 @@
-import 'package:carcare_customer_mobile/features/history/domain/diagnostic_report_summary.dart';
-import 'package:carcare_customer_mobile/features/history/domain/service_order_item.dart'
+import 'package:carservice_customer/features/history/domain/diagnostic_report_summary.dart';
+import 'package:carservice_customer/features/history/domain/service_order_item.dart'
     show ServiceOrderItemKind;
 
 /// Захиалгын PAYMENT статус (workflow-той тусдаа). Аппойнтмент бүрэн
@@ -34,7 +34,7 @@ ServiceProgressStatus serviceProgressStatusFromApi(String value) {
       return ServiceProgressStatus.scheduled;
     case 'IN_PROGRESS':
       return ServiceProgressStatus.inProgress;
-    // Backend renamed WAITING_PARTS -> POSTPONED (carcare.mn migration
+    // Backend renamed WAITING_PARTS -> POSTPONED (carservice.mn migration
     // 20260910160000): postponed now covers any pause reason, not just
     // parts. Old label kept as fallback only if a stale value ever appears.
     case 'POSTPONED':
@@ -161,7 +161,7 @@ class AppointmentServiceProgress {
   final OrderPaymentStatus paymentStatus;
   // Ажил хараахан эхлээгүй (SCHEDULED) үед л утгатай — эхэлмэгц startedAt
   // тэргүүлнэ, ажилтан шилжүүлбэл энэ утга шинэчлэгдэнэ (order_rescheduled
-  // мэдэгдэл, харах: carcare.mn lib/notifications.ts).
+  // мэдэгдэл, харах: carservice.mn lib/notifications.ts).
   final DateTime? scheduledAt;
   final DateTime? startedAt;
   final DateTime? completedAt;

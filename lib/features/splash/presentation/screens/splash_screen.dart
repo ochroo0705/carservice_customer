@@ -1,5 +1,5 @@
-import 'package:carcare_customer_mobile/app/theme/app_theme.dart';
-import 'package:carcare_customer_mobile/features/splash/presentation/widgets/animated_logo.dart';
+import 'package:carservice_customer/app/theme/app_theme.dart';
+import 'package:carservice_customer/features/splash/presentation/widgets/animated_logo.dart';
 import 'package:flutter/material.dart';
 
 /// First-launch splash: the animated Carservice mark (pop-in → spinning gear +

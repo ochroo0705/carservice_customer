@@ -1,9 +1,9 @@
-import 'package:carcare_customer_mobile/app/app.dart';
-import 'package:carcare_customer_mobile/app/bootstrap_flags.dart';
-import 'package:carcare_customer_mobile/features/auth/data/fake_auth_repository.dart';
-import 'package:carcare_customer_mobile/features/discovery/data/fake_organization_repository.dart';
-import 'package:carcare_customer_mobile/features/legal/presentation/screens/privacy_policy_screen.dart';
-import 'package:carcare_customer_mobile/features/legal/presentation/screens/terms_of_service_screen.dart';
+import 'package:carservice_customer/app/app.dart';
+import 'package:carservice_customer/app/bootstrap_flags.dart';
+import 'package:carservice_customer/features/booking/auth/data/fake_auth_repository.dart';
+import 'package:carservice_customer/features/discovery/data/fake_organization_repository.dart';
+import 'package:carservice_customer/features/legal/presentation/screens/privacy_policy_screen.dart';
+import 'package:carservice_customer/features/legal/presentation/screens/terms_of_service_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -14,10 +14,8 @@ void main() {
 
   Future<void> openProfile(WidgetTester tester) async {
     await tester.pumpWidget(
-      CarCareCustomerApp(
-        organizationRepository: FakeOrganizationRepository(
-          delay: Duration.zero,
-        ),
+      CarserviceApp(
+        organizationRepository: FakeOrganizationRepository(delay: Duration.zero),
         authRepository: FakeAuthRepository(signedIn: true),
       ),
     );
@@ -30,18 +28,12 @@ void main() {
 
   Future<void> tapTile(WidgetTester tester, String key) async {
     final tile = find.byKey(ValueKey(key));
-    await tester.scrollUntilVisible(
-      tile,
-      200,
-      scrollable: find.byType(Scrollable).last,
-    );
+    await tester.scrollUntilVisible(tile, 200, scrollable: find.byType(Scrollable).last);
     await tester.tap(tile);
     await tester.pumpAndSettle();
   }
 
-  testWidgets('the terms tile opens the bundled terms and back returns', (
-    tester,
-  ) async {
+  testWidgets('the terms tile opens the bundled terms and back returns', (tester) async {
     await openProfile(tester);
     await tapTile(tester, 'profile-terms-tile');
     expect(find.byType(TermsOfServiceScreen), findsOneWidget);
@@ -59,15 +51,9 @@ void main() {
     expect(find.byKey(const ValueKey('legal-open-on-web')), findsOneWidget);
   });
 
-  testWidgets('guests can read both legal pages from the profile tab', (
-    tester,
-  ) async {
+  testWidgets('guests can read both legal pages from the profile tab', (tester) async {
     await tester.pumpWidget(
-      CarCareCustomerApp(
-        organizationRepository: FakeOrganizationRepository(
-          delay: Duration.zero,
-        ),
-      ),
+      CarserviceApp(organizationRepository: FakeOrganizationRepository(delay: Duration.zero)),
     );
     await tester.pumpAndSettle();
     await tester.tap(find.text('Профайл'));

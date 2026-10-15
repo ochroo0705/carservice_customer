@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:carcare_customer_mobile/core/errors/app_failure.dart';
+import 'package:carservice_customer/core/errors/app_failure.dart';
 import 'package:dio/dio.dart';
 
 /// Customer API-ийн нийтлэг HTTP давхарга.
@@ -48,8 +48,18 @@ class ApiClient {
     Map<String, dynamic> body,
   ) => _send('PATCH', path, body: body);
 
-  /// JSON object буцаадаг DELETE endpoint дуудна.
-  Future<Map<String, dynamic>> deleteJson(String path) => _send('DELETE', path);
+  /// JSON object body-той PUT endpoint дуудна.
+  Future<Map<String, dynamic>> putJson(
+    String path,
+    Map<String, dynamic> body,
+  ) => _send('PUT', path, body: body);
+
+  /// JSON object буцаадаг DELETE endpoint дуудна. Зарим endpoint (жишээ нь
+  /// нууц үг устгах) баталгаажуулах кодыг body-д хүлээн авна.
+  Future<Map<String, dynamic>> deleteJson(
+    String path, [
+    Map<String, dynamic>? body,
+  ]) => _send('DELETE', path, body: body);
 
   Future<Map<String, dynamic>> _send(
     String method,

@@ -1,4 +1,4 @@
-import 'package:carcare_customer_mobile/features/diagnostics/data/diagnostic_report_dto.dart';
+import 'package:carservice_customer/features/diagnostics/data/diagnostic_report_dto.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

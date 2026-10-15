@@ -1,5 +1,5 @@
-import 'package:carcare_customer_mobile/app/theme/app_theme.dart';
-import 'package:carcare_customer_mobile/features/booking/domain/availability.dart';
+import 'package:carservice_customer/app/theme/app_theme.dart';
+import 'package:carservice_customer/features/booking/domain/availability.dart';
 import 'package:flutter/material.dart';
 
 /// A slot chip grid driven by the branch availability endpoint (booking v2):

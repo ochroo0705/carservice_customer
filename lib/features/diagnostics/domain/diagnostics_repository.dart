@@ -1,6 +1,6 @@
-import 'package:carcare_customer_mobile/features/diagnostics/domain/diagnostic_report_detail.dart';
-import 'package:carcare_customer_mobile/features/diagnostics/domain/diagnostic_report_list_item.dart';
-import 'package:carcare_customer_mobile/features/diagnostics/domain/report_severity.dart';
+import 'package:carservice_customer/features/diagnostics/domain/diagnostic_report_detail.dart';
+import 'package:carservice_customer/features/diagnostics/domain/diagnostic_report_list_item.dart';
+import 'package:carservice_customer/features/diagnostics/domain/report_severity.dart';
 
 abstract interface class DiagnosticsRepository {
   Future<DiagnosticPage> getDiagnostics({

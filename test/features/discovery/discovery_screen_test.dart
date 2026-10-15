@@ -1,7 +1,7 @@
-import 'package:carcare_customer_mobile/app/bootstrap_flags.dart';
-import 'package:carcare_customer_mobile/app/app.dart';
-import 'package:carcare_customer_mobile/data/cache/in_memory_cache_store.dart';
-import 'package:carcare_customer_mobile/features/discovery/data/fake_organization_repository.dart';
+import 'package:carservice_customer/app/bootstrap_flags.dart';
+import 'package:carservice_customer/app/app.dart';
+import 'package:carservice_customer/data/cache/in_memory_cache_store.dart';
+import 'package:carservice_customer/features/discovery/data/fake_organization_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -25,7 +25,7 @@ Future<void> _scrollUntilVisible(
 );
 
 const _mapChannel = MethodChannel(
-  'mn.carcare.carcare_customer_mobile/map_configuration',
+  'mn.infosystems.carservice/map_configuration',
 );
 
 /// Flips Discover from its default map view over to the list, via the map's
@@ -70,7 +70,7 @@ void main() {
     );
 
     await tester.pumpWidget(
-      CarCareCustomerApp(
+      CarserviceApp(
         organizationRepository: FakeOrganizationRepository(
           delay: Duration.zero,
         ),
@@ -107,7 +107,7 @@ void main() {
     'shown only on the Хайх tab',
     (tester) async {
       await tester.pumpWidget(
-        CarCareCustomerApp(
+        CarserviceApp(
           organizationRepository: FakeOrganizationRepository(
             delay: Duration.zero,
           ),
@@ -160,7 +160,7 @@ void main() {
 
   testWidgets('opens a branch detail page from a tap', (tester) async {
     await tester.pumpWidget(
-      CarCareCustomerApp(
+      CarserviceApp(
         organizationRepository: FakeOrganizationRepository(
           delay: Duration.zero,
         ),
@@ -186,7 +186,7 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(
-      CarCareCustomerApp(
+      CarserviceApp(
         organizationRepository: FakeOrganizationRepository(
           delay: Duration.zero,
         ),
@@ -221,7 +221,7 @@ void main() {
 
   testWidgets('shows an explicit empty state', (tester) async {
     await tester.pumpWidget(
-      CarCareCustomerApp(
+      CarserviceApp(
         organizationRepository: FakeOrganizationRepository(
           scenario: FakeOrganizationScenario.empty,
           delay: Duration.zero,
@@ -235,7 +235,7 @@ void main() {
 
   testWidgets('filters the organization list from search', (tester) async {
     await tester.pumpWidget(
-      CarCareCustomerApp(
+      CarserviceApp(
         organizationRepository: FakeOrganizationRepository(
           delay: Duration.zero,
         ),
@@ -255,7 +255,7 @@ void main() {
 
   testWidgets('shows an error with retry action', (tester) async {
     await tester.pumpWidget(
-      CarCareCustomerApp(
+      CarserviceApp(
         organizationRepository: FakeOrganizationRepository(
           scenario: FakeOrganizationScenario.error,
           delay: Duration.zero,
@@ -277,7 +277,7 @@ void main() {
 
       // First launch: a normal, successful load persists the list to cache.
       await tester.pumpWidget(
-        CarCareCustomerApp(
+        CarserviceApp(
           organizationRepository: FakeOrganizationRepository(
             delay: Duration.zero,
           ),
@@ -299,7 +299,7 @@ void main() {
       // re-runs DiscoveryController.load() with the new repository).
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pumpWidget(
-        CarCareCustomerApp(
+        CarserviceApp(
           organizationRepository: FakeOrganizationRepository(
             scenario: FakeOrganizationScenario.error,
             delay: Duration.zero,

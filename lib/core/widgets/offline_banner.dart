@@ -1,4 +1,4 @@
-import 'package:carcare_customer_mobile/app/theme/app_theme.dart';
+import 'package:carservice_customer/app/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 
 /// Shown above a screen's data when it is displaying a locally cached list

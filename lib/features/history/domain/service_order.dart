@@ -1,4 +1,4 @@
-import 'package:carcare_customer_mobile/features/history/domain/service_order_status.dart';
+import 'package:carservice_customer/features/history/domain/service_order_status.dart';
 
 /// Sparse, list-shaped view of a completed service order. Mirrors the web
 /// backend's known list/detail split: `GET /account/history` returns fewer

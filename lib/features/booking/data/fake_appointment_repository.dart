@@ -1,11 +1,11 @@
-import 'package:carcare_customer_mobile/core/errors/app_failure.dart';
-import 'package:carcare_customer_mobile/features/booking/domain/appointment.dart';
-import 'package:carcare_customer_mobile/features/booking/domain/appointment_payment.dart';
-import 'package:carcare_customer_mobile/features/booking/domain/appointment_repository.dart';
-import 'package:carcare_customer_mobile/features/booking/domain/appointment_status.dart';
-import 'package:carcare_customer_mobile/features/booking/domain/availability.dart';
-import 'package:carcare_customer_mobile/features/booking/domain/service_progress.dart';
-import 'package:carcare_customer_mobile/features/booking/domain/walk_in_order.dart';
+import 'package:carservice_customer/core/errors/app_failure.dart';
+import 'package:carservice_customer/features/booking/domain/appointment.dart';
+import 'package:carservice_customer/features/booking/domain/appointment_payment.dart';
+import 'package:carservice_customer/features/booking/domain/appointment_repository.dart';
+import 'package:carservice_customer/features/booking/domain/appointment_status.dart';
+import 'package:carservice_customer/features/booking/domain/availability.dart';
+import 'package:carservice_customer/features/booking/domain/service_progress.dart';
+import 'package:carservice_customer/features/booking/domain/walk_in_order.dart';
 
 /// A small checkerboard placeholder, clearly not a real QPay QR — this is
 /// fake-repository data, never scannable. Mirrors the shape of a real QPay

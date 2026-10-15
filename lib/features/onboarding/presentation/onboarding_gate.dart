@@ -1,8 +1,8 @@
-import 'package:carcare_customer_mobile/app/bootstrap_flags.dart';
-import 'package:carcare_customer_mobile/core/analytics/analytics_service.dart';
-import 'package:carcare_customer_mobile/core/permissions/notification_permission_service.dart';
-import 'package:carcare_customer_mobile/features/onboarding/data/onboarding_store.dart';
-import 'package:carcare_customer_mobile/features/onboarding/presentation/screens/onboarding_screen.dart';
+import 'package:carservice_customer/app/bootstrap_flags.dart';
+import 'package:carservice_customer/core/analytics/analytics_service.dart';
+import 'package:carservice_customer/core/permissions/notification_permission_service.dart';
+import 'package:carservice_customer/features/onboarding/data/onboarding_store.dart';
+import 'package:carservice_customer/features/onboarding/presentation/screens/onboarding_screen.dart';
 import 'package:flutter/material.dart';
 
 /// Shows [OnboardingScreen] once on first run, then the app. Sits inside the

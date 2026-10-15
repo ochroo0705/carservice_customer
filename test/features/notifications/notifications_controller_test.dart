@@ -1,13 +1,15 @@
 import 'dart:async';
 
-import 'package:carcare_customer_mobile/core/errors/app_failure.dart';
-import 'package:carcare_customer_mobile/features/notifications/data/fake_notifications_repository.dart';
-import 'package:carcare_customer_mobile/features/notifications/domain/app_notification.dart';
-import 'package:carcare_customer_mobile/features/notifications/domain/notification_type.dart';
-import 'package:carcare_customer_mobile/features/notifications/domain/notifications_page.dart';
-import 'package:carcare_customer_mobile/features/notifications/domain/notifications_repository.dart';
-import 'package:carcare_customer_mobile/features/notifications/presentation/controllers/notifications_controller.dart';
-import 'package:carcare_customer_mobile/features/notifications/presentation/controllers/notifications_state.dart';
+import 'package:carservice_customer/core/errors/app_failure.dart';
+import 'package:carservice_customer/core/notifications/local_push_service.dart';
+import 'package:carservice_customer/features/notifications/data/fake_notifications_repository.dart';
+import 'package:carservice_customer/features/notifications/domain/app_notification.dart';
+import 'package:carservice_customer/features/notifications/domain/notification_type.dart';
+import 'package:carservice_customer/features/notifications/domain/notifications_page.dart';
+import 'package:carservice_customer/features/notifications/domain/notifications_repository.dart';
+import 'package:carservice_customer/features/notifications/presentation/controllers/notifications_controller.dart';
+import 'package:carservice_customer/features/notifications/presentation/controllers/notifications_state.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Lets a test control exactly when each `getNotifications` call resolves,
@@ -23,6 +25,15 @@ class _RaceNotificationsRepository extends Fake
     completers.add(completer);
     return completer.future;
   }
+}
+
+/// Records banners instead of touching the native plugin.
+class _RecordingLocalPushService extends Fake implements LocalPushService {
+  final List<AppNotification> shown = [];
+
+  @override
+  Future<void> show(AppNotification notification) async =>
+      shown.add(notification);
 }
 
 class _ScriptedNotificationsRepository extends Fake
@@ -216,4 +227,43 @@ void main() {
     await controller.markRead('a');
     await controller.markAllRead();
   });
+  test('handleIncomingPush shows a local banner on Android', () async {
+    final banners = _RecordingLocalPushService();
+    final controller = NotificationsController(
+      FakeNotificationsRepository(),
+      banners,
+    );
+
+    await controller.handleIncomingPush(
+      title: 'Цаг баталгаажлаа',
+      body: 'Таны захиалсан цаг баталгаажлаа.',
+      data: const {'type': 'appointment_confirmed'},
+    );
+
+    expect(banners.shown.single.title, 'Цаг баталгаажлаа');
+  });
+
+  test(
+    'handleIncomingPush leaves the banner to iOS but still lists the push',
+    () async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      addTearDown(() => debugDefaultTargetPlatformOverride = null);
+      final banners = _RecordingLocalPushService();
+      final controller = NotificationsController(
+        FakeNotificationsRepository(),
+        banners,
+      );
+      await controller.load();
+      final before = controller.unreadCount;
+
+      await controller.handleIncomingPush(
+        title: 'Цаг баталгаажлаа',
+        body: 'Таны захиалсан цаг баталгаажлаа.',
+        data: const {'type': 'appointment_confirmed'},
+      );
+
+      expect(banners.shown, isEmpty);
+      expect(controller.unreadCount, before + 1);
+    },
+  );
 }

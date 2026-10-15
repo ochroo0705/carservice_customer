@@ -1,7 +1,7 @@
-import 'package:carcare_customer_mobile/core/errors/app_failure.dart';
-import 'package:carcare_customer_mobile/features/vehicles/domain/vehicle.dart';
-import 'package:carcare_customer_mobile/features/vehicles/domain/vehicle_lookup_result.dart';
-import 'package:carcare_customer_mobile/features/vehicles/domain/vehicle_repository.dart';
+import 'package:carservice_customer/core/errors/app_failure.dart';
+import 'package:carservice_customer/features/vehicles/domain/vehicle.dart';
+import 'package:carservice_customer/features/vehicles/domain/vehicle_lookup_result.dart';
+import 'package:carservice_customer/features/vehicles/domain/vehicle_repository.dart';
 
 class FakeVehicleRepository implements VehicleRepository {
   final List<Vehicle> _vehicles = [

@@ -1,7 +1,7 @@
-import 'package:carcare_customer_mobile/core/errors/app_failure.dart';
-import 'package:carcare_customer_mobile/features/history/domain/cancelled_appointment_summary.dart';
-import 'package:carcare_customer_mobile/features/history/domain/service_order_detail.dart';
-import 'package:carcare_customer_mobile/features/history/domain/service_history_repository.dart';
+import 'package:carservice_customer/core/errors/app_failure.dart';
+import 'package:carservice_customer/features/history/domain/cancelled_appointment_summary.dart';
+import 'package:carservice_customer/features/history/domain/service_order_detail.dart';
+import 'package:carservice_customer/features/history/domain/service_history_repository.dart';
 
 /// Service-history repository for **real API builds**, where no history
 /// endpoint exists yet (D-014). Every read throws [FeatureUnavailableFailure]

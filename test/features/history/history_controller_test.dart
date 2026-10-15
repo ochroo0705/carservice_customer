@@ -1,14 +1,14 @@
 import 'dart:async';
 
-import 'package:carcare_customer_mobile/core/errors/app_failure.dart';
-import 'package:carcare_customer_mobile/data/cache/in_memory_cache_store.dart';
-import 'package:carcare_customer_mobile/features/history/domain/service_order.dart';
-import 'package:carcare_customer_mobile/features/history/domain/service_order_status.dart';
-import 'package:carcare_customer_mobile/features/history/data/fake_service_history_repository.dart';
-import 'package:carcare_customer_mobile/features/history/domain/cancelled_appointment_summary.dart';
-import 'package:carcare_customer_mobile/features/history/domain/service_history_repository.dart';
-import 'package:carcare_customer_mobile/features/history/presentation/controllers/history_controller.dart';
-import 'package:carcare_customer_mobile/features/history/presentation/controllers/history_state.dart';
+import 'package:carservice_customer/core/errors/app_failure.dart';
+import 'package:carservice_customer/data/cache/in_memory_cache_store.dart';
+import 'package:carservice_customer/features/history/domain/service_order.dart';
+import 'package:carservice_customer/features/history/domain/service_order_status.dart';
+import 'package:carservice_customer/features/history/data/fake_service_history_repository.dart';
+import 'package:carservice_customer/features/history/domain/cancelled_appointment_summary.dart';
+import 'package:carservice_customer/features/history/domain/service_history_repository.dart';
+import 'package:carservice_customer/features/history/presentation/controllers/history_controller.dart';
+import 'package:carservice_customer/features/history/presentation/controllers/history_state.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

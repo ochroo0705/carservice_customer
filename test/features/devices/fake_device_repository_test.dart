@@ -1,4 +1,4 @@
-import 'package:carcare_customer_mobile/features/devices/data/fake_device_repository.dart';
+import 'package:carservice_customer/features/devices/data/fake_device_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

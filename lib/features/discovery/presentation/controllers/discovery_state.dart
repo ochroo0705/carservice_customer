@@ -1,5 +1,5 @@
-import 'package:carcare_customer_mobile/features/discovery/domain/organization.dart';
-import 'package:carcare_customer_mobile/features/discovery/domain/organization_repository.dart';
+import 'package:carservice_customer/features/discovery/domain/organization.dart';
+import 'package:carservice_customer/features/discovery/domain/organization_repository.dart';
 
 enum DiscoveryStatus { initial, loading, data, empty, error }
 

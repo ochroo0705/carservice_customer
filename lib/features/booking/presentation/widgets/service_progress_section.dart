@@ -1,13 +1,13 @@
-import 'package:carcare_customer_mobile/app/theme/app_surfaces.dart';
-import 'package:carcare_customer_mobile/app/theme/app_theme.dart';
-import 'package:carcare_customer_mobile/features/booking/domain/service_progress.dart';
-import 'package:carcare_customer_mobile/features/history/domain/service_order_item.dart'
+import 'package:carservice_customer/app/theme/app_surfaces.dart';
+import 'package:carservice_customer/app/theme/app_theme.dart';
+import 'package:carservice_customer/features/booking/domain/service_progress.dart';
+import 'package:carservice_customer/features/history/domain/service_order_item.dart'
     show ServiceOrderItemKind, ServiceOrderItemKindUi;
-import 'package:carcare_customer_mobile/features/history/presentation/format_amount.dart';
-import 'package:carcare_customer_mobile/features/history/presentation/widgets/diagnostic_report_row.dart';
+import 'package:carservice_customer/features/history/presentation/format_amount.dart';
+import 'package:carservice_customer/features/history/presentation/widgets/diagnostic_report_row.dart';
 import 'package:flutter/material.dart';
-import 'package:carcare_customer_mobile/core/widgets/status_chip.dart';
-import 'package:carcare_customer_mobile/features/booking/presentation/widgets/appointment_status_style.dart';
+import 'package:carservice_customer/core/widgets/status_chip.dart';
+import 'package:carservice_customer/features/booking/presentation/widgets/appointment_status_style.dart';
 
 /// Customer-facing read-only view of the repair progress created from an
 /// appointment. Payment status stays in its own section on the detail page.

@@ -4,7 +4,7 @@
 
 A notification sent through the production backend did not appear on an iOS simulator, reportedly iOS 17 on a Mac mini. Mac chip, macOS/Xcode versions, current simulator token, provider response and app foreground/background state are unknown. The developer has no production deployment logs. This does not establish whether the fault is in the app, APNs/Firebase or backend targeting.
 
-The checked-in GoogleService-Info.plist uses project `carcare-bf796` and bundle ID `mn.infosystems.carcare.customer`, matching the Xcode target. It is included in build resources. Remote-notification background mode is present and Firebase swizzling is not disabled. Push entitlements are absent from this checkout; the developer enables the capability on the Mac before archiving. Confirm it is also enabled for the build used to run the simulator, before testing.
+The checked-in GoogleService-Info.plist uses project `carcare-bf796` and bundle ID `mn.infosystems.carservice`, matching the Xcode target. It is included in build resources. Remote-notification background mode is present and Firebase swizzling is not disabled. Push entitlements are absent from this checkout; the developer enables the capability on the Mac before archiving. Confirm it is also enabled for the build used to run the simulator, before testing.
 
 Uploading an APNs key to the same Firebase iOS app normally does not require replacing GoogleService-Info.plist. Verify the Firebase app/project/bundle identity rather than downloading configuration as a first troubleshooting step.
 

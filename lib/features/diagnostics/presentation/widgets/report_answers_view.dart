@@ -1,12 +1,12 @@
-import 'package:carcare_customer_mobile/app/theme/app_theme.dart';
-import 'package:carcare_customer_mobile/app/theme/app_surfaces.dart';
-import 'package:carcare_customer_mobile/features/diagnostics/domain/report_severity.dart';
-import 'package:carcare_customer_mobile/features/diagnostics/domain/template_schema.dart';
-import 'package:carcare_customer_mobile/features/diagnostics/presentation/widgets/severity_chip.dart';
+import 'package:carservice_customer/app/theme/app_theme.dart';
+import 'package:carservice_customer/app/theme/app_surfaces.dart';
+import 'package:carservice_customer/features/diagnostics/domain/report_severity.dart';
+import 'package:carservice_customer/features/diagnostics/domain/template_schema.dart';
+import 'package:carservice_customer/features/diagnostics/presentation/widgets/severity_chip.dart';
 import 'package:flutter/material.dart';
 
 /// Тайлангийн хариултуудыг хэсэг хэсгээр нь харуулна — worker web-ийн
-/// `ReportAnswers`-тэй ижил бүтэц (харах: `carcare.mn`
+/// `ReportAnswers`-тэй ижил бүтэц (харах: `carservice.mn`
 /// `app/dashboard/diagnostics/reports/[id]/report-answers.tsx`).
 ///
 /// `toneFilter` идэвхтэй үед зөвхөн "check" төрлийн зүйл/байрлал шүүгдэнэ —

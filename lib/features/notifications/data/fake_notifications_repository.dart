@@ -1,8 +1,8 @@
-import 'package:carcare_customer_mobile/core/errors/app_failure.dart';
-import 'package:carcare_customer_mobile/features/notifications/domain/app_notification.dart';
-import 'package:carcare_customer_mobile/features/notifications/domain/notification_type.dart';
-import 'package:carcare_customer_mobile/features/notifications/domain/notifications_page.dart';
-import 'package:carcare_customer_mobile/features/notifications/domain/notifications_repository.dart';
+import 'package:carservice_customer/core/errors/app_failure.dart';
+import 'package:carservice_customer/features/notifications/domain/app_notification.dart';
+import 'package:carservice_customer/features/notifications/domain/notification_type.dart';
+import 'package:carservice_customer/features/notifications/domain/notifications_page.dart';
+import 'package:carservice_customer/features/notifications/domain/notifications_repository.dart';
 
 /// Customer notification-list API нийтлэгдээгүй тул одоогоор fake-only.
 /// Энэ repository-ийн seed нь UI/FCM flow хөгжүүлэхэд зориулагдсан бөгөөд

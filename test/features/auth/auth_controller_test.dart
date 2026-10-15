@@ -1,5 +1,5 @@
-import 'package:carcare_customer_mobile/features/auth/data/fake_auth_repository.dart';
-import 'package:carcare_customer_mobile/features/auth/presentation/auth_controller.dart';
+import 'package:carservice_customer/features/booking/auth/data/fake_auth_repository.dart';
+import 'package:carservice_customer/features/booking/auth/presentation/auth_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

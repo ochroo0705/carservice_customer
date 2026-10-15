@@ -1,8 +1,8 @@
 import 'dart:async';
 
-import 'package:carcare_customer_mobile/features/diagnostics/domain/diagnostic_report_list_item.dart';
-import 'package:carcare_customer_mobile/features/diagnostics/domain/diagnostics_repository.dart';
-import 'package:carcare_customer_mobile/features/diagnostics/presentation/controllers/diagnostics_controller.dart';
+import 'package:carservice_customer/features/diagnostics/domain/diagnostic_report_list_item.dart';
+import 'package:carservice_customer/features/diagnostics/domain/diagnostics_repository.dart';
+import 'package:carservice_customer/features/diagnostics/presentation/controllers/diagnostics_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 DiagnosticReportListItem _report(String id) => DiagnosticReportListItem(

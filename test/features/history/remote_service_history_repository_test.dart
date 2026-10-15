@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:carcare_customer_mobile/core/network/api_client.dart';
-import 'package:carcare_customer_mobile/features/history/data/remote_service_history_repository.dart';
-import 'package:carcare_customer_mobile/features/history/domain/service_order_status.dart';
+import 'package:carservice_customer/core/network/api_client.dart';
+import 'package:carservice_customer/features/history/data/remote_service_history_repository.dart';
+import 'package:carservice_customer/features/history/domain/service_order_status.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 

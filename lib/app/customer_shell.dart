@@ -1,9 +1,9 @@
-import 'package:carcare_customer_mobile/app/theme/app_surfaces.dart';
-import 'package:carcare_customer_mobile/app/theme/theme_controller.dart';
-import 'package:carcare_customer_mobile/features/auth/domain/account.dart';
-import 'package:carcare_customer_mobile/features/auth/presentation/auth_controller.dart';
-import 'package:carcare_customer_mobile/features/discovery/presentation/controllers/discovery_controller.dart';
-import 'package:carcare_customer_mobile/features/notifications/presentation/controllers/notifications_controller.dart';
+import 'package:carservice_customer/app/theme/app_surfaces.dart';
+import 'package:carservice_customer/app/theme/theme_controller.dart';
+import 'package:carservice_customer/features/booking/auth/domain/account.dart';
+import 'package:carservice_customer/features/booking/auth/presentation/auth_controller.dart';
+import 'package:carservice_customer/features/discovery/presentation/controllers/discovery_controller.dart';
+import 'package:carservice_customer/features/notifications/presentation/controllers/notifications_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -24,8 +24,7 @@ class CustomerShell extends StatefulWidget {
   State<CustomerShell> createState() => CustomerShellState();
 }
 
-class CustomerShellState extends State<CustomerShell>
-    with SingleTickerProviderStateMixin {
+class CustomerShellState extends State<CustomerShell> with SingleTickerProviderStateMixin {
   static const _discoveryIndex = 0;
   static const _profileIndex = 4;
 
@@ -62,32 +61,28 @@ class CustomerShellState extends State<CustomerShell>
     // every unrelated change to the auth/notifications controllers (e.g. a
     // notification's read-state flipping when the unread count is unchanged).
     final account = context.select<AuthController, Account?>((c) => c.account);
-    final unreadNotificationCount = context
-        .select<NotificationsController, int>((c) => c.unreadCount);
-    final discoveryMapView = context
-        .select<DiscoveryController, bool>((c) => c.mapView);
+    final unreadNotificationCount = context.select<NotificationsController, int>(
+      (c) => c.unreadCount,
+    );
+    final discoveryMapView = context.select<DiscoveryController, bool>((c) => c.mapView);
     return LayoutBuilder(
       builder: (context, constraints) {
         final useRail = constraints.maxWidth >= 720;
         final content = ScaleTransition(
           scale: _tabScale,
-          child: IndexedStack(
-            index: _selectedIndex,
-            children: widget.destinations,
-          ),
+          child: IndexedStack(index: _selectedIndex, children: widget.destinations),
         );
         // Map mode wants the whole screen (search/filters/notifications/
         // list-toggle/zoom/locate-me all float on top of the map itself —
         // see DiscoveryScreen), so the shell's own AppBar (and its FAB,
         // below) step aside for it entirely rather than eating space above
         // the map.
-        final isDiscoveryMap =
-            _selectedIndex == _discoveryIndex && discoveryMapView;
+        final isDiscoveryMap = _selectedIndex == _discoveryIndex && discoveryMapView;
         return Scaffold(
           appBar: isDiscoveryMap
               ? null
               : AppBar(
-                  title: const CarCareBrand(compact: true),
+                  title: const CarserviceBrand(compact: true),
                   actions: [
                     _ThemeModeMenu(controller: themeController),
                     if (account != null)
@@ -162,14 +157,9 @@ class CustomerShellState extends State<CustomerShell>
                   // the old/new widget tree ("multiple heroes share the same
                   // tag"). Disable the hero entirely to sidestep that.
                   heroTag: null,
-                  onPressed: () => context
-                      .read<DiscoveryController>()
-                      .setMapView(!discoveryMapView),
-                  icon: Icon(
-                    discoveryMapView
-                        ? Icons.view_list_outlined
-                        : Icons.map_outlined,
-                  ),
+                  onPressed: () =>
+                      context.read<DiscoveryController>().setMapView(!discoveryMapView),
+                  icon: Icon(discoveryMapView ? Icons.view_list_outlined : Icons.map_outlined),
                   label: Text(discoveryMapView ? 'Жагсаалт' : 'Газрын зураг'),
                 )
               : null,
@@ -240,10 +230,7 @@ class _ThemeModeMenu extends StatelessWidget {
       onSelected: controller.setMode,
       icon: Icon(isDark ? Icons.dark_mode_outlined : Icons.light_mode_outlined),
       itemBuilder: (context) => const [
-        PopupMenuItem(
-          value: ThemeMode.system,
-          child: Text('Системийн тохиргоо'),
-        ),
+        PopupMenuItem(value: ThemeMode.system, child: Text('Системийн тохиргоо')),
         PopupMenuItem(value: ThemeMode.light, child: Text('Гэрэлтэй')),
         PopupMenuItem(value: ThemeMode.dark, child: Text('Бараан')),
       ],
@@ -270,8 +257,7 @@ class _NotificationBell extends StatelessWidget {
       isLabelVisible: unreadCount > 0,
       label: AnimatedSwitcher(
         duration: const Duration(milliseconds: 220),
-        transitionBuilder: (child, animation) =>
-            ScaleTransition(scale: animation, child: child),
+        transitionBuilder: (child, animation) => ScaleTransition(scale: animation, child: child),
         // Key by value so incrementing the count pops the new number in.
         child: Text(label, key: ValueKey(label)),
       ),
@@ -301,11 +287,7 @@ class _AvatarButton extends StatelessWidget {
           backgroundColor: scheme.primary,
           child: Text(
             label.substring(0, 1).toUpperCase(),
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w700,
-              fontSize: 13,
-            ),
+            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13),
           ),
         ),
       ),

@@ -1,13 +1,14 @@
-import 'package:carcare_customer_mobile/app/theme/app_surfaces.dart';
-import 'package:carcare_customer_mobile/core/errors/app_failure.dart';
-import 'package:carcare_customer_mobile/core/widgets/skeletons.dart';
-import 'package:carcare_customer_mobile/features/diagnostics/domain/diagnostic_report_detail.dart';
-import 'package:carcare_customer_mobile/features/diagnostics/domain/diagnostics_repository.dart';
-import 'package:carcare_customer_mobile/features/diagnostics/domain/report_severity.dart';
-import 'package:carcare_customer_mobile/features/diagnostics/domain/template_schema.dart';
-import 'package:carcare_customer_mobile/features/diagnostics/presentation/diagnostic_pdf_export.dart';
-import 'package:carcare_customer_mobile/features/diagnostics/presentation/widgets/report_answers_view.dart';
-import 'package:carcare_customer_mobile/features/diagnostics/presentation/widgets/severity_chip.dart';
+import 'package:carservice_customer/app/app_messages.dart';
+import 'package:carservice_customer/app/theme/app_surfaces.dart';
+import 'package:carservice_customer/core/errors/app_failure.dart';
+import 'package:carservice_customer/core/widgets/skeletons.dart';
+import 'package:carservice_customer/features/diagnostics/domain/diagnostic_report_detail.dart';
+import 'package:carservice_customer/features/diagnostics/domain/diagnostics_repository.dart';
+import 'package:carservice_customer/features/diagnostics/domain/report_severity.dart';
+import 'package:carservice_customer/features/diagnostics/domain/template_schema.dart';
+import 'package:carservice_customer/features/diagnostics/presentation/diagnostic_pdf_export.dart';
+import 'package:carservice_customer/features/diagnostics/presentation/widgets/report_answers_view.dart';
+import 'package:carservice_customer/features/diagnostics/presentation/widgets/severity_chip.dart';
 import 'package:flutter/material.dart';
 
 /// Схем даяар check зүйлсийн хариултыг тона (Хэвийн/Анхаарах/Солих)-оор
@@ -105,11 +106,7 @@ class _DiagnosticDetailScreenState extends State<DiagnosticDetailScreen> {
       await shareDiagnosticPdf(detail);
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('PDF бэлтгэхэд алдаа гарлаа. Дахин оролдоно уу.'),
-        ),
-      );
+      AppMessages.show('PDF бэлтгэхэд алдаа гарлаа. Дахин оролдоно уу.');
     } finally {
       if (mounted) setState(() => _isExporting = false);
     }

@@ -1,6 +1,7 @@
-import 'package:carcare_customer_mobile/app/customer_routes.dart';
-import 'package:carcare_customer_mobile/app/theme/app_theme.dart';
-import 'package:carcare_customer_mobile/features/legal/presentation/widgets/legal_widgets.dart';
+import 'package:carservice_customer/app/app_messages.dart';
+import 'package:carservice_customer/app/customer_routes.dart';
+import 'package:carservice_customer/app/theme/app_theme.dart';
+import 'package:carservice_customer/features/legal/presentation/widgets/legal_widgets.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -55,16 +56,10 @@ class _TermsConsentScreenState extends State<TermsConsentScreen> {
 
   /// Signs out and says so: the router drops the user on the guest home
   /// page, which would otherwise look like the decline did nothing. The
-  /// app-level messenger outlives this route, so the snack bar stays.
+  /// global message outlives this route, so it stays.
   Future<void> _decline() async {
-    final messenger = ScaffoldMessenger.of(context);
     await _run(widget.onDecline);
-    messenger.showSnackBar(
-      const SnackBar(
-        key: ValueKey('terms-consent-declined-snack'),
-        content: Text('Нөхцөлийг зөвшөөрөөгүй тул системээс гарлаа.'),
-      ),
-    );
+    AppMessages.show('Нөхцөлийг зөвшөөрөөгүй тул системээс гарлаа.');
   }
 
   @override
@@ -103,7 +98,7 @@ class _TermsConsentScreenState extends State<TermsConsentScreen> {
                     'Carservice-ийг ашиглахын тулд Үйлчилгээний нөхцөл болон '
                     'Нууцлалын бодлоготой танилцана уу.',
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: CarCareTheme.of(context).mutedText,
+                      color: CarserviceTheme.of(context).mutedText,
                     ),
                   ),
                   const SizedBox(height: 16),

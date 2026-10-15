@@ -1,5 +1,5 @@
-import 'package:carcare_customer_mobile/core/errors/app_failure.dart';
-import 'package:carcare_customer_mobile/features/discovery/data/fake_organization_repository.dart';
+import 'package:carservice_customer/core/errors/app_failure.dart';
+import 'package:carservice_customer/features/discovery/data/fake_organization_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

@@ -1,5 +1,5 @@
-import 'package:carcare_customer_mobile/features/diagnostics/domain/report_severity.dart';
-import 'package:carcare_customer_mobile/features/diagnostics/domain/template_schema.dart';
+import 'package:carservice_customer/features/diagnostics/domain/report_severity.dart';
+import 'package:carservice_customer/features/diagnostics/domain/template_schema.dart';
 
 /// Нэг оношилгооны тайлангийн БҮРЭН бөглөлт — жагсаалтаас (эсвэл захиалгын
 /// дэлгэрэнгүй дэх товч мөрөөс) дарж орсны дараа татаж авна.

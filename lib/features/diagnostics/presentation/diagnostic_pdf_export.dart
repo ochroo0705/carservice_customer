@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 
-import 'package:carcare_customer_mobile/features/diagnostics/domain/diagnostic_report_detail.dart';
-import 'package:carcare_customer_mobile/features/diagnostics/domain/template_schema.dart';
+import 'package:carservice_customer/features/diagnostics/domain/diagnostic_report_detail.dart';
+import 'package:carservice_customer/features/diagnostics/domain/template_schema.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -27,7 +27,7 @@ Future<Uint8List> buildDiagnosticPdf(DiagnosticReportDetail detail) async {
           mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
           children: [
             pw.Text(
-              'CarCare',
+              'Carservice',
               style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
             ),
             pw.Text(

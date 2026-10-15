@@ -1,5 +1,5 @@
-import 'package:carcare_customer_mobile/core/network/api_client.dart';
-import 'package:carcare_customer_mobile/features/devices/domain/device_repository.dart';
+import 'package:carservice_customer/core/network/api_client.dart';
+import 'package:carservice_customer/features/devices/domain/device_repository.dart';
 
 /// `POST /api/v1/app/devices` / `DELETE /api/v1/app/devices/[deviceId]`, per
 /// `CUSTOMER_API_CONTRACT.md` "Push device registration". Best-effort: a

@@ -18,7 +18,7 @@ enum NotificationType {
   broadcast,
 }
 
-/// Maps the backend's `data.type` values (`carcare.mn/lib/notifications.ts`,
+/// Maps the backend's `data.type` values (`carservice.mn/lib/notifications.ts`,
 /// `NOTIFICATION_REGISTRY`) to the domain enum. Only the **account-realm**
 /// types ever reach the customer app; the staff/system types
 /// (`appointment_created`, `broadcast_staff`, …) and anything unrecognized

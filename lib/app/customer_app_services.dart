@@ -1,27 +1,27 @@
 import 'dart:async';
 
-import 'package:carcare_customer_mobile/app/push_coordinator.dart';
-import 'package:carcare_customer_mobile/app/reload_coordinator.dart';
-import 'package:carcare_customer_mobile/core/connectivity/connectivity_service.dart';
-import 'package:carcare_customer_mobile/data/cache/cache_store.dart';
-import 'package:carcare_customer_mobile/core/notifications/remote_push_service.dart';
-import 'package:carcare_customer_mobile/features/auth/domain/auth_repository.dart';
-import 'package:carcare_customer_mobile/features/auth/presentation/auth_controller.dart';
-import 'package:carcare_customer_mobile/features/booking/domain/appointment_repository.dart';
-import 'package:carcare_customer_mobile/features/devices/data/device_id_store.dart';
-import 'package:carcare_customer_mobile/features/devices/domain/device_repository.dart';
-import 'package:carcare_customer_mobile/features/diagnostics/domain/diagnostics_repository.dart';
-import 'package:carcare_customer_mobile/features/booking/presentation/controllers/appointments_controller.dart';
-import 'package:carcare_customer_mobile/features/discovery/domain/organization_repository.dart';
-import 'package:carcare_customer_mobile/features/discovery/presentation/controllers/discovery_controller.dart';
-import 'package:carcare_customer_mobile/features/discovery/presentation/controllers/organization_detail_controller.dart';
-import 'package:carcare_customer_mobile/features/history/domain/service_history_repository.dart';
-import 'package:carcare_customer_mobile/features/legal/data/legal_consent_store.dart';
-import 'package:carcare_customer_mobile/features/history/presentation/controllers/history_controller.dart';
-import 'package:carcare_customer_mobile/features/notifications/domain/notifications_repository.dart';
-import 'package:carcare_customer_mobile/features/notifications/presentation/controllers/notifications_controller.dart';
-import 'package:carcare_customer_mobile/features/vehicles/domain/vehicle_repository.dart';
-import 'package:carcare_customer_mobile/features/vehicles/presentation/controllers/vehicles_controller.dart';
+import 'package:carservice_customer/app/push_coordinator.dart';
+import 'package:carservice_customer/app/reload_coordinator.dart';
+import 'package:carservice_customer/core/connectivity/connectivity_service.dart';
+import 'package:carservice_customer/data/cache/cache_store.dart';
+import 'package:carservice_customer/core/notifications/remote_push_service.dart';
+import 'package:carservice_customer/features/booking/auth/domain/auth_repository.dart';
+import 'package:carservice_customer/features/booking/auth/presentation/auth_controller.dart';
+import 'package:carservice_customer/features/booking/domain/appointment_repository.dart';
+import 'package:carservice_customer/features/devices/data/device_id_store.dart';
+import 'package:carservice_customer/features/devices/domain/device_repository.dart';
+import 'package:carservice_customer/features/diagnostics/domain/diagnostics_repository.dart';
+import 'package:carservice_customer/features/booking/presentation/controllers/appointments_controller.dart';
+import 'package:carservice_customer/features/discovery/domain/organization_repository.dart';
+import 'package:carservice_customer/features/discovery/presentation/controllers/discovery_controller.dart';
+import 'package:carservice_customer/features/discovery/presentation/controllers/organization_detail_controller.dart';
+import 'package:carservice_customer/features/history/domain/service_history_repository.dart';
+import 'package:carservice_customer/features/legal/data/legal_consent_store.dart';
+import 'package:carservice_customer/features/history/presentation/controllers/history_controller.dart';
+import 'package:carservice_customer/features/notifications/domain/notifications_repository.dart';
+import 'package:carservice_customer/features/notifications/presentation/controllers/notifications_controller.dart';
+import 'package:carservice_customer/features/vehicles/domain/vehicle_repository.dart';
+import 'package:carservice_customer/features/vehicles/presentation/controllers/vehicles_controller.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
@@ -33,7 +33,7 @@ import 'package:flutter/material.dart';
 class CustomerAppServices with WidgetsBindingObserver {
   CustomerAppServices({
     required this.organizationRepository,
-    required AuthRepository authRepository,
+    required this.authRepository,
     required this.appointmentRepository,
     required this.vehicleRepository,
     required this.historyRepository,
@@ -46,27 +46,17 @@ class CustomerAppServices with WidgetsBindingObserver {
     required this.cacheStore,
     LegalConsentStore? legalConsentStore,
   }) : legalConsentStore = legalConsentStore ?? LegalConsentStore.instance,
-       discoveryController = DiscoveryController(
-         organizationRepository,
-         cache: cacheStore,
-       )..load() {
-    organizationDetailController = OrganizationDetailController(
-      organizationRepository,
-    );
+       discoveryController = DiscoveryController(organizationRepository, cache: cacheStore)
+         ..load() {
+    organizationDetailController = OrganizationDetailController(organizationRepository);
     authController = AuthController(authRepository);
     final sessionRestored = authController.restore();
     // Nobody awaits this unless a cold-start push tap needs it; a failed
     // restore just means signed out, so it must not surface as unhandled.
     // (Later awaiters of [sessionRestored] still observe the error.)
     unawaited(sessionRestored.catchError((Object _) {}));
-    appointmentsController = AppointmentsController(
-      appointmentRepository,
-      cache: cacheStore,
-    );
-    vehiclesController = VehiclesController(
-      vehicleRepository,
-      cache: cacheStore,
-    );
+    appointmentsController = AppointmentsController(appointmentRepository, cache: cacheStore);
+    vehiclesController = VehiclesController(vehicleRepository, cache: cacheStore);
     historyController = HistoryController(historyRepository, cache: cacheStore);
     // A customer cancelling their own appointment is a terminal transition, so
     // it has to reconcile both lists exactly as the staff-side terminal pushes
@@ -100,10 +90,10 @@ class CustomerAppServices with WidgetsBindingObserver {
     // Signing in on the login page is the acceptance (see its terms line), so
     // the consent gate never interrupts — and never resets — the stack the
     // customer signed in from.
-    authController.beforeSignIn = (account) =>
-        this.legalConsentStore.accept(account.id);
-    _connectivitySubscription = connectivityService.onConnectivityChanged
-        .listen(_onConnectivityChanged);
+    authController.beforeSignIn = (account) => this.legalConsentStore.accept(account.id);
+    _connectivitySubscription = connectivityService.onConnectivityChanged.listen(
+      _onConnectivityChanged,
+    );
   }
 
   final DiscoveryController discoveryController;
@@ -114,6 +104,10 @@ class CustomerAppServices with WidgetsBindingObserver {
   late final HistoryController historyController;
   late final NotificationsController notificationsController;
   final OrganizationRepository organizationRepository;
+
+  /// For pages that manage the account beyond the session itself (the
+  /// password page); sign-in state goes through [authController].
+  final AuthRepository authRepository;
   final AppointmentRepository appointmentRepository;
   final VehicleRepository vehicleRepository;
   final ServiceHistoryRepository historyRepository;
@@ -153,15 +147,14 @@ class CustomerAppServices with WidgetsBindingObserver {
   /// cold start). Services never navigates itself.
   set onNotificationTap(void Function(Map<String, dynamic> data)? handler) =>
       push.onNotificationTap = handler;
-  void Function(Map<String, dynamic> data)? get onNotificationTap =>
-      push.onNotificationTap;
+  void Function(Map<String, dynamic> data)? get onNotificationTap => push.onNotificationTap;
 
-  /// Shown after auth transitions (reactivated / closed / remote-closed).
-  /// Set by the app to a ScaffoldMessenger-backed callback.
+  /// Shown after auth transitions (reactivated / closed / remote-closed) and
+  /// router-level confirmations. Set by the app to `AppMessages.show`.
   void Function(String message)? showMessage;
 
   /// Routes a tapped push notification to the relevant screen, per the payload
-  /// contract in `carcare.mn/docs/mobile-device-push.md` §4:
+  /// contract in `carservice.mn/docs/mobile-device-push.md` §4:
   /// `data.appointmentId` (appointment_confirmed/reminder) → that appointment's
   /// detail; anything else (broadcast) → the notifications list. Any transient
   /// overlays already on the stack are cleared first so the target lands
@@ -190,12 +183,9 @@ class CustomerAppServices with WidgetsBindingObserver {
         // Account closure: the server already removed the devices, so skip
         // the removal call below and just confirm the action.
         showMessage?.call(
-          event == SessionEvent.deleted
-              ? 'Бүртгэл устгагдлаа'
-              : 'Бүртгэл идэвхгүй боллоо',
+          event == SessionEvent.deleted ? 'Бүртгэл устгагдлаа' : 'Бүртгэл идэвхгүй боллоо',
         );
-      } else if (event == SessionEvent.remoteDeleted ||
-          event == SessionEvent.remoteDeactivated) {
+      } else if (event == SessionEvent.remoteDeleted || event == SessionEvent.remoteDeactivated) {
         // Closed remotely (e.g. from the website) while this device was
         // still signed in — same skip-device-removal reasoning as above,
         // but distinct wording since this device didn't initiate it.

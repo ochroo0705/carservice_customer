@@ -1,7 +1,7 @@
-import 'package:carcare_customer_mobile/core/errors/app_failure.dart';
-import 'package:carcare_customer_mobile/features/history/data/service_order_dto.dart';
-import 'package:carcare_customer_mobile/features/history/domain/service_order_item.dart';
-import 'package:carcare_customer_mobile/features/history/domain/service_order_status.dart';
+import 'package:carservice_customer/core/errors/app_failure.dart';
+import 'package:carservice_customer/features/history/data/service_order_dto.dart';
+import 'package:carservice_customer/features/history/domain/service_order_item.dart';
+import 'package:carservice_customer/features/history/domain/service_order_status.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

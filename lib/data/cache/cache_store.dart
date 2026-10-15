@@ -1,7 +1,7 @@
-import 'package:carcare_customer_mobile/features/booking/domain/appointment.dart';
-import 'package:carcare_customer_mobile/features/discovery/domain/organization.dart';
-import 'package:carcare_customer_mobile/features/history/domain/service_order.dart';
-import 'package:carcare_customer_mobile/features/vehicles/domain/vehicle.dart';
+import 'package:carservice_customer/features/booking/domain/appointment.dart';
+import 'package:carservice_customer/features/discovery/domain/organization.dart';
+import 'package:carservice_customer/features/history/domain/service_order.dart';
+import 'package:carservice_customer/features/vehicles/domain/vehicle.dart';
 
 /// A cached organization detail plus when it was stored, so a reader can decide
 /// whether it is still fresh (see `CachingOrganizationRepository`).

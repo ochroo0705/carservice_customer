@@ -1,7 +1,7 @@
-import 'package:carcare_customer_mobile/app/theme/app_theme.dart';
-import 'package:carcare_customer_mobile/features/diagnostics/domain/report_severity.dart';
+import 'package:carservice_customer/app/theme/app_theme.dart';
+import 'package:carservice_customer/features/diagnostics/domain/report_severity.dart';
 import 'package:flutter/material.dart';
-import 'package:carcare_customer_mobile/core/widgets/status_chip.dart';
+import 'package:carservice_customer/core/widgets/status_chip.dart';
 
 /// Web-ийн `SEVERITY_BADGE`/`CHECK_TONE_ACTIVE`-тай ижил өнгөний зарчим:
 /// good → ногоон, warn → шар, bad → улаан.

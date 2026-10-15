@@ -1,6 +1,6 @@
-import 'package:carcare_customer_mobile/features/splash/presentation/screens/splash_screen.dart';
-import 'package:carcare_customer_mobile/features/splash/presentation/splash_gate.dart';
-import 'package:carcare_customer_mobile/features/splash/presentation/widgets/animated_logo.dart';
+import 'package:carservice_customer/features/splash/presentation/screens/splash_screen.dart';
+import 'package:carservice_customer/features/splash/presentation/splash_gate.dart';
+import 'package:carservice_customer/features/splash/presentation/widgets/animated_logo.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

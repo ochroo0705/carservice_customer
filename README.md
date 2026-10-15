@@ -1,4 +1,4 @@
-# CarCare Customer Mobile
+# Carservice Customer Mobile
 
 Customer-facing Flutter application for discovering automotive service
 organizations, selecting branches, and booking appointments.
@@ -11,7 +11,7 @@ organizations, selecting branches, and booking appointments.
 - Organization details and branch selection
 - Appointment booking and appointment cancellation
 - Vehicle management, service history, and notifications (fake data paths)
-- Light/dark CarCare design system
+- Light/dark Carservice design system
 - Android and iOS projects
 
 The first vertical slice is implemented against fake data. Remote API paths
@@ -43,17 +43,18 @@ keep `USE_FAKE_API` explicit when choosing the runtime path.
    [`docs/GOOGLE_MAPS_SETUP.md`](docs/GOOGLE_MAPS_SETUP.md)), plus
    `API_BASE_URL`/`USE_FAKE_API` for the customer API you want to run
    against — see the comments in `.env.example`.
-5. Run the app so it actually picks up `.env`:
+5. Run the app. `.env` is bundled as an asset and read at startup
+   (`flutter_dotenv`), so plain `flutter run` or VS Code's Run button picks
+   it up:
 
    ```bash
-   flutter run --dart-define-from-file=.env
+   flutter run
    ```
 
-   VS Code's Run panel already has a "carcare_customer_mobile (.env)"
-   launch configuration (`.vscode/launch.json`) that does this
-   automatically — plain `flutter run`/the bare "Run" button falls back to
-   the compile-time defaults in `lib/core/config/app_environment.dart`
-   instead of `.env`.
+   A key passed with `--dart-define` overrides the same key in `.env` (the
+   release build below relies on this). Keys missing from both fall back to
+   the defaults in `lib/core/config/app_environment.dart`. Because `.env`
+   ships inside the app, never put a secret in it.
 
 ## Validation
 

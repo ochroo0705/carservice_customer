@@ -1,6 +1,6 @@
-import 'package:carcare_customer_mobile/features/history/domain/cancelled_appointment_summary.dart';
-import 'package:carcare_customer_mobile/features/history/domain/service_order.dart';
-import 'package:carcare_customer_mobile/features/history/domain/service_history_repository.dart';
+import 'package:carservice_customer/features/history/domain/cancelled_appointment_summary.dart';
+import 'package:carservice_customer/features/history/domain/service_order.dart';
+import 'package:carservice_customer/features/history/domain/service_history_repository.dart';
 
 enum HistoryStatus { initial, loading, data, empty, error, unavailable }
 

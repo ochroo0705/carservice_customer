@@ -1,4 +1,4 @@
-import 'package:carcare_customer_mobile/features/vehicles/domain/vehicle.dart';
+import 'package:carservice_customer/features/vehicles/domain/vehicle.dart';
 
 enum VehiclesStatus { initial, loading, data, empty, error }
 

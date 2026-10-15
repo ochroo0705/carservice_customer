@@ -1,7 +1,7 @@
-import 'package:carcare_customer_mobile/app/theme/app_surfaces.dart';
-import 'package:carcare_customer_mobile/features/booking/presentation/controllers/booking_form_controller.dart';
-import 'package:carcare_customer_mobile/features/booking/presentation/widgets/booking_locked_notices.dart';
-import 'package:carcare_customer_mobile/features/booking/presentation/widgets/time_slot_grid.dart';
+import 'package:carservice_customer/app/theme/app_surfaces.dart';
+import 'package:carservice_customer/features/booking/presentation/controllers/booking_form_controller.dart';
+import 'package:carservice_customer/features/booking/presentation/widgets/booking_locked_notices.dart';
+import 'package:carservice_customer/features/booking/presentation/widgets/time_slot_grid.dart';
 import 'package:flutter/material.dart';
 
 /// Категорийн хэсэг: `lockCategories` үед зөвхөн товч тойм, эс бөгөөс

@@ -1,4 +1,4 @@
-import 'package:carcare_customer_mobile/features/notifications/domain/notification_type.dart';
+import 'package:carservice_customer/features/notifications/domain/notification_type.dart';
 
 class AppNotification {
   const AppNotification({

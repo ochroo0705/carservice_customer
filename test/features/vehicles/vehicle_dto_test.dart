@@ -1,6 +1,6 @@
-import 'package:carcare_customer_mobile/core/errors/app_failure.dart';
-import 'package:carcare_customer_mobile/features/vehicles/data/vehicle_dto.dart';
-import 'package:carcare_customer_mobile/features/vehicles/domain/vehicle_lookup_result.dart';
+import 'package:carservice_customer/core/errors/app_failure.dart';
+import 'package:carservice_customer/features/vehicles/data/vehicle_dto.dart';
+import 'package:carservice_customer/features/vehicles/domain/vehicle_lookup_result.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

@@ -1,29 +1,30 @@
-import 'package:carcare_customer_mobile/features/history/presentation/widgets/order_intake_tile.dart';
-import 'package:carcare_customer_mobile/features/history/domain/service_history_repository.dart';
+import 'package:carservice_customer/app/app_messages.dart';
+import 'package:carservice_customer/features/history/presentation/widgets/order_intake_tile.dart';
+import 'package:carservice_customer/features/history/domain/service_history_repository.dart';
 
 import 'dart:async';
 
-import 'package:carcare_customer_mobile/app/theme/app_surfaces.dart';
-import 'package:carcare_customer_mobile/core/widgets/skeletons.dart';
-import 'package:carcare_customer_mobile/app/theme/app_theme.dart';
-import 'package:carcare_customer_mobile/core/errors/app_failure.dart';
-import 'package:carcare_customer_mobile/features/booking/domain/appointment.dart';
-import 'package:carcare_customer_mobile/features/booking/domain/appointment_payment.dart';
-import 'package:carcare_customer_mobile/features/booking/domain/appointment_status.dart';
-import 'package:carcare_customer_mobile/features/booking/presentation/controllers/appointments_controller.dart';
-import 'package:carcare_customer_mobile/features/booking/presentation/controllers/appointments_state.dart';
-import 'package:carcare_customer_mobile/features/booking/presentation/widgets/service_progress_section.dart';
-import 'package:carcare_customer_mobile/features/discovery/domain/branch.dart';
-import 'package:carcare_customer_mobile/features/discovery/domain/organization_repository.dart';
-import 'package:carcare_customer_mobile/features/discovery/services/location_permission_service.dart';
+import 'package:carservice_customer/app/theme/app_surfaces.dart';
+import 'package:carservice_customer/core/widgets/skeletons.dart';
+import 'package:carservice_customer/app/theme/app_theme.dart';
+import 'package:carservice_customer/core/errors/app_failure.dart';
+import 'package:carservice_customer/features/booking/domain/appointment.dart';
+import 'package:carservice_customer/features/booking/domain/appointment_payment.dart';
+import 'package:carservice_customer/features/booking/domain/appointment_status.dart';
+import 'package:carservice_customer/features/booking/presentation/controllers/appointments_controller.dart';
+import 'package:carservice_customer/features/booking/presentation/controllers/appointments_state.dart';
+import 'package:carservice_customer/features/booking/presentation/widgets/service_progress_section.dart';
+import 'package:carservice_customer/features/discovery/domain/branch.dart';
+import 'package:carservice_customer/features/discovery/domain/organization_repository.dart';
+import 'package:carservice_customer/features/discovery/services/location_permission_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:carcare_customer_mobile/core/widgets/status_chip.dart';
-import 'package:carcare_customer_mobile/features/booking/presentation/widgets/appointment_status_style.dart';
-import 'package:carcare_customer_mobile/features/discovery/presentation/branch_open_style.dart';
+import 'package:carservice_customer/core/widgets/status_chip.dart';
+import 'package:carservice_customer/features/booking/presentation/widgets/appointment_status_style.dart';
+import 'package:carservice_customer/features/discovery/presentation/branch_open_style.dart';
 
 /// Full-page view of a single appointment. Reads the appointment reactively
 /// from [AppointmentsController] by id rather than taking it as a constructor
@@ -181,8 +182,7 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen>
     if (confirmed != true) return;
     final error = await controller.cancel(appointment.id);
     if (error != null && context.mounted) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(error)));
+      AppMessages.show(error);
     }
   }
 }
@@ -593,9 +593,7 @@ class _BranchInfoCardState extends State<_BranchInfoCard> {
       if (!ok) throw Exception('launch returned false');
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Газрын зураг нээх боломжгүй байна')),
-      );
+      AppMessages.show('Газрын зураг нээх боломжгүй байна');
     }
   }
 
@@ -603,17 +601,14 @@ class _BranchInfoCardState extends State<_BranchInfoCard> {
     final uri = Uri(scheme: 'tel', path: phone);
     final ok = await launchUrl(uri);
     if (!ok && mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Дуудлага хийж чадсангүй')));
+      AppMessages.show('Дуудлага хийж чадсангүй');
     }
   }
 
   Future<void> _copy(String phone) async {
     await Clipboard.setData(ClipboardData(text: phone));
     if (!mounted) return;
-    ScaffoldMessenger.of(context)
-        .showSnackBar(const SnackBar(content: Text('Утасны дугаар хууллаа')));
+    AppMessages.show('Утасны дугаар хууллаа');
   }
 
   @override

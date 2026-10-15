@@ -1,23 +1,23 @@
-import 'package:carcare_customer_mobile/app/theme/app_theme.dart';
-import 'package:carcare_customer_mobile/app/theme/app_surfaces.dart';
-import 'package:carcare_customer_mobile/core/widgets/coming_soon_view.dart';
-import 'package:carcare_customer_mobile/core/widgets/animations.dart';
-import 'package:carcare_customer_mobile/core/widgets/filter_controls.dart';
-import 'package:carcare_customer_mobile/core/widgets/offline_banner.dart';
-import 'package:carcare_customer_mobile/core/widgets/skeletons.dart';
-import 'package:carcare_customer_mobile/features/diagnostics/domain/diagnostics_repository.dart';
-import 'package:carcare_customer_mobile/features/diagnostics/presentation/controllers/diagnostics_controller.dart';
-import 'package:carcare_customer_mobile/features/diagnostics/presentation/screens/diagnostics_screen.dart';
-import 'package:carcare_customer_mobile/features/history/domain/cancelled_appointment_summary.dart';
-import 'package:carcare_customer_mobile/features/history/domain/service_order.dart';
-import 'package:carcare_customer_mobile/features/auth/presentation/auth_controller.dart';
-import 'package:carcare_customer_mobile/features/history/presentation/controllers/history_controller.dart';
-import 'package:carcare_customer_mobile/features/history/presentation/controllers/history_state.dart';
-import 'package:carcare_customer_mobile/features/history/presentation/format_amount.dart';
-import 'package:carcare_customer_mobile/features/history/presentation/widgets/service_order_status_chip.dart';
+import 'package:carservice_customer/app/theme/app_theme.dart';
+import 'package:carservice_customer/app/theme/app_surfaces.dart';
+import 'package:carservice_customer/core/widgets/coming_soon_view.dart';
+import 'package:carservice_customer/core/widgets/animations.dart';
+import 'package:carservice_customer/core/widgets/filter_controls.dart';
+import 'package:carservice_customer/core/widgets/offline_banner.dart';
+import 'package:carservice_customer/core/widgets/skeletons.dart';
+import 'package:carservice_customer/features/diagnostics/domain/diagnostics_repository.dart';
+import 'package:carservice_customer/features/diagnostics/presentation/controllers/diagnostics_controller.dart';
+import 'package:carservice_customer/features/diagnostics/presentation/screens/diagnostics_screen.dart';
+import 'package:carservice_customer/features/history/domain/cancelled_appointment_summary.dart';
+import 'package:carservice_customer/features/history/domain/service_order.dart';
+import 'package:carservice_customer/features/booking/auth/presentation/auth_controller.dart';
+import 'package:carservice_customer/features/history/presentation/controllers/history_controller.dart';
+import 'package:carservice_customer/features/history/presentation/controllers/history_state.dart';
+import 'package:carservice_customer/features/history/presentation/format_amount.dart';
+import 'package:carservice_customer/features/history/presentation/widgets/service_order_status_chip.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:carcare_customer_mobile/core/widgets/state_views.dart';
+import 'package:carservice_customer/core/widgets/state_views.dart';
 
 class HistoryScreen extends StatelessWidget {
   const HistoryScreen({
@@ -41,9 +41,7 @@ class HistoryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isAuthenticated = context.select<AuthController, bool>(
-      (c) => c.isAuthenticated,
-    );
+    final isAuthenticated = context.select<AuthController, bool>((c) => c.isAuthenticated);
     final controller = context.watch<HistoryController>();
     return AppShellBackground(
       child: SafeArea(
@@ -73,25 +71,19 @@ class _UnauthenticatedPrompt extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.receipt_long_outlined,
-            size: 58,
-            color: Theme.of(context).colorScheme.primary,
-          ),
+          Icon(Icons.receipt_long_outlined, size: 58, color: Theme.of(context).colorScheme.primary),
           const SizedBox(height: 18),
           Text(
             'Түүхээ харахын тулд нэвтэрнэ үү',
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.titleLarge
-                ?.copyWith(fontWeight: FontWeight.w800),
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 8),
           Text(
             'Таны хийлгэсэн засварын түүх энд харагдана.',
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
+            style: Theme.of(context).textTheme.bodyMedium
+                ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
           const SizedBox(height: 20),
           FilledButton.icon(
@@ -128,11 +120,11 @@ class _HistoryBody extends StatefulWidget {
   State<_HistoryBody> createState() => _HistoryBodyState();
 }
 
-class _HistoryBodyState extends State<_HistoryBody>
-    with SingleTickerProviderStateMixin {
+class _HistoryBodyState extends State<_HistoryBody> with SingleTickerProviderStateMixin {
   late final TabController _tabController;
-  late final DiagnosticsController _diagnosticsController =
-      DiagnosticsController(widget.diagnosticsRepository)..load();
+  late final DiagnosticsController _diagnosticsController = DiagnosticsController(
+    widget.diagnosticsRepository,
+  )..load();
 
   @override
   void initState() {
@@ -204,10 +196,7 @@ class _HistoryBodyState extends State<_HistoryBody>
 /// `loading`/`empty` рүү шилжиж, `TextField`-ийг unmount хийснээр гар
 /// товчлуур (keyboard) үсэг бүр дээр хаагдах алдаа гаргаж байсан.
 class _AppointmentHistoryTab extends StatelessWidget {
-  const _AppointmentHistoryTab({
-    required this.controller,
-    required this.onOrderSelected,
-  });
+  const _AppointmentHistoryTab({required this.controller, required this.onOrderSelected});
 
   final HistoryController controller;
   final ValueChanged<String> onOrderSelected;
@@ -313,8 +302,7 @@ class _HistoryListState extends State<_HistoryList> {
     final cancelledAppointments = allCancelled;
     final isFromCache = widget.controller.state.isFromCache;
     final hasFilter = widget.controller.query.isNotEmpty;
-    final noResults =
-        hasFilter && orders.isEmpty && cancelledAppointments.isEmpty;
+    final noResults = hasFilter && orders.isEmpty && cancelledAppointments.isEmpty;
     final offset = isFromCache ? 1 : 0;
     // D-085: cancelled/no-show/rejected appointments render after the order
     // cards, behind their own section header (only when there are any).
@@ -332,9 +320,8 @@ class _HistoryListState extends State<_HistoryList> {
               child: Text(
                 'Илэрц олдсонгүй',
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+                style: Theme.of(context).textTheme.bodyMedium
+                    ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
               ),
             ),
           )
@@ -368,7 +355,8 @@ class _HistoryListState extends State<_HistoryList> {
                 if (isFromCache && index == 0) {
                   return OfflineBanner(
                     message: 'Сүлжээгүй байна — сүүлд ачаалсан түүхийг харуулж байна',
-                    semanticsLabel: 'Сүлжээгүй байна. Сүүлд ачаалсан засварын түүхийг харуулж байна.',
+                    semanticsLabel:
+                        'Сүлжээгүй байна. Сүүлд ачаалсан засварын түүхийг харуулж байна.',
                     retryKey: const ValueKey('history-offline-retry'),
                     onRetry: widget.controller.load,
                   );
@@ -378,10 +366,7 @@ class _HistoryListState extends State<_HistoryList> {
                   final order = orders[index - offset];
                   return RiseIn(
                     index: index - offset,
-                    child: _OrderCard(
-                      order: order,
-                      onTap: () => widget.onOrderSelected(order.id),
-                    ),
+                    child: _OrderCard(order: order, onTap: () => widget.onOrderSelected(order.id)),
                   );
                 }
                 if (hasCancelledSection && index == ordersEnd) {
@@ -406,8 +391,7 @@ class _CancelledSectionHeader extends StatelessWidget {
     padding: const EdgeInsets.only(top: 6),
     child: Text(
       'Цуцлагдсан / ирээгүй цагууд',
-      style: Theme.of(context).textTheme.titleSmall
-          ?.copyWith(fontWeight: FontWeight.w800),
+      style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
     ),
   );
 }
@@ -493,9 +477,8 @@ class _OrderCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             order.branchName,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
+            style: Theme.of(context).textTheme.bodyMedium
+                ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
           const SizedBox(height: 8),
           Row(
@@ -519,8 +502,7 @@ class _OrderCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             '${formatAmount(order.totalAmount)}₮',
-            style: Theme.of(context).textTheme.titleMedium
-                ?.copyWith(fontWeight: FontWeight.w800),
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
           ),
         ],
       ),

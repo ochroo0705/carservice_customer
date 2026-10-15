@@ -1,10 +1,10 @@
-import 'package:carcare_customer_mobile/app/theme/app_theme.dart';
-import 'package:carcare_customer_mobile/features/discovery/data/fake_organization_repository.dart';
-import 'package:carcare_customer_mobile/features/discovery/domain/branch.dart';
-import 'package:carcare_customer_mobile/features/discovery/domain/organization.dart';
-import 'package:carcare_customer_mobile/features/discovery/presentation/controllers/organization_detail_controller.dart';
-import 'package:carcare_customer_mobile/features/discovery/presentation/widgets/discovery_map.dart';
-import 'package:carcare_customer_mobile/features/discovery/services/map_configuration_service.dart';
+import 'package:carservice_customer/app/theme/app_theme.dart';
+import 'package:carservice_customer/features/discovery/data/fake_organization_repository.dart';
+import 'package:carservice_customer/features/discovery/domain/branch.dart';
+import 'package:carservice_customer/features/discovery/domain/organization.dart';
+import 'package:carservice_customer/features/discovery/presentation/controllers/organization_detail_controller.dart';
+import 'package:carservice_customer/features/discovery/presentation/widgets/discovery_map.dart';
+import 'package:carservice_customer/features/discovery/services/map_configuration_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

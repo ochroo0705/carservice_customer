@@ -1,10 +1,10 @@
 import 'dart:async';
 
-import 'package:carcare_customer_mobile/core/errors/app_failure.dart';
-import 'package:carcare_customer_mobile/features/discovery/domain/branch.dart';
-import 'package:carcare_customer_mobile/features/discovery/domain/organization.dart';
-import 'package:carcare_customer_mobile/features/discovery/domain/organization_repository.dart';
-import 'package:carcare_customer_mobile/features/discovery/presentation/controllers/discovery_controller.dart';
+import 'package:carservice_customer/core/errors/app_failure.dart';
+import 'package:carservice_customer/features/discovery/domain/branch.dart';
+import 'package:carservice_customer/features/discovery/domain/organization.dart';
+import 'package:carservice_customer/features/discovery/domain/organization_repository.dart';
+import 'package:carservice_customer/features/discovery/presentation/controllers/discovery_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Organization _organization(String slug) => Organization(

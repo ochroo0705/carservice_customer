@@ -1,35 +1,36 @@
-import 'package:carcare_customer_mobile/app/customer_app_services.dart';
-import 'package:carcare_customer_mobile/app/customer_navigation.dart';
-import 'package:carcare_customer_mobile/app/customer_routes.dart';
-import 'package:carcare_customer_mobile/app/customer_shell.dart';
-import 'package:carcare_customer_mobile/features/auth/presentation/auth_controller.dart';
-import 'package:carcare_customer_mobile/features/auth/presentation/login_screen.dart';
-import 'package:carcare_customer_mobile/features/booking/domain/appointment_payment.dart';
-import 'package:carcare_customer_mobile/features/booking/presentation/screens/appointment_detail_screen.dart';
-import 'package:carcare_customer_mobile/features/booking/presentation/screens/appointment_payment_screen.dart';
-import 'package:carcare_customer_mobile/features/booking/presentation/screens/appointments_screen.dart';
-import 'package:carcare_customer_mobile/features/booking/presentation/screens/booking_request_screen.dart';
-import 'package:carcare_customer_mobile/features/booking/presentation/screens/walk_in_order_detail_screen.dart';
-import 'package:carcare_customer_mobile/features/discovery/domain/organization.dart';
-import 'package:carcare_customer_mobile/features/discovery/presentation/controllers/organization_detail_controller.dart';
-import 'package:carcare_customer_mobile/features/discovery/presentation/screens/discovery_screen.dart';
-import 'package:carcare_customer_mobile/features/discovery/presentation/screens/organization_detail_screen.dart';
-import 'package:carcare_customer_mobile/features/discovery/presentation/screens/service_key_picker_screen.dart';
-import 'package:carcare_customer_mobile/features/diagnostics/presentation/screens/diagnostic_detail_screen.dart';
-import 'package:carcare_customer_mobile/features/history/domain/order_intake.dart';
-import 'package:carcare_customer_mobile/features/history/presentation/screens/history_screen.dart';
-import 'package:carcare_customer_mobile/features/history/presentation/screens/order_intake_screen.dart';
-import 'package:carcare_customer_mobile/features/history/presentation/screens/service_order_detail_screen.dart';
-import 'package:carcare_customer_mobile/features/legal/presentation/screens/privacy_policy_screen.dart';
-import 'package:carcare_customer_mobile/features/legal/presentation/screens/terms_consent_screen.dart';
-import 'package:carcare_customer_mobile/features/legal/presentation/screens/terms_of_service_screen.dart';
-import 'package:carcare_customer_mobile/features/notifications/presentation/screens/notifications_screen.dart';
-import 'package:carcare_customer_mobile/features/profile/presentation/screens/account_closure_screen.dart';
-import 'package:carcare_customer_mobile/features/profile/presentation/screens/profile_screen.dart';
-import 'package:carcare_customer_mobile/features/vehicles/domain/vehicle.dart';
-import 'package:carcare_customer_mobile/features/vehicles/presentation/screens/add_vehicle_screen.dart';
-import 'package:carcare_customer_mobile/features/vehicles/presentation/screens/vehicle_detail_screen.dart';
-import 'package:carcare_customer_mobile/core/widgets/skeletons.dart';
+import 'package:carservice_customer/app/customer_app_services.dart';
+import 'package:carservice_customer/app/customer_navigation.dart';
+import 'package:carservice_customer/app/customer_routes.dart';
+import 'package:carservice_customer/app/customer_shell.dart';
+import 'package:carservice_customer/features/booking/auth/presentation/auth_controller.dart';
+import 'package:carservice_customer/features/booking/auth/presentation/login_screen.dart';
+import 'package:carservice_customer/features/booking/domain/appointment_payment.dart';
+import 'package:carservice_customer/features/booking/presentation/screens/appointment_detail_screen.dart';
+import 'package:carservice_customer/features/booking/presentation/screens/appointment_payment_screen.dart';
+import 'package:carservice_customer/features/booking/presentation/screens/appointments_screen.dart';
+import 'package:carservice_customer/features/booking/presentation/screens/booking_request_screen.dart';
+import 'package:carservice_customer/features/booking/presentation/screens/walk_in_order_detail_screen.dart';
+import 'package:carservice_customer/features/discovery/domain/organization.dart';
+import 'package:carservice_customer/features/discovery/presentation/controllers/organization_detail_controller.dart';
+import 'package:carservice_customer/features/discovery/presentation/screens/discovery_screen.dart';
+import 'package:carservice_customer/features/discovery/presentation/screens/organization_detail_screen.dart';
+import 'package:carservice_customer/features/discovery/presentation/screens/service_key_picker_screen.dart';
+import 'package:carservice_customer/features/diagnostics/presentation/screens/diagnostic_detail_screen.dart';
+import 'package:carservice_customer/features/history/domain/order_intake.dart';
+import 'package:carservice_customer/features/history/presentation/screens/history_screen.dart';
+import 'package:carservice_customer/features/history/presentation/screens/order_intake_screen.dart';
+import 'package:carservice_customer/features/history/presentation/screens/service_order_detail_screen.dart';
+import 'package:carservice_customer/features/legal/presentation/screens/privacy_policy_screen.dart';
+import 'package:carservice_customer/features/legal/presentation/screens/terms_consent_screen.dart';
+import 'package:carservice_customer/features/legal/presentation/screens/terms_of_service_screen.dart';
+import 'package:carservice_customer/features/notifications/presentation/screens/notifications_screen.dart';
+import 'package:carservice_customer/features/profile/presentation/screens/account_closure_screen.dart';
+import 'package:carservice_customer/features/profile/presentation/screens/account_password_screen.dart';
+import 'package:carservice_customer/features/profile/presentation/screens/profile_screen.dart';
+import 'package:carservice_customer/features/vehicles/domain/vehicle.dart';
+import 'package:carservice_customer/features/vehicles/presentation/screens/add_vehicle_screen.dart';
+import 'package:carservice_customer/features/vehicles/presentation/screens/vehicle_detail_screen.dart';
+import 'package:carservice_customer/core/widgets/skeletons.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -43,12 +44,9 @@ bool isProtectedLocation(Uri uri) {
     ['appointments', _] || ['appointments', _, 'pay'] => true,
     ['vehicles', 'add'] => false,
     ['vehicles', _] => true,
-    ['orders', _] ||
-    ['orders', _, 'intake'] ||
-    ['diagnostics', _] ||
-    ['walk-in-orders', _] => true,
+    ['orders', _] || ['orders', _, 'intake'] || ['diagnostics', _] || ['walk-in-orders', _] => true,
     ['notifications'] => true,
-    ['account', 'close'] => true,
+    ['account', 'close'] || ['account', 'password'] => true,
     _ => false,
   };
 }
@@ -76,9 +74,7 @@ String? customerRedirect({
     return null;
   }
   if (consentPending) {
-    if (atConsent ||
-        uri.path == CustomerRoutes.terms ||
-        uri.path == CustomerRoutes.privacy) {
+    if (atConsent || uri.path == CustomerRoutes.terms || uri.path == CustomerRoutes.privacy) {
       return null;
     }
     final from = uri.path == '/login'
@@ -87,8 +83,7 @@ String? customerRedirect({
     return CustomerRoutes.termsConsent(from: from);
   }
   if (atConsent) {
-    return safeReturnLocation(uri.queryParameters['from']) ??
-        CustomerRoutes.shell;
+    return safeReturnLocation(uri.queryParameters['from']) ?? CustomerRoutes.shell;
   }
   if (uri.path == '/login') {
     return safeReturnLocation(uri.queryParameters['from']);
@@ -121,9 +116,7 @@ List<String> resolveLockedCategoryIds(
   Set<String> keyIds,
 ) {
   if (branchId == null) return const [];
-  final branch = organization.branches
-      .where((b) => b.id == branchId)
-      .toList(growable: false);
+  final branch = organization.branches.where((b) => b.id == branchId).toList(growable: false);
   if (branch.isEmpty) return const [];
   return branch.first.categories
       .where((c) => keyIds.contains(c.systemServiceKeyId))
@@ -134,10 +127,7 @@ List<String> resolveLockedCategoryIds(
 /// Returns the `GoRouter` for the customer app. Every route is top-level
 /// (see the route table in `plan-context.md`); the app opens them with
 /// `push`, so the stack order is the order the customer opened them.
-GoRouter buildCustomerRouter(
-  CustomerAppServices services,
-  CustomerNavigation navigation,
-) {
+GoRouter buildCustomerRouter(CustomerAppServices services, CustomerNavigation navigation) {
   return GoRouter(
     initialLocation: CustomerRoutes.shell,
     refreshListenable: services.routerRefresh,
@@ -146,9 +136,7 @@ GoRouter buildCustomerRouter(
       return customerRedirect(
         isAuthenticated: services.authController.isAuthenticated,
         uri: state.uri,
-        consentPending:
-            account != null &&
-            !services.legalConsentStore.hasAccepted(account.id),
+        consentPending: account != null && !services.legalConsentStore.hasAccepted(account.id),
       );
     },
     // An unknown path lands on the shell, as the old parser's
@@ -163,15 +151,12 @@ GoRouter buildCustomerRouter(
           child: CustomerShell(
             key: navigation.shellKey,
             onLoginRequested: navigation.requestLogin,
-            onNotificationsRequested: () =>
-                context.push(CustomerRoutes.notifications),
+            onNotificationsRequested: () => context.push(CustomerRoutes.notifications),
             destinations: [
               DiscoveryScreen(
-                onBranchSelected: (org, branch) => context.push(
-                  CustomerRoutes.organization(org.slug, branchId: branch.id),
-                ),
-                onNotificationsRequested: () =>
-                    context.push(CustomerRoutes.notifications),
+                onBranchSelected: (org, branch) =>
+                    context.push(CustomerRoutes.organization(org.slug, branchId: branch.id)),
+                onNotificationsRequested: () => context.push(CustomerRoutes.notifications),
               ),
               ServiceKeyPickerScreen(
                 repository: services.organizationRepository,
@@ -190,24 +175,21 @@ GoRouter buildCustomerRouter(
                   CustomerRoutes.payment(appointment.id),
                   extra: appointment.payment,
                 ),
-                onWalkInOrderSelected: (id) =>
-                    context.push(CustomerRoutes.walkInOrder(id)),
+                onWalkInOrderSelected: (id) => context.push(CustomerRoutes.walkInOrder(id)),
               ),
               HistoryScreen(
                 onLoginRequested: navigation.requestLogin,
                 onOrderSelected: (id) => context.push(CustomerRoutes.order(id)),
                 diagnosticsRepository: services.diagnosticsRepository,
                 reconnects: services.reconnects,
-                onDiagnosticReportSelected: (id) =>
-                    context.push(CustomerRoutes.diagnostic(id)),
+                onDiagnosticReportSelected: (id) => context.push(CustomerRoutes.diagnostic(id)),
               ),
               ProfileScreen(
                 onLoginRequested: navigation.requestLogin,
                 onAddVehicle: () => context.push(CustomerRoutes.addVehicle),
-                onVehicleSelected: (v) =>
-                    context.push(CustomerRoutes.vehicle(v.id), extra: v),
-                onAccountClosureRequested: () =>
-                    context.push(CustomerRoutes.accountClosure),
+                onVehicleSelected: (v) => context.push(CustomerRoutes.vehicle(v.id), extra: v),
+                onAccountClosureRequested: () => context.push(CustomerRoutes.accountClosure),
+                onPasswordSettingsRequested: () => context.push(CustomerRoutes.accountPassword),
                 onTermsRequested: () => context.push(CustomerRoutes.terms),
                 onPrivacyRequested: () => context.push(CustomerRoutes.privacy),
               ),
@@ -234,11 +216,7 @@ GoRouter buildCustomerRouter(
                 onRetry: reload,
                 onBack: () => context.pop(),
                 onBook: () => context.push(
-                  CustomerRoutes.booking(
-                    slug,
-                    branchId: branchId,
-                    lockBranch: branchId != null,
-                  ),
+                  CustomerRoutes.booking(slug, branchId: branchId, lockBranch: branchId != null),
                 ),
               ),
             ),
@@ -267,9 +245,7 @@ GoRouter buildCustomerRouter(
                   final organization = c.organization;
                   if (c.status == OrganizationDetailStatus.error) {
                     return Scaffold(
-                      appBar: AppBar(
-                        leading: BackButton(onPressed: context.pop),
-                      ),
+                      appBar: AppBar(leading: BackButton(onPressed: context.pop)),
                       body: OrganizationLoadError(
                         message: c.message ?? 'Мэдээлэл ачаалсангүй.',
                         onRetry: reload,
@@ -277,10 +253,7 @@ GoRouter buildCustomerRouter(
                     );
                   }
                   if (organization == null || organization.slug != slug) {
-                    return Scaffold(
-                      appBar: AppBar(),
-                      body: const SkeletonDetail(),
-                    );
+                    return Scaffold(appBar: AppBar(), body: const SkeletonDetail());
                   }
                   return BookingRequestScreen(
                     organization: organization,
@@ -292,11 +265,7 @@ GoRouter buildCustomerRouter(
                     lockBranch: lock == '1',
                     initialCategoryIds: keyIds.isEmpty
                         ? null
-                        : resolveLockedCategoryIds(
-                            organization,
-                            branchId,
-                            keyIds,
-                          ),
+                        : resolveLockedCategoryIds(organization, branchId, keyIds),
                     // A 401 on submit: clear the session; the enclosing
                     // `_ProtectedRoute` then pushes `/login` (without `from`,
                     // so signing in pops back to this still-mounted page).
@@ -329,17 +298,13 @@ GoRouter buildCustomerRouter(
       ),
       GoRoute(
         path: CustomerRoutes.terms,
-        pageBuilder: (context, state) => MaterialPage(
-          key: state.pageKey,
-          child: const TermsOfServiceScreen(),
-        ),
+        pageBuilder: (context, state) =>
+            MaterialPage(key: state.pageKey, child: const TermsOfServiceScreen()),
       ),
       GoRoute(
         path: CustomerRoutes.privacy,
-        pageBuilder: (context, state) => MaterialPage(
-          key: state.pageKey,
-          child: const PrivacyPolicyScreen(),
-        ),
+        pageBuilder: (context, state) =>
+            MaterialPage(key: state.pageKey, child: const PrivacyPolicyScreen()),
       ),
       GoRoute(
         path: '/login',
@@ -382,9 +347,7 @@ GoRouter buildCustomerRouter(
             return MaterialPage(
               key: state.pageKey,
               child: Scaffold(
-                appBar: AppBar(
-                  leading: BackButton(onPressed: () => context.pop()),
-                ),
+                appBar: AppBar(leading: BackButton(onPressed: () => context.pop())),
                 body: const Center(child: Text('Машин олдсонгүй.')),
               ),
             );
@@ -418,12 +381,9 @@ GoRouter buildCustomerRouter(
               organizationRepository: services.organizationRepository,
               onBack: () => context.pop(),
               historyRepository: services.historyRepository,
-              onPay: (appointment) => context.push(
-                CustomerRoutes.payment(appointment.id),
-                extra: appointment.payment,
-              ),
-              onReportSelected: (id) =>
-                  context.push(CustomerRoutes.diagnostic(id)),
+              onPay: (appointment) =>
+                  context.push(CustomerRoutes.payment(appointment.id), extra: appointment.payment),
+              onReportSelected: (id) => context.push(CustomerRoutes.diagnostic(id)),
             ),
           ),
         ),
@@ -456,8 +416,7 @@ GoRouter buildCustomerRouter(
               orderId: state.pathParameters['id']!,
               onBack: () => context.pop(),
               historyRepository: services.historyRepository,
-              onReportSelected: (id) =>
-                  context.push(CustomerRoutes.diagnostic(id)),
+              onReportSelected: (id) => context.push(CustomerRoutes.diagnostic(id)),
             ),
           ),
         ),
@@ -474,8 +433,7 @@ GoRouter buildCustomerRouter(
               orderId: state.pathParameters['id']!,
               onBack: () => context.pop(),
               historyController: services.historyController,
-              onReportSelected: (id) =>
-                  context.push(CustomerRoutes.diagnostic(id)),
+              onReportSelected: (id) => context.push(CustomerRoutes.diagnostic(id)),
             ),
           ),
         ),
@@ -534,8 +492,22 @@ GoRouter buildCustomerRouter(
           child: _ProtectedRoute(
             auth: services.authController,
             onSessionEnded: (context) => context.go(CustomerRoutes.shell),
-            child: AccountClosureScreen(
-              onClosed: () => context.go(CustomerRoutes.shell),
+            child: AccountClosureScreen(onClosed: () => context.go(CustomerRoutes.shell)),
+          ),
+        ),
+      ),
+      GoRoute(
+        path: CustomerRoutes.accountPassword,
+        pageBuilder: (context, state) => MaterialPage(
+          key: state.pageKey,
+          child: _ProtectedRoute(
+            auth: services.authController,
+            onSessionEnded: (context) => context.go(CustomerRoutes.shell),
+            child: AccountPasswordScreen(
+              repository: services.authRepository,
+              onPasswordChanged: (hasPassword) => services.showMessage?.call(
+                hasPassword ? 'Нууц үг хадгалагдлаа.' : 'Нууц үг устгагдлаа.',
+              ),
             ),
           ),
         ),
@@ -553,11 +525,7 @@ GoRouter buildCustomerRouter(
 /// inside the same `notifyListeners()` go_router is also reacting to can be
 /// lost.
 class _ProtectedRoute extends StatefulWidget {
-  const _ProtectedRoute({
-    required this.auth,
-    required this.onSessionEnded,
-    required this.child,
-  });
+  const _ProtectedRoute({required this.auth, required this.onSessionEnded, required this.child});
 
   final AuthController auth;
   final void Function(BuildContext context) onSessionEnded;
@@ -634,20 +602,11 @@ const _loadingOrgScopeState = (
 /// currently holds must never render that mismatched data: it renders the
 /// loading state instead and schedules its own reload.
 class _OrganizationScope extends StatefulWidget {
-  const _OrganizationScope({
-    required this.slug,
-    required this.services,
-    required this.builder,
-  });
+  const _OrganizationScope({required this.slug, required this.services, required this.builder});
 
   final String slug;
   final CustomerAppServices services;
-  final Widget Function(
-    BuildContext context,
-    _OrgScopeState state,
-    VoidCallback reload,
-  )
-  builder;
+  final Widget Function(BuildContext context, _OrgScopeState state, VoidCallback reload) builder;
 
   @override
   State<_OrganizationScope> createState() => _OrganizationScopeState();
@@ -656,8 +615,7 @@ class _OrganizationScope extends StatefulWidget {
 class _OrganizationScopeState extends State<_OrganizationScope> {
   bool _reloadScheduled = false;
 
-  OrganizationDetailController get _controller =>
-      widget.services.organizationDetailController;
+  OrganizationDetailController get _controller => widget.services.organizationDetailController;
 
   @override
   void initState() {

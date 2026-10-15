@@ -1,17 +1,18 @@
+import 'package:carservice_customer/app/app_messages.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:carcare_customer_mobile/app/theme/app_surfaces.dart';
-import 'package:carcare_customer_mobile/core/widgets/skeletons.dart';
-import 'package:carcare_customer_mobile/app/theme/app_theme.dart';
-import 'package:carcare_customer_mobile/features/discovery/domain/branch.dart';
-import 'package:carcare_customer_mobile/features/discovery/domain/organization.dart';
-import 'package:carcare_customer_mobile/features/discovery/presentation/controllers/organization_detail_controller.dart';
-import 'package:carcare_customer_mobile/features/discovery/services/location_permission_service.dart';
+import 'package:carservice_customer/app/theme/app_surfaces.dart';
+import 'package:carservice_customer/core/widgets/skeletons.dart';
+import 'package:carservice_customer/app/theme/app_theme.dart';
+import 'package:carservice_customer/features/discovery/domain/branch.dart';
+import 'package:carservice_customer/features/discovery/domain/organization.dart';
+import 'package:carservice_customer/features/discovery/presentation/controllers/organization_detail_controller.dart';
+import 'package:carservice_customer/features/discovery/services/location_permission_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:carcare_customer_mobile/core/widgets/state_views.dart';
-import 'package:carcare_customer_mobile/features/discovery/presentation/branch_open_style.dart';
+import 'package:carservice_customer/core/widgets/state_views.dart';
+import 'package:carservice_customer/features/discovery/presentation/branch_open_style.dart';
 
 class OrganizationDetailScreen extends StatelessWidget {
   const OrganizationDetailScreen({
@@ -164,7 +165,7 @@ class _OrganizationHero extends StatelessWidget {
                         ),
                         borderRadius: BorderRadius.circular(AppRadii.large),
                         border: Border.all(
-                          color: CarCareTheme.of(context).glassBorder,
+                          color: CarserviceTheme.of(context).glassBorder,
                         ),
                       ),
                       clipBehavior: Clip.antiAlias,
@@ -216,11 +217,7 @@ class _OrganizationHero extends StatelessWidget {
                                       ClipboardData(text: organization.phone!),
                                     );
                                     if (!context.mounted) return;
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text('Утасны дугаар хууллаа'),
-                                      ),
-                                    );
+                                    AppMessages.show('Утасны дугаар хууллаа');
                                   },
                                   child: Padding(
                                     padding: const EdgeInsets.all(4),
@@ -331,9 +328,7 @@ class _BranchInfoCard extends StatelessWidget {
       if (!ok) throw Exception('launch returned false');
     } catch (_) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Газрын зураг нээх боломжгүй байна')),
-      );
+      AppMessages.show('Газрын зураг нээх боломжгүй байна');
     }
   }
 

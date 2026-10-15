@@ -1,11 +1,11 @@
-import 'package:carcare_customer_mobile/core/errors/app_failure.dart';
-import 'package:carcare_customer_mobile/core/network/api_client.dart';
-import 'package:carcare_customer_mobile/features/booking/data/appointment_dto.dart';
-import 'package:carcare_customer_mobile/features/booking/domain/appointment.dart';
-import 'package:carcare_customer_mobile/features/booking/domain/appointment_payment.dart';
-import 'package:carcare_customer_mobile/features/booking/domain/appointment_repository.dart';
-import 'package:carcare_customer_mobile/features/booking/domain/availability.dart';
-import 'package:carcare_customer_mobile/features/booking/domain/walk_in_order.dart';
+import 'package:carservice_customer/core/errors/app_failure.dart';
+import 'package:carservice_customer/core/network/api_client.dart';
+import 'package:carservice_customer/features/booking/data/appointment_dto.dart';
+import 'package:carservice_customer/features/booking/domain/appointment.dart';
+import 'package:carservice_customer/features/booking/domain/appointment_payment.dart';
+import 'package:carservice_customer/features/booking/domain/appointment_repository.dart';
+import 'package:carservice_customer/features/booking/domain/availability.dart';
+import 'package:carservice_customer/features/booking/domain/walk_in_order.dart';
 
 /// Customer appointment API adapter.
 ///

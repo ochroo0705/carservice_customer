@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:carcare_customer_mobile/core/connectivity/connectivity_service.dart';
+import 'package:carservice_customer/core/connectivity/connectivity_service.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_test/flutter_test.dart';
 

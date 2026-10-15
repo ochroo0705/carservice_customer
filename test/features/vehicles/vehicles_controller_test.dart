@@ -1,12 +1,12 @@
 import 'dart:async';
 
-import 'package:carcare_customer_mobile/core/errors/app_failure.dart';
-import 'package:carcare_customer_mobile/data/cache/in_memory_cache_store.dart';
-import 'package:carcare_customer_mobile/features/vehicles/data/fake_vehicle_repository.dart';
-import 'package:carcare_customer_mobile/features/vehicles/domain/vehicle.dart';
-import 'package:carcare_customer_mobile/features/vehicles/domain/vehicle_repository.dart';
-import 'package:carcare_customer_mobile/features/vehicles/presentation/controllers/vehicles_controller.dart';
-import 'package:carcare_customer_mobile/features/vehicles/presentation/controllers/vehicles_state.dart';
+import 'package:carservice_customer/core/errors/app_failure.dart';
+import 'package:carservice_customer/data/cache/in_memory_cache_store.dart';
+import 'package:carservice_customer/features/vehicles/data/fake_vehicle_repository.dart';
+import 'package:carservice_customer/features/vehicles/domain/vehicle.dart';
+import 'package:carservice_customer/features/vehicles/domain/vehicle_repository.dart';
+import 'package:carservice_customer/features/vehicles/presentation/controllers/vehicles_controller.dart';
+import 'package:carservice_customer/features/vehicles/presentation/controllers/vehicles_state.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

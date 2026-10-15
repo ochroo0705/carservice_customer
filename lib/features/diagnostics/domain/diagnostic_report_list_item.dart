@@ -1,4 +1,4 @@
-import 'package:carcare_customer_mobile/features/diagnostics/domain/report_severity.dart';
+import 'package:carservice_customer/features/diagnostics/domain/report_severity.dart';
 
 /// "Оношилгооны түүх" жагсаалтын нэг мөр — товч мэдээлэл. Бүрэн бөглөлтийг
 /// [DiagnosticReportDetail] дуудлагаас авна (харах: history feature-ийн

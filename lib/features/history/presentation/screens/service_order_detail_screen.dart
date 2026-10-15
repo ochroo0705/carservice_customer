@@ -1,14 +1,14 @@
-import 'package:carcare_customer_mobile/app/theme/app_surfaces.dart';
-import 'package:carcare_customer_mobile/core/widgets/skeletons.dart';
-import 'package:carcare_customer_mobile/core/errors/app_failure.dart';
-import 'package:carcare_customer_mobile/features/history/domain/service_history_repository.dart';
-import 'package:carcare_customer_mobile/features/history/domain/service_order_detail.dart';
-import 'package:carcare_customer_mobile/features/history/domain/service_order_item.dart';
-import 'package:carcare_customer_mobile/features/history/presentation/controllers/history_controller.dart';
-import 'package:carcare_customer_mobile/features/history/presentation/format_amount.dart';
-import 'package:carcare_customer_mobile/features/history/presentation/widgets/diagnostic_report_row.dart';
-import 'package:carcare_customer_mobile/features/history/presentation/widgets/order_intake_tile.dart';
-import 'package:carcare_customer_mobile/features/history/presentation/widgets/service_order_status_chip.dart';
+import 'package:carservice_customer/app/theme/app_surfaces.dart';
+import 'package:carservice_customer/core/widgets/skeletons.dart';
+import 'package:carservice_customer/core/errors/app_failure.dart';
+import 'package:carservice_customer/features/history/domain/service_history_repository.dart';
+import 'package:carservice_customer/features/history/domain/service_order_detail.dart';
+import 'package:carservice_customer/features/history/domain/service_order_item.dart';
+import 'package:carservice_customer/features/history/presentation/controllers/history_controller.dart';
+import 'package:carservice_customer/features/history/presentation/format_amount.dart';
+import 'package:carservice_customer/features/history/presentation/widgets/diagnostic_report_row.dart';
+import 'package:carservice_customer/features/history/presentation/widgets/order_intake_tile.dart';
+import 'package:carservice_customer/features/history/presentation/widgets/service_order_status_chip.dart';
 import 'package:flutter/material.dart';
 
 enum _DetailStatus { loading, data, error }

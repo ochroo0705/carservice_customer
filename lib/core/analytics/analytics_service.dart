@@ -2,7 +2,7 @@ import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/foundation.dart';
 
 /// Product analytics, injectable so widget tests (and anything constructing
-/// `CarCareCustomerApp` without `main()`/`Firebase.initializeApp()`) never touch
+/// `CarserviceApp` without `main()`/`Firebase.initializeApp()`) never touch
 /// the real plugin unless explicitly given a [FirebaseAnalyticsService].
 ///
 /// Events carry no personal data — only flow/step names and outcomes.

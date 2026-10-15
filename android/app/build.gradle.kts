@@ -39,8 +39,10 @@ plugins {
 }
 
 android {
-    namespace = "mn.carcare.carcare_customer_mobile"
-    compileSdk = maxOf(flutter.compileSdkVersion, 36)
+    namespace = "mn.infosystems.carservice"
+    // permission_handler_android 13 is compiled against API 37 and requires
+    // apps that use it to compile against 37 too. targetSdk stays 36.
+    compileSdk = maxOf(flutter.compileSdkVersion, 37)
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -51,7 +53,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "mn.infosystems.mn.customer"
+        applicationId = "mn.infosystems.carservice"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion

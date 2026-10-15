@@ -1,4 +1,4 @@
-import 'package:carcare_customer_mobile/features/devices/data/device_id_store.dart';
+import 'package:carservice_customer/features/devices/data/device_id_store.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

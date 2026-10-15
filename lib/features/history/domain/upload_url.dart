@@ -1,4 +1,4 @@
-import 'package:carcare_customer_mobile/core/config/app_environment.dart';
+import 'package:carservice_customer/core/config/app_environment.dart';
 
 /// Серверийн `/uploads/...` харьцангуй замыг API-ийн origin дээр үндэслэн
 /// бүтэн URL болгоно. `http(s)://` URL өөрчлөгдөхгүй. Origin нь

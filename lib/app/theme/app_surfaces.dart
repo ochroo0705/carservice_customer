@@ -1,6 +1,6 @@
 import 'dart:ui';
 
-import 'package:carcare_customer_mobile/app/theme/app_theme.dart';
+import 'package:carservice_customer/app/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 
 class AppShellBackground extends StatelessWidget {
@@ -9,7 +9,7 @@ class AppShellBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = CarCareTheme.of(context);
+    final theme = CarserviceTheme.of(context);
     final dark = Theme.of(context).brightness == Brightness.dark;
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -94,7 +94,7 @@ class _GlassSurfaceState extends State<GlassSurface>
 
   @override
   Widget build(BuildContext context) {
-    final theme = CarCareTheme.of(context);
+    final theme = CarserviceTheme.of(context);
     final surface = ClipRRect(
       borderRadius: BorderRadius.circular(AppRadii.large),
       child: BackdropFilter(
@@ -131,8 +131,8 @@ class _GlassSurfaceState extends State<GlassSurface>
   }
 }
 
-class CarCareBrand extends StatelessWidget {
-  const CarCareBrand({this.compact = false, super.key});
+class CarserviceBrand extends StatelessWidget {
+  const CarserviceBrand({this.compact = false, super.key});
   final bool compact;
 
   @override

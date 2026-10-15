@@ -1,5 +1,5 @@
-import 'package:carcare_customer_mobile/features/discovery/presentation/widgets/location_permission_banner.dart';
-import 'package:carcare_customer_mobile/features/discovery/services/location_permission_service.dart';
+import 'package:carservice_customer/features/discovery/presentation/widgets/location_permission_banner.dart';
+import 'package:carservice_customer/features/discovery/services/location_permission_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

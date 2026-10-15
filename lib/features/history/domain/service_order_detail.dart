@@ -1,7 +1,7 @@
-import 'package:carcare_customer_mobile/features/history/domain/diagnostic_report_summary.dart';
-import 'package:carcare_customer_mobile/features/history/domain/order_intake.dart';
-import 'package:carcare_customer_mobile/features/history/domain/service_order.dart';
-import 'package:carcare_customer_mobile/features/history/domain/service_order_item.dart';
+import 'package:carservice_customer/features/history/domain/diagnostic_report_summary.dart';
+import 'package:carservice_customer/features/history/domain/order_intake.dart';
+import 'package:carservice_customer/features/history/domain/service_order.dart';
+import 'package:carservice_customer/features/history/domain/service_order_item.dart';
 
 /// Full detail view of a single order, including line items. Fetched
 /// separately from the list per the sparse-list/rich-detail split.

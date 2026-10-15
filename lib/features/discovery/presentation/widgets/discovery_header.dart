@@ -1,8 +1,9 @@
-import 'package:carcare_customer_mobile/app/theme/app_surfaces.dart';
-import 'package:carcare_customer_mobile/app/theme/app_theme.dart';
-import 'package:carcare_customer_mobile/features/discovery/presentation/controllers/discovery_controller.dart';
-import 'package:carcare_customer_mobile/features/discovery/presentation/widgets/branch_filter_panel.dart';
-import 'package:carcare_customer_mobile/features/discovery/services/device_location_service.dart';
+import 'package:carservice_customer/app/app_messages.dart';
+import 'package:carservice_customer/app/theme/app_surfaces.dart';
+import 'package:carservice_customer/app/theme/app_theme.dart';
+import 'package:carservice_customer/features/discovery/presentation/controllers/discovery_controller.dart';
+import 'package:carservice_customer/features/discovery/presentation/widgets/branch_filter_panel.dart';
+import 'package:carservice_customer/features/discovery/services/device_location_service.dart';
 import 'package:flutter/material.dart';
 
 class DiscoveryHeader extends StatelessWidget {
@@ -148,12 +149,8 @@ class DiscoveryFiltersPanel extends StatelessWidget {
           : null,
     );
     if (!ok && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Байршлыг авч чадсангүй. Байршлын зөвшөөрөл, тохиргоогоо шалгана уу.',
-          ),
-        ),
+      AppMessages.show(
+        'Байршлыг авч чадсангүй. Байршлын зөвшөөрөл, тохиргоогоо шалгана уу.',
       );
     }
   }

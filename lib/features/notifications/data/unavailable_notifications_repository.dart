@@ -1,7 +1,7 @@
-import 'package:carcare_customer_mobile/core/errors/app_failure.dart';
-import 'package:carcare_customer_mobile/features/notifications/domain/app_notification.dart';
-import 'package:carcare_customer_mobile/features/notifications/domain/notifications_page.dart';
-import 'package:carcare_customer_mobile/features/notifications/domain/notifications_repository.dart';
+import 'package:carservice_customer/core/errors/app_failure.dart';
+import 'package:carservice_customer/features/notifications/domain/app_notification.dart';
+import 'package:carservice_customer/features/notifications/domain/notifications_page.dart';
+import 'package:carservice_customer/features/notifications/domain/notifications_repository.dart';
 
 /// Notifications repository for **real API builds**, where no notifications
 /// list/read-state endpoint exists yet (D-014). `getNotifications` throws

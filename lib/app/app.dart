@@ -1,41 +1,42 @@
-import 'package:carcare_customer_mobile/core/notifications/local_push_service.dart';
-import 'package:carcare_customer_mobile/app/app_dependencies.dart';
-import 'package:carcare_customer_mobile/core/widgets/network_status_strip.dart';
-import 'package:carcare_customer_mobile/core/analytics/analytics_service.dart';
-import 'package:carcare_customer_mobile/app/customer_app_services.dart';
-import 'package:carcare_customer_mobile/app/customer_navigation.dart';
-import 'package:carcare_customer_mobile/app/customer_router.dart';
-import 'package:carcare_customer_mobile/app/theme/app_theme.dart';
-import 'package:carcare_customer_mobile/app/theme/theme_controller.dart';
-import 'package:carcare_customer_mobile/core/connectivity/connectivity_service.dart';
-import 'package:carcare_customer_mobile/core/notifications/remote_push_service.dart';
-import 'package:carcare_customer_mobile/data/cache/cache_store.dart';
-import 'package:carcare_customer_mobile/features/booking/data/fake_appointment_repository.dart';
-import 'package:carcare_customer_mobile/features/booking/domain/appointment_repository.dart';
-import 'package:carcare_customer_mobile/features/auth/data/fake_auth_repository.dart';
-import 'package:carcare_customer_mobile/features/auth/domain/auth_repository.dart';
-import 'package:carcare_customer_mobile/features/devices/data/device_id_store.dart';
-import 'package:carcare_customer_mobile/features/devices/data/fake_device_repository.dart';
-import 'package:carcare_customer_mobile/features/devices/domain/device_repository.dart';
-import 'package:carcare_customer_mobile/features/diagnostics/data/fake_diagnostics_repository.dart';
-import 'package:carcare_customer_mobile/features/diagnostics/domain/diagnostics_repository.dart';
-import 'package:carcare_customer_mobile/features/discovery/domain/organization_repository.dart';
-import 'package:carcare_customer_mobile/features/history/data/fake_service_history_repository.dart';
-import 'package:carcare_customer_mobile/features/history/domain/service_history_repository.dart';
-import 'package:carcare_customer_mobile/features/notifications/data/fake_notifications_repository.dart';
-import 'package:carcare_customer_mobile/features/notifications/domain/notifications_repository.dart';
-import 'package:carcare_customer_mobile/features/legal/data/legal_consent_store.dart';
-import 'package:carcare_customer_mobile/features/onboarding/presentation/onboarding_gate.dart';
-import 'package:carcare_customer_mobile/features/splash/presentation/splash_gate.dart';
-import 'package:carcare_customer_mobile/features/vehicles/data/fake_vehicle_repository.dart';
-import 'package:carcare_customer_mobile/features/vehicles/domain/vehicle_repository.dart';
+import 'package:carservice_customer/app/app_messages.dart';
+import 'package:carservice_customer/core/notifications/local_push_service.dart';
+import 'package:carservice_customer/app/app_dependencies.dart';
+import 'package:carservice_customer/core/widgets/network_status_strip.dart';
+import 'package:carservice_customer/core/analytics/analytics_service.dart';
+import 'package:carservice_customer/app/customer_app_services.dart';
+import 'package:carservice_customer/app/customer_navigation.dart';
+import 'package:carservice_customer/app/customer_router.dart';
+import 'package:carservice_customer/app/theme/app_theme.dart';
+import 'package:carservice_customer/app/theme/theme_controller.dart';
+import 'package:carservice_customer/core/connectivity/connectivity_service.dart';
+import 'package:carservice_customer/core/notifications/remote_push_service.dart';
+import 'package:carservice_customer/data/cache/cache_store.dart';
+import 'package:carservice_customer/features/booking/data/fake_appointment_repository.dart';
+import 'package:carservice_customer/features/booking/domain/appointment_repository.dart';
+import 'package:carservice_customer/features/booking/auth/data/fake_auth_repository.dart';
+import 'package:carservice_customer/features/booking/auth/domain/auth_repository.dart';
+import 'package:carservice_customer/features/devices/data/device_id_store.dart';
+import 'package:carservice_customer/features/devices/data/fake_device_repository.dart';
+import 'package:carservice_customer/features/devices/domain/device_repository.dart';
+import 'package:carservice_customer/features/diagnostics/data/fake_diagnostics_repository.dart';
+import 'package:carservice_customer/features/diagnostics/domain/diagnostics_repository.dart';
+import 'package:carservice_customer/features/discovery/domain/organization_repository.dart';
+import 'package:carservice_customer/features/history/data/fake_service_history_repository.dart';
+import 'package:carservice_customer/features/history/domain/service_history_repository.dart';
+import 'package:carservice_customer/features/notifications/data/fake_notifications_repository.dart';
+import 'package:carservice_customer/features/notifications/domain/notifications_repository.dart';
+import 'package:carservice_customer/features/legal/data/legal_consent_store.dart';
+import 'package:carservice_customer/features/onboarding/presentation/onboarding_gate.dart';
+import 'package:carservice_customer/features/splash/presentation/splash_gate.dart';
+import 'package:carservice_customer/features/vehicles/data/fake_vehicle_repository.dart';
+import 'package:carservice_customer/features/vehicles/domain/vehicle_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-class CarCareCustomerApp extends StatefulWidget {
+class CarserviceApp extends StatefulWidget {
   /// Production entry point: every dependency comes from the composition root.
-  CarCareCustomerApp.fromDependencies(AppDependencies dependencies, {Key? key})
+  CarserviceApp.fromDependencies(AppDependencies dependencies, {Key? key})
     : this(
         organizationRepository: dependencies.organizationRepository,
         authRepository: dependencies.authRepository,
@@ -53,8 +54,8 @@ class CarCareCustomerApp extends StatefulWidget {
       );
 
   /// The Fake/Noop defaults below exist for widget tests only; production goes
-  /// through [CarCareCustomerApp.fromDependencies] and passes everything.
-  CarCareCustomerApp({
+  /// through [CarserviceApp.fromDependencies] and passes everything.
+  CarserviceApp({
     required this.organizationRepository,
     AuthRepository? authRepository,
     AppointmentRepository? appointmentRepository,
@@ -71,20 +72,16 @@ class CarCareCustomerApp extends StatefulWidget {
     this.legalConsentStore,
     super.key,
   }) : authRepository = authRepository ?? FakeAuthRepository(),
-       appointmentRepository =
-           appointmentRepository ?? FakeAppointmentRepository(),
+       appointmentRepository = appointmentRepository ?? FakeAppointmentRepository(),
        vehicleRepository = vehicleRepository ?? FakeVehicleRepository(),
        historyRepository = historyRepository ?? FakeServiceHistoryRepository(),
-       diagnosticsRepository =
-           diagnosticsRepository ?? FakeDiagnosticsRepository(),
-       notificationsRepository =
-           notificationsRepository ?? FakeNotificationsRepository(),
+       diagnosticsRepository = diagnosticsRepository ?? FakeDiagnosticsRepository(),
+       notificationsRepository = notificationsRepository ?? FakeNotificationsRepository(),
        deviceRepository = deviceRepository ?? FakeDeviceRepository(),
        remotePushService = remotePushService ?? const NoopRemotePushService(),
        analytics = analytics ?? const NoopAnalyticsService(),
        deviceIdStore = deviceIdStore ?? DeviceIdStore(),
-       connectivityService =
-           connectivityService ?? const NoopConnectivityService(),
+       connectivityService = connectivityService ?? const NoopConnectivityService(),
        cacheStore = cacheStore ?? const NoopCacheStore();
   final OrganizationRepository organizationRepository;
   final AuthRepository authRepository;
@@ -104,15 +101,14 @@ class CarCareCustomerApp extends StatefulWidget {
   final LegalConsentStore? legalConsentStore;
 
   @override
-  State<CarCareCustomerApp> createState() => _CarCareCustomerAppState();
+  State<CarserviceApp> createState() => _CarserviceAppState();
 }
 
-class _CarCareCustomerAppState extends State<CarCareCustomerApp> {
+class _CarserviceAppState extends State<CarserviceApp> {
   late final CustomerAppServices _services;
   late final CustomerNavigation _navigation;
   late final GoRouter _router;
   late final ThemeController _themeController;
-  final _messengerKey = GlobalKey<ScaffoldMessengerState>();
 
   @override
   void initState() {
@@ -134,8 +130,7 @@ class _CarCareCustomerAppState extends State<CarCareCustomerApp> {
       cacheStore: widget.cacheStore,
       legalConsentStore: widget.legalConsentStore,
     );
-    _services.showMessage = (m) =>
-        _messengerKey.currentState?.showSnackBar(SnackBar(content: Text(m)));
+    _services.showMessage = AppMessages.show;
     _navigation = CustomerNavigation(_services);
     _router = buildCustomerRouter(_services, _navigation);
     _navigation.router = _router;
@@ -163,9 +158,7 @@ class _CarCareCustomerAppState extends State<CarCareCustomerApp> {
     providers: [
       ChangeNotifierProvider.value(value: _themeController),
       ChangeNotifierProvider.value(value: _services.discoveryController),
-      ChangeNotifierProvider.value(
-        value: _services.organizationDetailController,
-      ),
+      ChangeNotifierProvider.value(value: _services.organizationDetailController),
       ChangeNotifierProvider.value(value: _services.authController),
       ChangeNotifierProvider.value(value: _services.appointmentsController),
       ChangeNotifierProvider.value(value: _services.vehiclesController),
@@ -178,7 +171,7 @@ class _CarCareCustomerAppState extends State<CarCareCustomerApp> {
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: _themeController.mode,
-      scaffoldMessengerKey: _messengerKey,
+      scaffoldMessengerKey: AppMessages.messengerKey,
       routerConfig: _router,
       builder: (context, child) => SplashGate(
         child: OnboardingGate(

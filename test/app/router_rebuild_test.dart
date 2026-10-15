@@ -1,19 +1,19 @@
-import 'package:carcare_customer_mobile/app/bootstrap_flags.dart';
-import 'package:carcare_customer_mobile/app/customer_app_services.dart';
-import 'package:carcare_customer_mobile/app/customer_shell.dart';
-import 'package:carcare_customer_mobile/core/connectivity/connectivity_service.dart';
-import 'package:carcare_customer_mobile/core/notifications/remote_push_service.dart';
-import 'package:carcare_customer_mobile/data/cache/cache_store.dart';
-import 'package:carcare_customer_mobile/features/auth/data/fake_auth_repository.dart';
-import 'package:carcare_customer_mobile/features/booking/data/fake_appointment_repository.dart';
-import 'package:carcare_customer_mobile/features/devices/data/device_id_store.dart';
-import 'package:carcare_customer_mobile/features/devices/data/fake_device_repository.dart';
-import 'package:carcare_customer_mobile/features/diagnostics/data/fake_diagnostics_repository.dart';
-import 'package:carcare_customer_mobile/features/discovery/data/fake_organization_repository.dart';
-import 'package:carcare_customer_mobile/features/discovery/presentation/controllers/discovery_controller.dart';
-import 'package:carcare_customer_mobile/features/history/data/fake_service_history_repository.dart';
-import 'package:carcare_customer_mobile/features/notifications/data/fake_notifications_repository.dart';
-import 'package:carcare_customer_mobile/features/vehicles/data/fake_vehicle_repository.dart';
+import 'package:carservice_customer/app/bootstrap_flags.dart';
+import 'package:carservice_customer/app/customer_app_services.dart';
+import 'package:carservice_customer/app/customer_shell.dart';
+import 'package:carservice_customer/core/connectivity/connectivity_service.dart';
+import 'package:carservice_customer/core/notifications/remote_push_service.dart';
+import 'package:carservice_customer/data/cache/cache_store.dart';
+import 'package:carservice_customer/features/booking/auth/data/fake_auth_repository.dart';
+import 'package:carservice_customer/features/booking/data/fake_appointment_repository.dart';
+import 'package:carservice_customer/features/devices/data/device_id_store.dart';
+import 'package:carservice_customer/features/devices/data/fake_device_repository.dart';
+import 'package:carservice_customer/features/diagnostics/data/fake_diagnostics_repository.dart';
+import 'package:carservice_customer/features/discovery/data/fake_organization_repository.dart';
+import 'package:carservice_customer/features/discovery/presentation/controllers/discovery_controller.dart';
+import 'package:carservice_customer/features/history/data/fake_service_history_repository.dart';
+import 'package:carservice_customer/features/notifications/data/fake_notifications_repository.dart';
+import 'package:carservice_customer/features/vehicles/data/fake_vehicle_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -58,37 +58,34 @@ void main() {
     cacheStore: const NoopCacheStore(),
   );
 
-  test(
-    'loading data-only controllers does not rebuild the page stack',
-    () async {
-      final services = buildServices();
-      // The constructor kicks off discovery load + session restore; let those
-      // settle before counting, so the test measures our own calls.
-      await pumpEventQueue();
+  test('loading data-only controllers does not rebuild the page stack', () async {
+    final services = buildServices();
+    // The constructor kicks off discovery load + session restore; let those
+    // settle before counting, so the test measures our own calls.
+    await pumpEventQueue();
 
-      var rebuilds = 0;
-      void count() => rebuilds++;
-      services.routerRefresh.addListener(count);
+    var rebuilds = 0;
+    void count() => rebuilds++;
+    services.routerRefresh.addListener(count);
 
-      await services.discoveryController.load();
-      await services.notificationsController.load();
-      await services.appointmentsController.load();
-      await services.vehiclesController.load();
-      await services.historyController.load();
-      await pumpEventQueue();
+    await services.discoveryController.load();
+    await services.notificationsController.load();
+    await services.appointmentsController.load();
+    await services.vehiclesController.load();
+    await services.historyController.load();
+    await pumpEventQueue();
 
-      expect(
-        rebuilds,
-        0,
-        reason:
-            'Screens read these through Provider and rebuild themselves; '
-            'the router must not rebuild every page for them.',
-      );
+    expect(
+      rebuilds,
+      0,
+      reason:
+          'Screens read these through Provider and rebuild themselves; '
+          'the router must not rebuild every page for them.',
+    );
 
-      services.routerRefresh.removeListener(count);
-      services.dispose();
-    },
-  );
+    services.routerRefresh.removeListener(count);
+    services.dispose();
+  });
 
   test('auth changes still rebuild — the page stack depends on them', () async {
     final services = buildServices();
@@ -113,18 +110,14 @@ void main() {
     services.dispose();
   });
 
-  testWidgets('a discovery load does not rebuild the router pages', (
-    tester,
-  ) async {
+  testWidgets('a discovery load does not rebuild the router pages', (tester) async {
     await pumpApp(tester);
     final router = GoRouter.of(tester.element(find.byType(CustomerShell)));
     var notifications = 0;
     void count() => notifications++;
     router.routerDelegate.addListener(count);
 
-    final discovery = tester
-        .element(find.byType(CustomerShell))
-        .read<DiscoveryController>();
+    final discovery = tester.element(find.byType(CustomerShell)).read<DiscoveryController>();
     await discovery.load();
     await tester.pumpAndSettle();
 

@@ -1,9 +1,9 @@
-import 'package:carcare_customer_mobile/core/errors/app_failure.dart';
-import 'package:carcare_customer_mobile/core/notifications/local_push_service.dart';
-import 'package:carcare_customer_mobile/features/notifications/domain/app_notification.dart';
-import 'package:carcare_customer_mobile/features/notifications/domain/notification_type.dart';
-import 'package:carcare_customer_mobile/features/notifications/domain/notifications_repository.dart';
-import 'package:carcare_customer_mobile/features/notifications/presentation/controllers/notifications_state.dart';
+import 'package:carservice_customer/core/errors/app_failure.dart';
+import 'package:carservice_customer/core/notifications/local_push_service.dart';
+import 'package:carservice_customer/features/notifications/domain/app_notification.dart';
+import 'package:carservice_customer/features/notifications/domain/notification_type.dart';
+import 'package:carservice_customer/features/notifications/domain/notifications_repository.dart';
+import 'package:carservice_customer/features/notifications/presentation/controllers/notifications_state.dart';
 import 'package:flutter/foundation.dart';
 
 class NotificationsController extends ChangeNotifier {
@@ -113,7 +113,7 @@ class NotificationsController extends ChangeNotifier {
   }
 
   /// Called when a real FCM message arrives while the app is in the
-  /// foreground (foreground messages don't auto-display, unlike
+  /// foreground (on Android foreground messages don't auto-display, unlike
   /// background/terminated ones, which the OS shows on its own). Takes plain
   /// fields rather than a `RemoteMessage` so this controller doesn't depend
   /// on the `firebase_messaging` package directly — the caller (router
@@ -148,6 +148,10 @@ class NotificationsController extends ChangeNotifier {
       // The in-app list may be unavailable in a real build — never let that
       // stop the local banner below, which is the actual notification.
     }
+    // iOS presents the push itself in the foreground
+    // (`setForegroundNotificationPresentationOptions` in main.dart); a local
+    // banner on top would show it twice. Android never does, so it needs one.
+    if (defaultTargetPlatform == TargetPlatform.iOS) return;
     await _pushService.show(notification);
   }
 }

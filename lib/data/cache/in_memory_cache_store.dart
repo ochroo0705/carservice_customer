@@ -1,8 +1,8 @@
-import 'package:carcare_customer_mobile/data/cache/cache_store.dart';
-import 'package:carcare_customer_mobile/features/booking/domain/appointment.dart';
-import 'package:carcare_customer_mobile/features/discovery/domain/organization.dart';
-import 'package:carcare_customer_mobile/features/history/domain/service_order.dart';
-import 'package:carcare_customer_mobile/features/vehicles/domain/vehicle.dart';
+import 'package:carservice_customer/data/cache/cache_store.dart';
+import 'package:carservice_customer/features/booking/domain/appointment.dart';
+import 'package:carservice_customer/features/discovery/domain/organization.dart';
+import 'package:carservice_customer/features/history/domain/service_order.dart';
+import 'package:carservice_customer/features/vehicles/domain/vehicle.dart';
 
 /// Pure-Dart [CacheStore] that keeps collections in memory. Lets unit tests
 /// exercise the offline-cache fallback (persistence across controller

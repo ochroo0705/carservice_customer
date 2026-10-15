@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 /// Mirrors the web app's `.landing-ops` accent token system
-/// (`carcare.mn/app/globals.css`), which is what the live customer portal
+/// (`carservice.mn/app/globals.css`), which is what the live customer portal
 /// (sidebar + page content alike) actually renders — see COWORK.md D-021.
 /// Accent switched amber -> cyan on 2026-09-10 (web commit `f15b477`,
 /// COWORK.md D-086) — the `accent*`/`onAccent` names below are no longer
@@ -71,8 +71,8 @@ abstract final class AppRadii {
 }
 
 @immutable
-class CarCareTheme extends ThemeExtension<CarCareTheme> {
-  const CarCareTheme({
+class CarserviceTheme extends ThemeExtension<CarserviceTheme> {
+  const CarserviceTheme({
     required this.shellBackground,
     required this.shellSurface,
     required this.glass,
@@ -89,11 +89,11 @@ class CarCareTheme extends ThemeExtension<CarCareTheme> {
   final Color mutedText;
   final Color inputBackground;
 
-  static CarCareTheme of(BuildContext context) =>
-      Theme.of(context).extension<CarCareTheme>()!;
+  static CarserviceTheme of(BuildContext context) =>
+      Theme.of(context).extension<CarserviceTheme>()!;
 
   @override
-  CarCareTheme copyWith({
+  CarserviceTheme copyWith({
     Color? shellBackground,
     Color? shellSurface,
     Color? glass,
@@ -101,7 +101,7 @@ class CarCareTheme extends ThemeExtension<CarCareTheme> {
     Color? glassBorder,
     Color? mutedText,
     Color? inputBackground,
-  }) => CarCareTheme(
+  }) => CarserviceTheme(
     shellBackground: shellBackground ?? this.shellBackground,
     shellSurface: shellSurface ?? this.shellSurface,
     glass: glass ?? this.glass,
@@ -112,9 +112,9 @@ class CarCareTheme extends ThemeExtension<CarCareTheme> {
   );
 
   @override
-  CarCareTheme lerp(CarCareTheme? other, double t) {
+  CarserviceTheme lerp(CarserviceTheme? other, double t) {
     if (other == null) return this;
-    return CarCareTheme(
+    return CarserviceTheme(
       shellBackground: Color.lerp(shellBackground, other.shellBackground, t)!,
       shellSurface: Color.lerp(shellSurface, other.shellSurface, t)!,
       glass: Color.lerp(glass, other.glass, t)!,
@@ -180,7 +180,7 @@ abstract final class AppTheme {
     final inputBorder = dark
         ? AppColors.darkInputBorder
         : AppColors.lightInputBorder;
-    final extension = CarCareTheme(
+    final extension = CarserviceTheme(
       shellBackground: background,
       shellSurface: surface,
       glass: dark ? AppColors.darkGlass : AppColors.lightGlass,

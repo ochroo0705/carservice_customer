@@ -1,16 +1,16 @@
 import 'dart:async';
 
-import 'package:carcare_customer_mobile/features/booking/presentation/controllers/appointments_controller.dart';
-import 'package:carcare_customer_mobile/features/booking/presentation/controllers/appointments_state.dart';
-import 'package:carcare_customer_mobile/features/discovery/presentation/controllers/discovery_controller.dart';
-import 'package:carcare_customer_mobile/features/discovery/presentation/controllers/discovery_state.dart';
-import 'package:carcare_customer_mobile/features/discovery/presentation/controllers/organization_detail_controller.dart';
-import 'package:carcare_customer_mobile/features/history/presentation/controllers/history_controller.dart';
-import 'package:carcare_customer_mobile/features/history/presentation/controllers/history_state.dart';
-import 'package:carcare_customer_mobile/features/notifications/presentation/controllers/notifications_controller.dart';
-import 'package:carcare_customer_mobile/features/notifications/presentation/controllers/notifications_state.dart';
-import 'package:carcare_customer_mobile/features/vehicles/presentation/controllers/vehicles_controller.dart';
-import 'package:carcare_customer_mobile/features/vehicles/presentation/controllers/vehicles_state.dart';
+import 'package:carservice_customer/features/booking/presentation/controllers/appointments_controller.dart';
+import 'package:carservice_customer/features/booking/presentation/controllers/appointments_state.dart';
+import 'package:carservice_customer/features/discovery/presentation/controllers/discovery_controller.dart';
+import 'package:carservice_customer/features/discovery/presentation/controllers/discovery_state.dart';
+import 'package:carservice_customer/features/discovery/presentation/controllers/organization_detail_controller.dart';
+import 'package:carservice_customer/features/history/presentation/controllers/history_controller.dart';
+import 'package:carservice_customer/features/history/presentation/controllers/history_state.dart';
+import 'package:carservice_customer/features/notifications/presentation/controllers/notifications_controller.dart';
+import 'package:carservice_customer/features/notifications/presentation/controllers/notifications_state.dart';
+import 'package:carservice_customer/features/vehicles/presentation/controllers/vehicles_controller.dart';
+import 'package:carservice_customer/features/vehicles/presentation/controllers/vehicles_state.dart';
 import 'package:flutter/foundation.dart';
 
 /// Clock used for the resume throttle. Tests replace it to move time.

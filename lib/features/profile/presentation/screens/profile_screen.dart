@@ -1,15 +1,16 @@
-import 'package:carcare_customer_mobile/app/theme/app_theme.dart';
-import 'package:carcare_customer_mobile/app/theme/app_surfaces.dart';
-import 'package:carcare_customer_mobile/core/widgets/offline_banner.dart';
-import 'package:carcare_customer_mobile/core/widgets/skeletons.dart';
-import 'package:carcare_customer_mobile/features/auth/domain/account.dart';
-import 'package:carcare_customer_mobile/features/auth/presentation/auth_controller.dart';
-import 'package:carcare_customer_mobile/features/vehicles/domain/vehicle.dart';
-import 'package:carcare_customer_mobile/features/vehicles/presentation/controllers/vehicles_controller.dart';
-import 'package:carcare_customer_mobile/features/vehicles/presentation/controllers/vehicles_state.dart';
+import 'package:carservice_customer/app/app_messages.dart';
+import 'package:carservice_customer/app/theme/app_theme.dart';
+import 'package:carservice_customer/app/theme/app_surfaces.dart';
+import 'package:carservice_customer/core/widgets/offline_banner.dart';
+import 'package:carservice_customer/core/widgets/skeletons.dart';
+import 'package:carservice_customer/features/booking/auth/domain/account.dart';
+import 'package:carservice_customer/features/booking/auth/presentation/auth_controller.dart';
+import 'package:carservice_customer/features/vehicles/domain/vehicle.dart';
+import 'package:carservice_customer/features/vehicles/presentation/controllers/vehicles_controller.dart';
+import 'package:carservice_customer/features/vehicles/presentation/controllers/vehicles_state.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:carcare_customer_mobile/core/widgets/state_views.dart';
+import 'package:carservice_customer/core/widgets/state_views.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({
@@ -17,6 +18,7 @@ class ProfileScreen extends StatelessWidget {
     required this.onAddVehicle,
     this.onVehicleSelected,
     this.onAccountClosureRequested,
+    this.onPasswordSettingsRequested,
     this.onTermsRequested,
     this.onPrivacyRequested,
     super.key,
@@ -29,6 +31,10 @@ class ProfileScreen extends StatelessWidget {
   /// Opens the account-closure page on the router delegate's stack. The tile
   /// is hidden when null.
   final VoidCallback? onAccountClosureRequested;
+
+  /// Opens the account password page (set/change/remove). The tile is hidden
+  /// when null.
+  final VoidCallback? onPasswordSettingsRequested;
 
   /// Open the bundled Үйлчилгээний нөхцөл / Нууцлалын бодлого pages. Each tile
   /// is hidden when its callback is null.
@@ -58,6 +64,7 @@ class ProfileScreen extends StatelessWidget {
                   onSignOut: authController.signOut,
                   onVehicleSelected: onVehicleSelected,
                   onAccountClosureRequested: onAccountClosureRequested,
+                  onPasswordSettingsRequested: onPasswordSettingsRequested,
                   onTermsRequested: onTermsRequested,
                   onPrivacyRequested: onPrivacyRequested,
                 )
@@ -101,16 +108,14 @@ class _UnauthenticatedPrompt extends StatelessWidget {
           Text(
             'Профайлаа харахын тулд нэвтэрнэ үү',
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.titleLarge
-                ?.copyWith(fontWeight: FontWeight.w800),
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 8),
           Text(
             'Таны мэдээлэл болон бүртгэсэн машинууд энд харагдана.',
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
+            style: Theme.of(context).textTheme.bodyMedium
+                ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
           const SizedBox(height: 20),
           FilledButton.icon(
@@ -150,6 +155,7 @@ class _ProfileBody extends StatelessWidget {
     required this.onSignOut,
     this.onVehicleSelected,
     this.onAccountClosureRequested,
+    this.onPasswordSettingsRequested,
     this.onTermsRequested,
     this.onPrivacyRequested,
   });
@@ -159,6 +165,7 @@ class _ProfileBody extends StatelessWidget {
   final VoidCallback onSignOut;
   final ValueChanged<Vehicle>? onVehicleSelected;
   final VoidCallback? onAccountClosureRequested;
+  final VoidCallback? onPasswordSettingsRequested;
   final VoidCallback? onTermsRequested;
   final VoidCallback? onPrivacyRequested;
 
@@ -166,8 +173,7 @@ class _ProfileBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final state = controller.state;
     final items = <Widget>[
-      if (account != null)
-        _ProfileHeader(account: account!, onSignOut: onSignOut),
+      if (account != null) _ProfileHeader(account: account!, onSignOut: onSignOut),
       const _VehiclesHeader(),
       ...switch (state.status) {
         VehiclesStatus.initial || VehiclesStatus.loading => [
@@ -198,9 +204,9 @@ class _ProfileBody extends StatelessWidget {
         VehiclesStatus.data => [
           if (state.isFromCache)
             OfflineBanner(
-              message:
-                  'Сүлжээгүй байна — сүүлд ачаалсан машинуудыг харуулж байна',
-              semanticsLabel: 'Сүлжээгүй байна. Сүүлд ачаалсан машинуудын жагсаалтыг харуулж байна.',
+              message: 'Сүлжээгүй байна — сүүлд ачаалсан машинуудыг харуулж байна',
+              semanticsLabel:
+                  'Сүлжээгүй байна. Сүүлд ачаалсан машинуудын жагсаалтыг харуулж байна.',
               retryKey: const ValueKey('profile-offline-retry'),
               onRetry: controller.load,
             ),
@@ -209,12 +215,17 @@ class _ProfileBody extends StatelessWidget {
               vehicle: vehicle,
               isDeleting: controller.isDeleting(vehicle.id),
               onDelete: () => _confirmDelete(context, controller, vehicle),
-              onTap: onVehicleSelected == null
-                  ? null
-                  : () => onVehicleSelected!(vehicle),
+              onTap: onVehicleSelected == null ? null : () => onVehicleSelected!(vehicle),
             ),
         ],
       },
+      if (account != null && onPasswordSettingsRequested != null)
+        _ProfileLinkTile(
+          key: const ValueKey('profile-password-tile'),
+          icon: Icons.lock_outline,
+          label: 'Нууц үг',
+          onTap: onPasswordSettingsRequested!,
+        ),
       if (onTermsRequested != null)
         _ProfileLinkTile(
           key: const ValueKey('profile-terms-tile'),
@@ -255,10 +266,7 @@ class _ProfileBody extends StatelessWidget {
         title: const Text('Машин устгах уу?'),
         content: Text('${vehicle.make} ${vehicle.model} — ${vehicle.plate}'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Үгүй'),
-          ),
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Үгүй')),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
             child: const Text('Тийм, устгах'),
@@ -269,8 +277,7 @@ class _ProfileBody extends StatelessWidget {
     if (confirmed != true) return;
     final error = await controller.delete(vehicle.id);
     if (error != null && context.mounted) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(error)));
+      AppMessages.show(error);
     }
   }
 }
@@ -294,10 +301,8 @@ class _ProfileHeader extends StatelessWidget {
             backgroundColor: scheme.primary,
             child: Text(
               label.substring(0, 1).toUpperCase(),
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: scheme.onPrimary,
-                fontWeight: FontWeight.w800,
-              ),
+              style: Theme.of(context).textTheme.titleLarge
+                  ?.copyWith(color: scheme.onPrimary, fontWeight: FontWeight.w800),
             ),
           ),
           const SizedBox(width: 14),
@@ -334,12 +339,7 @@ class _ProfileHeader extends StatelessWidget {
 }
 
 class _ProfileLinkTile extends StatelessWidget {
-  const _ProfileLinkTile({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    super.key,
-  });
+  const _ProfileLinkTile({required this.icon, required this.label, required this.onTap, super.key});
 
   final IconData icon;
   final String label;
@@ -353,10 +353,7 @@ class _ProfileLinkTile extends StatelessWidget {
         Icon(icon, color: Theme.of(context).colorScheme.onSurfaceVariant),
         const SizedBox(width: 12),
         Expanded(child: Text(label)),
-        Icon(
-          Icons.chevron_right_rounded,
-          color: Theme.of(context).colorScheme.onSurfaceVariant,
-        ),
+        Icon(Icons.chevron_right_rounded, color: Theme.of(context).colorScheme.onSurfaceVariant),
       ],
     ),
   );
@@ -373,16 +370,10 @@ class _AccountClosureTile extends StatelessWidget {
     onTap: onTap,
     child: Row(
       children: [
-        Icon(
-          Icons.person_off_outlined,
-          color: Theme.of(context).colorScheme.onSurfaceVariant,
-        ),
+        Icon(Icons.person_off_outlined, color: Theme.of(context).colorScheme.onSurfaceVariant),
         const SizedBox(width: 12),
         const Expanded(child: Text('Бүртгэл хаах')),
-        Icon(
-          Icons.chevron_right_rounded,
-          color: Theme.of(context).colorScheme.onSurfaceVariant,
-        ),
+        Icon(Icons.chevron_right_rounded, color: Theme.of(context).colorScheme.onSurfaceVariant),
       ],
     ),
   );
@@ -399,8 +390,7 @@ class _VehiclesHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Text(
     'Миний машинууд',
-    style: Theme.of(context).textTheme.headlineSmall
-        ?.copyWith(fontWeight: FontWeight.w900),
+    style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900),
   );
 }
 
@@ -426,14 +416,10 @@ class _VehicleCard extends StatelessWidget {
           width: 46,
           height: 46,
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.primary
-                .withValues(alpha: 0.14),
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.14),
             borderRadius: BorderRadius.circular(AppRadii.medium),
           ),
-          child: Icon(
-            Icons.directions_car_outlined,
-            color: Theme.of(context).colorScheme.primary,
-          ),
+          child: Icon(Icons.directions_car_outlined, color: Theme.of(context).colorScheme.primary),
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -450,12 +436,9 @@ class _VehicleCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  vehicle.year == null
-                      ? vehicle.plate
-                      : '${vehicle.plate} · ${vehicle.year}',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                  vehicle.year == null ? vehicle.plate : '${vehicle.plate} · ${vehicle.year}',
+                  style: Theme.of(context).textTheme.bodyMedium
+                      ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
                 if (_vehicleFacts(vehicle).isNotEmpty) ...[
                   const SizedBox(height: 8),
@@ -467,11 +450,7 @@ class _VehicleCard extends StatelessWidget {
                         Text(
                           fact,
                           style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSurfaceVariant,
-                              ),
+                              ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                         ),
                     ],
                   ),
@@ -479,18 +458,14 @@ class _VehicleCard extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text(
                   '${vehicle.serviceCount} үйлчилгээ · ${vehicle.diagnosisCount} оношилгоо',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                  style: Theme.of(context).textTheme.bodySmall
+                      ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
               ],
             ),
           ),
         ),
-        Icon(
-          Icons.chevron_right_rounded,
-          color: Theme.of(context).colorScheme.onSurfaceVariant,
-        ),
+        Icon(Icons.chevron_right_rounded, color: Theme.of(context).colorScheme.onSurfaceVariant),
         IconButton(
           key: ValueKey('delete-vehicle-${vehicle.id}'),
           onPressed: isDeleting ? null : onDelete,
@@ -500,10 +475,7 @@ class _VehicleCard extends StatelessWidget {
                   dimension: 18,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              : Icon(
-                  Icons.delete_outline_rounded,
-                  color: Theme.of(context).colorScheme.error,
-                ),
+              : Icon(Icons.delete_outline_rounded, color: Theme.of(context).colorScheme.error),
         ),
       ],
     ),

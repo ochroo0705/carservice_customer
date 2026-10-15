@@ -1,4 +1,4 @@
-# carcare_customer_mobile — Agent Instructions
+# carservice_customer — Agent Instructions
 
 This repository is worked by two AI agents alternately (Codex and Claude).
 

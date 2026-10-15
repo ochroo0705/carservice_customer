@@ -1,4 +1,4 @@
-import 'package:carcare_customer_mobile/app/theme/app_surfaces.dart';
+import 'package:carservice_customer/app/theme/app_surfaces.dart';
 import 'package:flutter/material.dart';
 
 /// `lockCategories` урсгал үргэлжлэх боломжгүй үеийн бүтэн дэлгэцийн мэдэгдэл

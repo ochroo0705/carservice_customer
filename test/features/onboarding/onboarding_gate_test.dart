@@ -1,7 +1,7 @@
-import 'package:carcare_customer_mobile/core/permissions/notification_permission_service.dart';
-import 'package:carcare_customer_mobile/features/onboarding/data/onboarding_store.dart';
-import 'package:carcare_customer_mobile/features/onboarding/presentation/onboarding_gate.dart';
-import 'package:carcare_customer_mobile/features/onboarding/presentation/screens/onboarding_screen.dart';
+import 'package:carservice_customer/core/permissions/notification_permission_service.dart';
+import 'package:carservice_customer/features/onboarding/data/onboarding_store.dart';
+import 'package:carservice_customer/features/onboarding/presentation/onboarding_gate.dart';
+import 'package:carservice_customer/features/onboarding/presentation/screens/onboarding_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';

@@ -1,35 +1,35 @@
-import 'package:carcare_customer_mobile/core/analytics/analytics_service.dart';
-import 'package:carcare_customer_mobile/core/config/app_environment.dart';
-import 'package:carcare_customer_mobile/core/connectivity/connectivity_service.dart';
-import 'package:carcare_customer_mobile/core/network/api_client.dart';
-import 'package:carcare_customer_mobile/core/notifications/remote_push_service.dart';
-import 'package:carcare_customer_mobile/data/cache/cache_store.dart';
-import 'package:carcare_customer_mobile/features/auth/data/fake_auth_repository.dart';
-import 'package:carcare_customer_mobile/features/auth/data/remote_auth_repository.dart';
-import 'package:carcare_customer_mobile/features/auth/data/secure_session_store.dart';
-import 'package:carcare_customer_mobile/features/auth/domain/auth_repository.dart';
-import 'package:carcare_customer_mobile/features/booking/data/fake_appointment_repository.dart';
-import 'package:carcare_customer_mobile/features/booking/data/remote_appointment_repository.dart';
-import 'package:carcare_customer_mobile/features/booking/domain/appointment_repository.dart';
-import 'package:carcare_customer_mobile/features/devices/data/fake_device_repository.dart';
-import 'package:carcare_customer_mobile/features/devices/data/remote_device_repository.dart';
-import 'package:carcare_customer_mobile/features/devices/domain/device_repository.dart';
-import 'package:carcare_customer_mobile/features/diagnostics/data/fake_diagnostics_repository.dart';
-import 'package:carcare_customer_mobile/features/diagnostics/data/remote_diagnostics_repository.dart';
-import 'package:carcare_customer_mobile/features/diagnostics/domain/diagnostics_repository.dart';
-import 'package:carcare_customer_mobile/features/discovery/data/caching_organization_repository.dart';
-import 'package:carcare_customer_mobile/features/discovery/data/fake_organization_repository.dart';
-import 'package:carcare_customer_mobile/features/discovery/data/remote_organization_repository.dart';
-import 'package:carcare_customer_mobile/features/discovery/domain/organization_repository.dart';
-import 'package:carcare_customer_mobile/features/history/data/fake_service_history_repository.dart';
-import 'package:carcare_customer_mobile/features/history/data/remote_service_history_repository.dart';
-import 'package:carcare_customer_mobile/features/history/domain/service_history_repository.dart';
-import 'package:carcare_customer_mobile/features/notifications/data/fake_notifications_repository.dart';
-import 'package:carcare_customer_mobile/features/notifications/data/remote_notifications_repository.dart';
-import 'package:carcare_customer_mobile/features/notifications/domain/notifications_repository.dart';
-import 'package:carcare_customer_mobile/features/vehicles/data/fake_vehicle_repository.dart';
-import 'package:carcare_customer_mobile/features/vehicles/data/remote_vehicle_repository.dart';
-import 'package:carcare_customer_mobile/features/vehicles/domain/vehicle_repository.dart';
+import 'package:carservice_customer/core/analytics/analytics_service.dart';
+import 'package:carservice_customer/core/config/app_environment.dart';
+import 'package:carservice_customer/core/connectivity/connectivity_service.dart';
+import 'package:carservice_customer/core/network/api_client.dart';
+import 'package:carservice_customer/core/notifications/remote_push_service.dart';
+import 'package:carservice_customer/data/cache/cache_store.dart';
+import 'package:carservice_customer/features/booking/auth/data/fake_auth_repository.dart';
+import 'package:carservice_customer/features/booking/auth/data/remote_auth_repository.dart';
+import 'package:carservice_customer/features/booking/auth/data/secure_session_store.dart';
+import 'package:carservice_customer/features/booking/auth/domain/auth_repository.dart';
+import 'package:carservice_customer/features/booking/data/fake_appointment_repository.dart';
+import 'package:carservice_customer/features/booking/data/remote_appointment_repository.dart';
+import 'package:carservice_customer/features/booking/domain/appointment_repository.dart';
+import 'package:carservice_customer/features/devices/data/fake_device_repository.dart';
+import 'package:carservice_customer/features/devices/data/remote_device_repository.dart';
+import 'package:carservice_customer/features/devices/domain/device_repository.dart';
+import 'package:carservice_customer/features/diagnostics/data/fake_diagnostics_repository.dart';
+import 'package:carservice_customer/features/diagnostics/data/remote_diagnostics_repository.dart';
+import 'package:carservice_customer/features/diagnostics/domain/diagnostics_repository.dart';
+import 'package:carservice_customer/features/discovery/data/caching_organization_repository.dart';
+import 'package:carservice_customer/features/discovery/data/fake_organization_repository.dart';
+import 'package:carservice_customer/features/discovery/data/remote_organization_repository.dart';
+import 'package:carservice_customer/features/discovery/domain/organization_repository.dart';
+import 'package:carservice_customer/features/history/data/fake_service_history_repository.dart';
+import 'package:carservice_customer/features/history/data/remote_service_history_repository.dart';
+import 'package:carservice_customer/features/history/domain/service_history_repository.dart';
+import 'package:carservice_customer/features/notifications/data/fake_notifications_repository.dart';
+import 'package:carservice_customer/features/notifications/data/remote_notifications_repository.dart';
+import 'package:carservice_customer/features/notifications/domain/notifications_repository.dart';
+import 'package:carservice_customer/features/vehicles/data/fake_vehicle_repository.dart';
+import 'package:carservice_customer/features/vehicles/data/remote_vehicle_repository.dart';
+import 'package:carservice_customer/features/vehicles/domain/vehicle_repository.dart';
 
 /// Builds an [ApiClient]. Authenticated clients attach the session token and
 /// clear the session on a 401; unauthenticated ones send no `Authorization`.
@@ -63,14 +63,15 @@ class AppDependencies {
     required AnalyticsService analytics,
     SecureSessionStore? sessionStore,
     ConnectivityService? connectivityService,
-    String baseUrl = AppEnvironment.apiBaseUrl,
-    bool useFakeApi = AppEnvironment.useFakeApi,
+    String? baseUrl,
+    bool? useFakeApi,
     ApiClientFactory? clientFactory,
   }) {
+    final apiBaseUrl = baseUrl ?? AppEnvironment.apiBaseUrl;
     final connectivity =
         connectivityService ??
-        PlatformConnectivityService(probe: ApiReachabilityProbe(baseUrl).call);
-    return useFakeApi
+        PlatformConnectivityService(probe: ApiReachabilityProbe(apiBaseUrl).call);
+    return (useFakeApi ?? AppEnvironment.useFakeApi)
         ? AppDependencies.fake(
             cacheStore: cacheStore,
             remotePushService: remotePushService,
@@ -83,7 +84,7 @@ class AppDependencies {
             analytics: analytics,
             connectivityService: connectivity,
             sessionStore: sessionStore ?? SecureSessionStore(),
-            baseUrl: baseUrl,
+            baseUrl: apiBaseUrl,
             clientFactory: clientFactory,
           );
   }
@@ -95,10 +96,7 @@ class AppDependencies {
     required AnalyticsService analytics,
     required ConnectivityService connectivityService,
   }) => AppDependencies(
-    organizationRepository: CachingOrganizationRepository(
-      FakeOrganizationRepository(),
-      cacheStore,
-    ),
+    organizationRepository: CachingOrganizationRepository(FakeOrganizationRepository(), cacheStore),
     authRepository: FakeAuthRepository(),
     appointmentRepository: FakeAppointmentRepository(),
     vehicleRepository: FakeVehicleRepository(),
@@ -122,18 +120,19 @@ class AppDependencies {
     required AnalyticsService analytics,
     required ConnectivityService connectivityService,
     required SecureSessionStore sessionStore,
-    String baseUrl = AppEnvironment.apiBaseUrl,
+    String? baseUrl,
     ApiClientFactory? clientFactory,
   }) {
+    final apiBaseUrl = baseUrl ?? AppEnvironment.apiBaseUrl;
     final make =
         clientFactory ??
         ({required bool authenticated}) => authenticated
             ? ApiClient(
-                baseUrl: baseUrl,
+                baseUrl: apiBaseUrl,
                 accessTokenProvider: sessionStore.readToken,
                 onUnauthorized: sessionStore.clear,
               )
-            : ApiClient(baseUrl: baseUrl);
+            : ApiClient(baseUrl: apiBaseUrl);
     final authed = make(authenticated: true);
     final public = make(authenticated: false);
     return AppDependencies(

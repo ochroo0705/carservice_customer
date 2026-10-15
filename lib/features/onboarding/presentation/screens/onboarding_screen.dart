@@ -1,8 +1,8 @@
 import 'dart:math' as math;
 
-import 'package:carcare_customer_mobile/app/theme/app_theme.dart';
-import 'package:carcare_customer_mobile/core/analytics/analytics_service.dart';
-import 'package:carcare_customer_mobile/core/permissions/notification_permission_service.dart';
+import 'package:carservice_customer/app/theme/app_theme.dart';
+import 'package:carservice_customer/core/analytics/analytics_service.dart';
+import 'package:carservice_customer/core/permissions/notification_permission_service.dart';
 import 'package:flutter/material.dart';
 
 /// First-run onboarding, three pages: welcome (with an app preview) → how it

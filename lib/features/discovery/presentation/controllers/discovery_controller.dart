@@ -2,12 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
-import 'package:carcare_customer_mobile/core/errors/app_failure.dart';
-import 'package:carcare_customer_mobile/data/cache/cache_store.dart';
-import 'package:carcare_customer_mobile/features/discovery/domain/branch.dart';
-import 'package:carcare_customer_mobile/features/discovery/domain/organization.dart';
-import 'package:carcare_customer_mobile/features/discovery/domain/organization_repository.dart';
-import 'package:carcare_customer_mobile/features/discovery/presentation/controllers/discovery_state.dart';
+import 'package:carservice_customer/core/errors/app_failure.dart';
+import 'package:carservice_customer/data/cache/cache_store.dart';
+import 'package:carservice_customer/features/discovery/domain/branch.dart';
+import 'package:carservice_customer/features/discovery/domain/organization.dart';
+import 'package:carservice_customer/features/discovery/domain/organization_repository.dart';
+import 'package:carservice_customer/features/discovery/presentation/controllers/discovery_state.dart';
 
 class _MapCoverage {
   const _MapCoverage({
@@ -646,7 +646,7 @@ class DiscoveryController extends ChangeNotifier {
     // The old viewport-scoped markers are for the PREVIOUS filter — showing
     // them a moment longer looks like nothing happened. Drop back to the
     // unbounded, already-filtered organization list (same idea as the web
-    // client's `mapMarkers ?? markers` fallback — see carcare.mn's
+    // client's `mapMarkers ?? markers` fallback — see carservice.mn's
     // discover-client.tsx) until a fresh viewport-scoped fetch lands.
     //
     // Deliberately NOT re-requesting markers for the *old* viewport here:

@@ -1,10 +1,10 @@
 import 'dart:async';
 
-import 'package:carcare_customer_mobile/core/notifications/remote_push_service.dart';
-import 'package:carcare_customer_mobile/features/auth/presentation/auth_controller.dart';
-import 'package:carcare_customer_mobile/features/devices/data/device_id_store.dart';
-import 'package:carcare_customer_mobile/features/devices/domain/device_repository.dart';
-import 'package:carcare_customer_mobile/features/notifications/presentation/controllers/notifications_controller.dart';
+import 'package:carservice_customer/core/notifications/remote_push_service.dart';
+import 'package:carservice_customer/features/booking/auth/presentation/auth_controller.dart';
+import 'package:carservice_customer/features/devices/data/device_id_store.dart';
+import 'package:carservice_customer/features/devices/domain/device_repository.dart';
+import 'package:carservice_customer/features/notifications/presentation/controllers/notifications_controller.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
@@ -88,6 +88,9 @@ class PushCoordinator {
   }
 
   void _onForegroundMessage(RemoteMessage message) {
+    if (kDebugMode) {
+      debugPrint('FCM message received: ${message.notification?.title}');
+    }
     final data = message.data;
     final rawType = data['type'];
     final type = rawType is String ? rawType : null;

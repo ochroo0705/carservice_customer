@@ -1,9 +1,10 @@
+import 'package:carservice_customer/app/app_messages.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:carcare_customer_mobile/app/theme/app_surfaces.dart';
-import 'package:carcare_customer_mobile/app/theme/app_theme.dart';
-import 'package:carcare_customer_mobile/features/discovery/domain/branch.dart';
-import 'package:carcare_customer_mobile/features/discovery/domain/organization.dart';
-import 'package:carcare_customer_mobile/features/discovery/presentation/branch_open_style.dart';
+import 'package:carservice_customer/app/theme/app_surfaces.dart';
+import 'package:carservice_customer/app/theme/app_theme.dart';
+import 'package:carservice_customer/features/discovery/domain/branch.dart';
+import 'package:carservice_customer/features/discovery/domain/organization.dart';
+import 'package:carservice_customer/features/discovery/presentation/branch_open_style.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -48,7 +49,7 @@ class BookingHeader extends StatelessWidget {
                   ),
                   borderRadius: BorderRadius.circular(AppRadii.large),
                   border: Border.all(
-                    color: CarCareTheme.of(context).glassBorder,
+                    color: CarserviceTheme.of(context).glassBorder,
                   ),
                 ),
                 clipBehavior: Clip.antiAlias,
@@ -93,11 +94,7 @@ class BookingHeader extends StatelessWidget {
                                 ClipboardData(text: organization.phone!),
                               );
                               if (!context.mounted) return;
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Утасны дугаар хууллаа'),
-                                ),
-                              );
+                              AppMessages.show('Утасны дугаар хууллаа');
                             },
                             child: Padding(
                               padding: const EdgeInsets.all(4),

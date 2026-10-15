@@ -1,9 +1,9 @@
-import 'package:carcare_customer_mobile/core/errors/app_failure.dart';
-import 'package:carcare_customer_mobile/core/network/api_client.dart';
-import 'package:carcare_customer_mobile/features/history/data/service_order_dto.dart';
-import 'package:carcare_customer_mobile/features/history/domain/cancelled_appointment_summary.dart';
-import 'package:carcare_customer_mobile/features/history/domain/service_order_detail.dart';
-import 'package:carcare_customer_mobile/features/history/domain/service_history_repository.dart';
+import 'package:carservice_customer/core/errors/app_failure.dart';
+import 'package:carservice_customer/core/network/api_client.dart';
+import 'package:carservice_customer/features/history/data/service_order_dto.dart';
+import 'package:carservice_customer/features/history/domain/cancelled_appointment_summary.dart';
+import 'package:carservice_customer/features/history/domain/service_order_detail.dart';
+import 'package:carservice_customer/features/history/domain/service_history_repository.dart';
 
 /// `GET /api/v1/app/orders` + `/orders/[id]`-ийн эсрэг ажилладаг бодит
 /// хэрэгжүүлэлт (web commit `79f0e9e`). Backend pagination and filters are

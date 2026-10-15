@@ -1,7 +1,7 @@
-import 'package:carcare_customer_mobile/app/theme/app_theme.dart';
-import 'package:carcare_customer_mobile/features/auth/presentation/auth_controller.dart';
-import 'package:carcare_customer_mobile/features/discovery/presentation/widgets/discovery_map.dart';
-import 'package:carcare_customer_mobile/features/notifications/presentation/controllers/notifications_controller.dart';
+import 'package:carservice_customer/app/theme/app_theme.dart';
+import 'package:carservice_customer/features/booking/auth/presentation/auth_controller.dart';
+import 'package:carservice_customer/features/discovery/presentation/widgets/discovery_map.dart';
+import 'package:carservice_customer/features/notifications/presentation/controllers/notifications_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -19,9 +19,7 @@ class MapRefreshSpinner extends StatelessWidget {
     decoration: BoxDecoration(
       color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.9),
       shape: BoxShape.circle,
-      boxShadow: [
-        BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 6),
-      ],
+      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 6)],
     ),
     padding: const EdgeInsets.all(6),
     child: const CircularProgressIndicator(strokeWidth: 2.5),
@@ -49,9 +47,7 @@ class MapActionStack extends StatelessWidget {
   Widget build(BuildContext context) {
     // Scoped to the two values the stack shows, so an unread-count push or
     // an account change rebuilds this stack and never the map behind it.
-    final showNotifications = context.select<AuthController, bool>(
-      (auth) => auth.account != null,
-    );
+    final showNotifications = context.select<AuthController, bool>((auth) => auth.account != null);
     final unreadCount = context.select<NotificationsController, int>(
       (notifications) => notifications.unreadCount,
     );

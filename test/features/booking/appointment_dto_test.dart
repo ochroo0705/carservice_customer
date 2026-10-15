@@ -1,8 +1,15 @@
+<<<<<<< Updated upstream
 import 'package:carcare_customer_mobile/features/booking/data/appointment_dto.dart';
 import 'package:carcare_customer_mobile/features/booking/domain/appointment_payment.dart';
 import 'package:carcare_customer_mobile/features/booking/domain/appointment_status.dart';
 import 'package:carcare_customer_mobile/features/booking/domain/service_progress.dart';
 import 'package:carcare_customer_mobile/core/errors/app_failure.dart';
+=======
+import 'package:carservice_customer/features/booking/data/appointment_dto.dart';
+import 'package:carservice_customer/features/booking/domain/appointment_status.dart';
+import 'package:carservice_customer/features/booking/domain/service_progress.dart';
+import 'package:carservice_customer/core/errors/app_failure.dart';
+>>>>>>> Stashed changes
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

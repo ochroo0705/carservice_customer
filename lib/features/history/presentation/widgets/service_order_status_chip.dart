@@ -1,7 +1,7 @@
-import 'package:carcare_customer_mobile/app/theme/app_theme.dart';
-import 'package:carcare_customer_mobile/features/history/domain/service_order_status.dart';
+import 'package:carservice_customer/app/theme/app_theme.dart';
+import 'package:carservice_customer/features/history/domain/service_order_status.dart';
 import 'package:flutter/material.dart';
-import 'package:carcare_customer_mobile/core/widgets/status_chip.dart';
+import 'package:carservice_customer/core/widgets/status_chip.dart';
 
 /// Захиалгын төлбөрийн төлөв (unpaid/partial/paid) — түүхийн жагсаалт болон
 /// дэлгэрэнгүй дэлгэц хоёуланд ижилхэн харагдана.

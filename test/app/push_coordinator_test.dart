@@ -1,22 +1,22 @@
 import 'dart:async';
 
-import 'package:carcare_customer_mobile/app/app.dart';
-import 'package:carcare_customer_mobile/app/bootstrap_flags.dart';
-import 'package:carcare_customer_mobile/app/customer_app_services.dart';
-import 'package:carcare_customer_mobile/app/customer_navigation.dart';
+import 'package:carservice_customer/app/app.dart';
+import 'package:carservice_customer/app/bootstrap_flags.dart';
+import 'package:carservice_customer/app/customer_app_services.dart';
+import 'package:carservice_customer/app/customer_navigation.dart';
 import 'package:go_router/go_router.dart';
-import 'package:carcare_customer_mobile/core/connectivity/connectivity_service.dart';
-import 'package:carcare_customer_mobile/core/notifications/remote_push_service.dart';
-import 'package:carcare_customer_mobile/data/cache/cache_store.dart';
-import 'package:carcare_customer_mobile/features/auth/domain/account.dart';
-import 'package:carcare_customer_mobile/features/booking/data/fake_appointment_repository.dart';
-import 'package:carcare_customer_mobile/features/devices/data/device_id_store.dart';
-import 'package:carcare_customer_mobile/features/devices/data/fake_device_repository.dart';
-import 'package:carcare_customer_mobile/features/diagnostics/data/fake_diagnostics_repository.dart';
-import 'package:carcare_customer_mobile/features/discovery/data/fake_organization_repository.dart';
-import 'package:carcare_customer_mobile/features/history/data/fake_service_history_repository.dart';
-import 'package:carcare_customer_mobile/features/notifications/data/fake_notifications_repository.dart';
-import 'package:carcare_customer_mobile/features/vehicles/data/fake_vehicle_repository.dart';
+import 'package:carservice_customer/core/connectivity/connectivity_service.dart';
+import 'package:carservice_customer/core/notifications/remote_push_service.dart';
+import 'package:carservice_customer/data/cache/cache_store.dart';
+import 'package:carservice_customer/features/booking/auth/domain/account.dart';
+import 'package:carservice_customer/features/booking/data/fake_appointment_repository.dart';
+import 'package:carservice_customer/features/devices/data/device_id_store.dart';
+import 'package:carservice_customer/features/devices/data/fake_device_repository.dart';
+import 'package:carservice_customer/features/diagnostics/data/fake_diagnostics_repository.dart';
+import 'package:carservice_customer/features/discovery/data/fake_organization_repository.dart';
+import 'package:carservice_customer/features/history/data/fake_service_history_repository.dart';
+import 'package:carservice_customer/features/notifications/data/fake_notifications_repository.dart';
+import 'package:carservice_customer/features/vehicles/data/fake_vehicle_repository.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -31,8 +31,7 @@ class _Push extends Fake implements RemotePushService {
   String? token;
   RemoteMessage? initial;
 
-  void arrive(Map<String, dynamic> data) =>
-      _incoming.add(RemoteMessage(data: data));
+  void arrive(Map<String, dynamic> data) => _incoming.add(RemoteMessage(data: data));
   void refresh(String t) => _refresh.add(t);
 
   @override
@@ -68,21 +67,16 @@ void main() {
   setUpAll(() => debugDisableAppBootstrap = true);
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
-  testWidgets('cold-start tap waits for a slow session restore', (
-    tester,
-  ) async {
+  testWidgets('cold-start tap waits for a slow session restore', (tester) async {
     final restore = Completer<Account?>();
     final auth = signedInAuthRepository();
     when(() => auth.restoreSession()).thenAnswer((_) => restore.future);
     final push = _Push()
       ..initial = RemoteMessage(
-        data: const {
-          'type': 'appointment_confirmed',
-          'appointmentId': 'seed-1',
-        },
+        data: const {'type': 'appointment_confirmed', 'appointmentId': 'seed-1'},
       );
     await tester.pumpWidget(
-      CarCareCustomerApp(
+      CarserviceApp(
         organizationRepository: FakeOrganizationRepository(),
         authRepository: auth,
         appointmentRepository: FakeAppointmentRepository(),
@@ -105,9 +99,7 @@ void main() {
       push = _Push();
       devices = _Devices();
       services = CustomerAppServices(
-        organizationRepository: FakeOrganizationRepository(
-          delay: Duration.zero,
-        ),
+        organizationRepository: FakeOrganizationRepository(delay: Duration.zero),
         authRepository: signedInAuthRepository(),
         appointmentRepository: FakeAppointmentRepository(),
         vehicleRepository: FakeVehicleRepository(),
@@ -125,26 +117,20 @@ void main() {
 
     tearDown(() => services.dispose());
 
-    test(
-      'a foreground push with a non-string type is ignored, not thrown',
-      () async {
-        await boot();
-        push.arrive({'type': 42, 'reason': 'deleted'});
-        await pumpEventQueue();
-        expect(services.authController.isAuthenticated, isTrue);
-      },
-    );
+    test('a foreground push with a non-string type is ignored, not thrown', () async {
+      await boot();
+      push.arrive({'type': 42, 'reason': 'deleted'});
+      await pumpEventQueue();
+      expect(services.authController.isAuthenticated, isTrue);
+    });
 
-    test(
-      'a tap with a non-string type is delivered without the type',
-      () async {
-        await boot();
-        Map<String, dynamic>? got;
-        services.onNotificationTap = (d) => got = d;
-        services.push.handleTap({'type': 7, 'appointmentId': 'a1'});
-        expect(got, {'appointmentId': 'a1'});
-      },
-    );
+    test('a tap with a non-string type is delivered without the type', () async {
+      await boot();
+      Map<String, dynamic>? got;
+      services.onNotificationTap = (d) => got = d;
+      services.push.handleTap({'type': 7, 'appointmentId': 'a1'});
+      expect(got, {'appointmentId': 'a1'});
+    });
 
     test('openFromPush tolerates a non-string type (list-row tap)', () async {
       await boot();
@@ -153,10 +139,7 @@ void main() {
           routes: [GoRoute(path: '/', builder: (_, _) => const SizedBox())],
         );
       expect(
-        () => nav.openFromPush({
-          'type': 7,
-          'appointmentId': 'a1',
-        }, fromList: true),
+        () => nav.openFromPush({'type': 7, 'appointmentId': 'a1'}, fromList: true),
         returnsNormally,
       );
       await pumpEventQueue();

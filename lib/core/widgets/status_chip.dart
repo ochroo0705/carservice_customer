@@ -1,4 +1,4 @@
-import 'package:carcare_customer_mobile/app/theme/app_theme.dart';
+import 'package:carservice_customer/app/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 
 /// Shared pill for statuses. [color] is the base status color; the text and

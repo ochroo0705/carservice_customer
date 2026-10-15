@@ -1,4 +1,4 @@
-import 'package:carcare_customer_mobile/features/discovery/domain/branch.dart';
+import 'package:carservice_customer/features/discovery/domain/branch.dart';
 import 'package:flutter/material.dart';
 
 /// The branch filter controls (city/district, business-type tag, and the

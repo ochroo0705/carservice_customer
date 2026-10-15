@@ -1,5 +1,5 @@
-import 'package:carcare_customer_mobile/app/theme/app_theme.dart';
-import 'package:carcare_customer_mobile/features/discovery/services/location_permission_service.dart';
+import 'package:carservice_customer/app/theme/app_theme.dart';
+import 'package:carservice_customer/features/discovery/services/location_permission_service.dart';
 import 'package:flutter/material.dart';
 
 class LocationPermissionBanner extends StatelessWidget {

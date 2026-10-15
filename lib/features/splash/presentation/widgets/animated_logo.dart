@@ -1,6 +1,6 @@
 import 'dart:math' as math;
 
-import 'package:carcare_customer_mobile/app/theme/app_theme.dart';
+import 'package:carservice_customer/app/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 
 /// The Carservice mark drawn as a vector so the gear and heart animate

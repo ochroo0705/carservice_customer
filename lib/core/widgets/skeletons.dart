@@ -1,5 +1,5 @@
-import 'package:carcare_customer_mobile/app/theme/app_surfaces.dart';
-import 'package:carcare_customer_mobile/core/widgets/skeleton.dart';
+import 'package:carservice_customer/app/theme/app_surfaces.dart';
+import 'package:carservice_customer/core/widgets/skeleton.dart';
 import 'package:flutter/material.dart';
 
 /// Ready-made, feature-agnostic skeleton placeholders that mirror the shape of

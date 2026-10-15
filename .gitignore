@@ -50,7 +50,7 @@ app.*.map.json
 *.keystore
 
 # This project ships Android/iOS only; the customer web app is the separate
-# Next.js repository at ../carcare.mn.
+# Next.js repository at ../carservice.mn.
 /web/
 
 # Local environment and API keys

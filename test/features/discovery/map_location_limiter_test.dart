@@ -1,4 +1,4 @@
-import 'package:carcare_customer_mobile/features/discovery/presentation/map_location_limiter.dart';
+import 'package:carservice_customer/features/discovery/presentation/map_location_limiter.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

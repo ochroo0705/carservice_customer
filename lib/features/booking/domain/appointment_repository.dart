@@ -1,7 +1,7 @@
-import 'package:carcare_customer_mobile/features/booking/domain/appointment.dart';
-import 'package:carcare_customer_mobile/features/booking/domain/appointment_payment.dart';
-import 'package:carcare_customer_mobile/features/booking/domain/availability.dart';
-import 'package:carcare_customer_mobile/features/booking/domain/walk_in_order.dart';
+import 'package:carservice_customer/features/booking/domain/appointment.dart';
+import 'package:carservice_customer/features/booking/domain/appointment_payment.dart';
+import 'package:carservice_customer/features/booking/domain/availability.dart';
+import 'package:carservice_customer/features/booking/domain/walk_in_order.dart';
 
 class CreatedAppointment {
   const CreatedAppointment({

@@ -1,0 +1,30 @@
+{
+    "flutter": {
+        "platforms": {
+            "android": {
+                "default": {
+                    "projectId": "carcare-bf796",
+                    "appId": "1:17267525827:android:c9885daea88d1211fffa76",
+                    "fileOutput": "android/app/google-services.json"
+                }
+            },
+            "ios": {
+                "default": {
+                    "projectId": "carcare-bf796",
+                    "appId": "1:17267525827:ios:ad7111eb051dbb6afffa76",
+                    "uploadDebugSymbols": true,
+                    "fileOutput": "ios/Runner/GoogleService-Info.plist"
+                }
+            },
+            "dart": {
+                "lib/firebase_options.dart": {
+                    "projectId": "carcare-bf796",
+                    "configurations": {
+                        "android": "1:17267525827:android:c9885daea88d1211fffa76",
+                        "ios": "1:17267525827:ios:ad7111eb051dbb6afffa76"
+                    }
+                }
+            }
+        }
+    }
+}

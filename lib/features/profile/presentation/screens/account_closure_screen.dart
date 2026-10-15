@@ -1,6 +1,6 @@
-import 'package:carcare_customer_mobile/app/theme/app_surfaces.dart';
-import 'package:carcare_customer_mobile/app/theme/app_theme.dart';
-import 'package:carcare_customer_mobile/features/auth/presentation/auth_controller.dart';
+import 'package:carservice_customer/app/theme/app_surfaces.dart';
+import 'package:carservice_customer/app/theme/app_theme.dart';
+import 'package:carservice_customer/features/booking/auth/presentation/auth_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -100,9 +100,7 @@ class _AccountClosureScreenState extends State<AccountClosureScreen> {
         context: context,
         builder: (context) => AlertDialog(
           title: const Text('Бүрмөсөн устгах уу?'),
-          content: const Text(
-            'Энэ үйлдлийг буцаах боломжгүй. Бүртгэл бүрмөсөн устана.',
-          ),
+          content: const Text('Энэ үйлдлийг буцаах боломжгүй. Бүртгэл бүрмөсөн устана.'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
@@ -187,16 +185,13 @@ class _OptionCard extends StatelessWidget {
         children: [
           Text(
             title,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w800,
-              color: destructive ? scheme.error : null,
-            ),
+            style: Theme.of(context).textTheme.titleMedium
+                ?.copyWith(fontWeight: FontWeight.w800, color: destructive ? scheme.error : null),
           ),
           const SizedBox(height: 8),
           Text(
             description,
-            style: Theme.of(context).textTheme.bodyMedium
-                ?.copyWith(color: scheme.onSurfaceVariant),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
           ),
         ],
       ),
@@ -234,10 +229,8 @@ class _ClosureStep extends StatelessWidget {
         children: [
           Text(
             _delete ? 'Бүрмөсөн устгах' : 'Идэвхгүй болгох',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w800,
-              color: _delete ? scheme.error : null,
-            ),
+            style: Theme.of(context).textTheme.titleLarge
+                ?.copyWith(fontWeight: FontWeight.w800, color: _delete ? scheme.error : null),
           ),
           const SizedBox(height: 8),
           Text(
@@ -247,8 +240,7 @@ class _ClosureStep extends StatelessWidget {
                       'боломжгүй.'
                 : 'Бүртгэл нуугдаж, мэдэгдэл ирэхгүй. Хүссэн үедээ дахин '
                       'нэвтэрч сэргээнэ.',
-            style: Theme.of(context).textTheme.bodyMedium
-                ?.copyWith(color: scheme.onSurfaceVariant),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
           ),
           const SizedBox(height: 20),
           // Код авах алхамд гарсан алдаа (429 throttle, сүлжээ г.м.) — доорх

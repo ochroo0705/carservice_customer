@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 
 /// Thin wrapper around `FirebaseMessaging.instance`, injectable so
 /// `CustomerAppServices` (and the widget tests that construct
-/// `CarCareCustomerApp` directly, bypassing `main()`/`Firebase.initializeApp()`)
+/// `CarserviceApp` directly, bypassing `main()`/`Firebase.initializeApp()`)
 /// never touch the real plugin unless explicitly given a
 /// [FirebaseRemotePushService].
 abstract interface class RemotePushService {
@@ -39,12 +39,9 @@ class FirebaseRemotePushService implements RemotePushService {
     Future<void> Function()? deleteFcmToken,
     Future<void> Function(Duration)? wait,
     bool? requiresApns,
-  }) : _readApnsToken =
-           readApnsToken ?? (() => FirebaseMessaging.instance.getAPNSToken()),
-       _readFcmToken =
-           readFcmToken ?? (() => FirebaseMessaging.instance.getToken()),
-       _deleteFcmToken =
-           deleteFcmToken ?? (() => FirebaseMessaging.instance.deleteToken()),
+  }) : _readApnsToken = readApnsToken ?? (() => FirebaseMessaging.instance.getAPNSToken()),
+       _readFcmToken = readFcmToken ?? (() => FirebaseMessaging.instance.getToken()),
+       _deleteFcmToken = deleteFcmToken ?? (() => FirebaseMessaging.instance.deleteToken()),
        _wait = wait ?? ((duration) => Future<void>.delayed(duration)),
        _requiresApns =
            requiresApns ??
@@ -75,7 +72,11 @@ class FirebaseRemotePushService implements RemotePushService {
     final request = _loadToken();
     _pendingToken = request;
     try {
-      return await request;
+      final token = await request;
+      // Debug only: paste into Firebase Console → Messaging → "Send test
+      // message" to target this device.
+      if (kDebugMode && token != null) debugPrint('FCM token: $token');
+      return token;
     } finally {
       _pendingToken = null;
     }
@@ -106,23 +107,20 @@ class FirebaseRemotePushService implements RemotePushService {
   }
 
   @override
-  Stream<String> get onTokenRefresh =>
-      FirebaseMessaging.instance.onTokenRefresh;
+  Stream<String> get onTokenRefresh => FirebaseMessaging.instance.onTokenRefresh;
 
   @override
   Stream<RemoteMessage> get onMessage => FirebaseMessaging.onMessage;
 
   @override
-  Stream<RemoteMessage> get onMessageOpenedApp =>
-      FirebaseMessaging.onMessageOpenedApp;
+  Stream<RemoteMessage> get onMessageOpenedApp => FirebaseMessaging.onMessageOpenedApp;
 
   @override
-  Future<RemoteMessage?> getInitialMessage() =>
-      FirebaseMessaging.instance.getInitialMessage();
+  Future<RemoteMessage?> getInitialMessage() => FirebaseMessaging.instance.getInitialMessage();
 }
 
 /// Default for anywhere that doesn't explicitly wire real FCM — every
-/// existing widget test that constructs `CarCareCustomerApp` gets this.
+/// existing widget test that constructs `CarserviceApp` gets this.
 class NoopRemotePushService implements RemotePushService {
   const NoopRemotePushService();
 

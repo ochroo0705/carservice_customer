@@ -1,13 +1,13 @@
 import 'dart:typed_data';
 
-import 'package:carcare_customer_mobile/app/app_dependencies.dart';
-import 'package:carcare_customer_mobile/core/analytics/analytics_service.dart';
-import 'package:carcare_customer_mobile/core/connectivity/connectivity_service.dart';
-import 'package:carcare_customer_mobile/core/network/api_client.dart';
-import 'package:carcare_customer_mobile/core/notifications/remote_push_service.dart';
-import 'package:carcare_customer_mobile/data/cache/cache_store.dart';
-import 'package:carcare_customer_mobile/features/auth/data/fake_auth_repository.dart';
-import 'package:carcare_customer_mobile/features/auth/data/secure_session_store.dart';
+import 'package:carservice_customer/app/app_dependencies.dart';
+import 'package:carservice_customer/core/analytics/analytics_service.dart';
+import 'package:carservice_customer/core/connectivity/connectivity_service.dart';
+import 'package:carservice_customer/core/network/api_client.dart';
+import 'package:carservice_customer/core/notifications/remote_push_service.dart';
+import 'package:carservice_customer/data/cache/cache_store.dart';
+import 'package:carservice_customer/features/booking/auth/data/fake_auth_repository.dart';
+import 'package:carservice_customer/features/booking/auth/data/secure_session_store.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -23,10 +23,7 @@ class _TagAdapter implements HttpClientAdapter {
     Future<void>? cancelFuture,
   ) async {
     hits.add(tag);
-    throw DioException(
-      requestOptions: options,
-      type: DioExceptionType.connectionError,
-    );
+    throw DioException(requestOptions: options, type: DioExceptionType.connectionError);
   }
 
   @override
@@ -77,10 +74,7 @@ void main() {
     for (final entry in authed.entries) {
       expect(await tagOf(entry.value), 'authed', reason: entry.key);
     }
-    expect(
-      await tagOf(() => deps.organizationRepository.getOrganizations()),
-      'public',
-    );
+    expect(await tagOf(() => deps.organizationRepository.getOrganizations()), 'public');
   });
 
   test('build() with useFakeApi wires fakes and creates no clients', () {

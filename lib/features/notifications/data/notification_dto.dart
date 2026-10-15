@@ -1,6 +1,6 @@
-import 'package:carcare_customer_mobile/core/errors/app_failure.dart';
-import 'package:carcare_customer_mobile/features/notifications/domain/app_notification.dart';
-import 'package:carcare_customer_mobile/features/notifications/domain/notification_type.dart';
+import 'package:carservice_customer/core/errors/app_failure.dart';
+import 'package:carservice_customer/features/notifications/domain/app_notification.dart';
+import 'package:carservice_customer/features/notifications/domain/notification_type.dart';
 
 /// `GET /api/v1/app/notifications` item.
 ///

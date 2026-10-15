@@ -5,7 +5,7 @@ import 'package:dio/dio.dart';
 
 /// Reports whether the device currently has network connectivity, injectable
 /// so `CustomerAppServices` (and the widget tests that construct
-/// `CarCareCustomerApp` directly, bypassing `main()`) never touch the real
+/// `CarserviceApp` directly, bypassing `main()`) never touch the real
 /// `connectivity_plus` platform channel unless explicitly given a
 /// [PlatformConnectivityService] — mirrors [RemotePushService]'s pattern.
 abstract interface class ConnectivityService {
@@ -155,7 +155,7 @@ class ApiReachabilityProbe {
 }
 
 /// Default for anywhere that doesn't explicitly wire the real platform
-/// service — every existing widget test that constructs `CarCareCustomerApp`
+/// service — every existing widget test that constructs `CarserviceApp`
 /// gets this.
 class NoopConnectivityService implements ConnectivityService {
   const NoopConnectivityService();

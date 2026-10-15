@@ -1,12 +1,12 @@
-import 'package:carcare_customer_mobile/data/cache/cache_database.dart';
-import 'package:carcare_customer_mobile/data/cache/drift_cache_store.dart';
-import 'package:carcare_customer_mobile/features/booking/domain/appointment.dart';
-import 'package:carcare_customer_mobile/features/booking/domain/appointment_status.dart';
-import 'package:carcare_customer_mobile/features/discovery/domain/branch.dart';
-import 'package:carcare_customer_mobile/features/discovery/domain/organization.dart';
-import 'package:carcare_customer_mobile/features/history/domain/service_order.dart';
-import 'package:carcare_customer_mobile/features/history/domain/service_order_status.dart';
-import 'package:carcare_customer_mobile/features/vehicles/domain/vehicle.dart';
+import 'package:carservice_customer/data/cache/cache_database.dart';
+import 'package:carservice_customer/data/cache/drift_cache_store.dart';
+import 'package:carservice_customer/features/booking/domain/appointment.dart';
+import 'package:carservice_customer/features/booking/domain/appointment_status.dart';
+import 'package:carservice_customer/features/discovery/domain/branch.dart';
+import 'package:carservice_customer/features/discovery/domain/organization.dart';
+import 'package:carservice_customer/features/history/domain/service_order.dart';
+import 'package:carservice_customer/features/history/domain/service_order_status.dart';
+import 'package:carservice_customer/features/vehicles/domain/vehicle.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 

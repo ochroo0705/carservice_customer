@@ -1,18 +1,19 @@
+import 'package:carservice_customer/app/app_messages.dart';
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:carcare_customer_mobile/app/theme/app_surfaces.dart';
-import 'package:carcare_customer_mobile/core/widgets/skeletons.dart';
-import 'package:carcare_customer_mobile/app/theme/app_theme.dart';
-import 'package:carcare_customer_mobile/core/errors/app_failure.dart';
-import 'package:carcare_customer_mobile/features/booking/domain/appointment_payment.dart';
-import 'package:carcare_customer_mobile/features/booking/domain/appointment_repository.dart';
-import 'package:carcare_customer_mobile/features/history/presentation/format_amount.dart';
+import 'package:carservice_customer/app/theme/app_surfaces.dart';
+import 'package:carservice_customer/core/widgets/skeletons.dart';
+import 'package:carservice_customer/app/theme/app_theme.dart';
+import 'package:carservice_customer/core/errors/app_failure.dart';
+import 'package:carservice_customer/features/booking/domain/appointment_payment.dart';
+import 'package:carservice_customer/features/booking/domain/appointment_repository.dart';
+import 'package:carservice_customer/features/history/presentation/format_amount.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// The QPay booking-fee flow — mirrors the web `AppointmentPaymentPanel`
-/// (`carcare.mn/app/(app)/account/appointments/[id]/pay/payment-panel.tsx`):
+/// (`carservice.mn/app/(app)/account/appointments/[id]/pay/payment-panel.tsx`):
 /// a QR code + bank-app deeplink, a manual "check" button (no auto-polling,
 /// matching web), and a retry path if QPay checkout itself failed to create.
 class AppointmentPaymentScreen extends StatefulWidget {
@@ -222,21 +223,21 @@ class _AppointmentPaymentScreenState extends State<AppointmentPaymentScreen>
           });
         }
         if (!silent) {
-          _showSnack(
+          AppMessages.show(
             result.message ?? 'Дутуу төлбөр ирсэн байна.',
             isError: true,
           );
         }
       } else if (!silent) {
-        _showSnack(
+        AppMessages.show(
           result.message ?? 'Төлбөр төлөгдөөгүй байна. Банкны аппаар QR-аа уншуулсны дараа дахин шалгана уу.',
         );
       }
     } on AppFailure catch (failure) {
-      if (mounted && !silent) _showSnack(failure.message, isError: true);
+      if (mounted && !silent) AppMessages.show(failure.message, isError: true);
     } catch (_) {
       if (mounted && !silent) {
-        _showSnack('Тодорхойгүй алдаа гарлаа.', isError: true);
+        AppMessages.show('Тодорхойгүй алдаа гарлаа.', isError: true);
       }
     } finally {
       _checkInFlight = false;
@@ -260,29 +261,20 @@ class _AppointmentPaymentScreenState extends State<AppointmentPaymentScreen>
       _maybeStartPolling(); // a fresh pending invoice — resume auto-confirm
       widget.onPaymentUpdated?.call();
     } on AppFailure catch (failure) {
-      if (mounted) _showSnack(failure.message, isError: true);
+      if (mounted) AppMessages.show(failure.message, isError: true);
     } catch (_) {
       if (mounted) {
-        _showSnack('Тодорхойгүй алдаа гарлаа.', isError: true);
+        AppMessages.show('Тодорхойгүй алдаа гарлаа.', isError: true);
       }
     } finally {
       if (mounted) setState(() => _retrying = false);
     }
   }
 
-  void _showSnack(String message, {bool isError = false}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: isError ? AppColors.red : null,
-      ),
-    );
-  }
-
   Future<void> _openBankLink(String link) async {
     final uri = Uri.tryParse(link);
     if (uri == null) {
-      if (mounted) _showSnack('Банкны холбоос буруу байна.', isError: true);
+      if (mounted) AppMessages.show('Банкны холбоос буруу байна.', isError: true);
       return;
     }
     try {
@@ -293,13 +285,13 @@ class _AppointmentPaymentScreenState extends State<AppointmentPaymentScreen>
       if (!launched && mounted) {
         // Апп суулгаагүй, эсвэл scheme-ийг Android <queries>/iOS
         // LSApplicationQueriesSchemes-д зарлаагүй үед false буцаана.
-        _showSnack(
+        AppMessages.show(
           'Банкны апп нээгдсэнгүй. Уг банкны апп суусан эсэхээ шалгана уу.',
           isError: true,
         );
       }
     } catch (_) {
-      if (mounted) _showSnack('Банкны апп нээгдсэнгүй.', isError: true);
+      if (mounted) AppMessages.show('Банкны апп нээгдсэнгүй.', isError: true);
     }
   }
 

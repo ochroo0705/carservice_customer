@@ -1,8 +1,8 @@
 import 'dart:async';
 
-import 'package:carcare_customer_mobile/app/theme/app_surfaces.dart';
-import 'package:carcare_customer_mobile/app/theme/app_theme.dart';
-import 'package:carcare_customer_mobile/features/auth/presentation/auth_controller.dart';
+import 'package:carservice_customer/app/theme/app_surfaces.dart';
+import 'package:carservice_customer/app/theme/app_theme.dart';
+import 'package:carservice_customer/features/booking/auth/presentation/auth_controller.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -10,7 +10,8 @@ import 'package:provider/provider.dart';
 
 /// Phone + OTP login, mirroring the web customer login page's copy and
 /// step structure (static title/subtitle over a card whose form content
-/// swaps between the phone step and the code step).
+/// swaps between the phone step and the code step), with phone + password
+/// as an alternative to the code for accounts that set a password.
 ///
 /// Closing the page after a successful sign-in is not this screen's job:
 /// `CustomerNavigation` does it for every entry point, off the auth session.
@@ -37,10 +38,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
   final _phoneController = TextEditingController();
   final _codeController = TextEditingController();
+  final _passwordController = TextEditingController();
+  var _obscurePassword = true;
   Timer? _resendTimer;
   int _resendSecondsRemaining = 0;
-  late final TapGestureRecognizer _termsTap = TapGestureRecognizer()
-    ..onTap = widget.onOpenTerms;
+  late final TapGestureRecognizer _termsTap = TapGestureRecognizer()..onTap = widget.onOpenTerms;
   late final TapGestureRecognizer _privacyTap = TapGestureRecognizer()
     ..onTap = widget.onOpenPrivacy;
 
@@ -59,6 +61,7 @@ class _LoginScreenState extends State<LoginScreen> {
     _resendTimer?.cancel();
     _phoneController.dispose();
     _codeController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
@@ -68,7 +71,7 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: BackButton(onPressed: widget.onBack),
-        title: const CarCareBrand(compact: true),
+        title: const CarserviceBrand(compact: true),
         centerTitle: false,
       ),
       body: AppShellBackground(
@@ -86,31 +89,57 @@ class _LoginScreenState extends State<LoginScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        'Нэвтрэх / Бүртгүүлэх',
+                        // Password login never creates an account.
+                        controller.step == AuthStep.password
+                            ? 'Нэвтрэх'
+                            : 'Нэвтрэх / Бүртгүүлэх',
                         style: Theme.of(context).textTheme.headlineSmall
                             ?.copyWith(fontWeight: FontWeight.w800),
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        controller.step == AuthStep.phone
-                            ? 'Утасны дугаараа оруулаад, ирэх 6 оронтой кодоор нэвтэрнэ.'
-                            : '${controller.phone} дугаарт ирсэн 6 оронтой кодоо оруулна уу.',
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
+                        switch (controller.step) {
+                          AuthStep.phone =>
+                            'Утасны дугаараа оруулаад, ирэх 6 оронтой кодоор нэвтэрнэ.',
+                          AuthStep.otp =>
+                            '${controller.phone} дугаарт ирсэн 6 оронтой кодоо оруулна уу.',
+                          AuthStep.password => 'Утасны дугаар, нууц үгээрээ нэвтэрнэ.',
+                        },
+                        style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                       ),
                       const SizedBox(height: 24),
                       if (controller.step == AuthStep.phone)
-                        TextField(
-                          key: const ValueKey('login-phone'),
-                          controller: _phoneController,
-                          keyboardType: TextInputType.phone,
-                          autofillHints: const [AutofillHints.telephoneNumber],
-                          inputFormatters: const [_MongolianPhoneFormatter()],
-                          decoration: const InputDecoration(
-                            labelText: 'Утасны дугаар',
-                            prefixText: '+976 ',
-                            hintText: '99112233',
+                        _phoneField()
+                      else if (controller.step == AuthStep.password)
+                        // One group so password managers offer and save the
+                        // phone + password pair together.
+                        AutofillGroup(
+                          child: Column(
+                            children: [
+                              _phoneField(),
+                              const SizedBox(height: 12),
+                              TextField(
+                                key: const ValueKey('login-password'),
+                                controller: _passwordController,
+                                obscureText: _obscurePassword,
+                                autofillHints: const [AutofillHints.password],
+                                textInputAction: TextInputAction.done,
+                                onSubmitted: (_) => controller.isBusy ? null : _submit(),
+                                decoration: InputDecoration(
+                                  labelText: 'Нууц үг',
+                                  suffixIcon: IconButton(
+                                    tooltip: _obscurePassword ? 'Нууц үг харуулах' : 'Нууц үг нуух',
+                                    icon: Icon(
+                                      _obscurePassword
+                                          ? Icons.visibility_outlined
+                                          : Icons.visibility_off_outlined,
+                                    ),
+                                    onPressed: () =>
+                                        setState(() => _obscurePassword = !_obscurePassword),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         )
                       else
@@ -121,10 +150,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           textAlign: TextAlign.center,
                           autofillHints: const [AutofillHints.oneTimeCode],
                           style: Theme.of(context).textTheme.titleLarge
-                              ?.copyWith(
-                                letterSpacing: 8,
-                                fontWeight: FontWeight.w700,
-                              ),
+                              ?.copyWith(letterSpacing: 8, fontWeight: FontWeight.w700),
                           inputFormatters: [
                             FilteringTextInputFormatter.digitsOnly,
                             LengthLimitingTextInputFormatter(6),
@@ -138,9 +164,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         const SizedBox(height: 12),
                         Text(
                           controller.errorMessage!,
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.error,
-                          ),
+                          style: TextStyle(color: Theme.of(context).colorScheme.error),
                         ),
                       ],
                       const SizedBox(height: 20),
@@ -149,35 +173,54 @@ class _LoginScreenState extends State<LoginScreen> {
                         child: FilledButton(
                           onPressed:
                               controller.isBusy ||
-                                  (controller.step == AuthStep.phone &&
-                                      _resendSecondsRemaining > 0)
+                                  (controller.step == AuthStep.phone && _resendSecondsRemaining > 0)
                               ? null
                               : _submit,
                           child: controller.isBusy
                               ? const SizedBox.square(
                                   dimension: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
+                                  child: CircularProgressIndicator(strokeWidth: 2),
                                 )
                               : Text(
-                                  controller.step == AuthStep.phone
-                                      ? 'Код авах →'
-                                      : 'Нэвтрэх →',
+                                  controller.step == AuthStep.phone ? 'Код авах →' : 'Нэвтрэх →',
                                 ),
                         ),
                       ),
-                      if (controller.step == AuthStep.otp) ...[
-                        const SizedBox(height: 12),
-                        _TermsNotice(
-                          termsTap: _termsTap,
-                          privacyTap: _privacyTap,
+                      if (controller.step == AuthStep.phone)
+                        Center(
+                          child: TextButton(
+                            key: const ValueKey('login-use-password'),
+                            onPressed: controller.isBusy ? null : controller.usePassword,
+                            child: const Text('Нууц үгээр нэвтрэх'),
+                          ),
                         ),
+                      if (controller.step == AuthStep.password) ...[
+                        const SizedBox(height: 12),
+                        _TermsNotice(termsTap: _termsTap, privacyTap: _privacyTap),
                         const SizedBox(height: 4),
                         Center(
                           child: TextButton(
-                            onPressed:
-                                controller.isBusy || _resendSecondsRemaining > 0
+                            key: const ValueKey('login-use-otp'),
+                            onPressed: controller.isBusy ? null : controller.useOtp,
+                            child: const Text('← Кодоор нэвтрэх'),
+                          ),
+                        ),
+                        Text(
+                          'Нууц үгээ мартсан бол кодоор нэвтэрч, Профайл → Нууц үг '
+                          'хэсгээс шинээр тохируулна.',
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                      if (controller.step == AuthStep.otp) ...[
+                        const SizedBox(height: 12),
+                        _TermsNotice(termsTap: _termsTap, privacyTap: _privacyTap),
+                        const SizedBox(height: 4),
+                        Center(
+                          child: TextButton(
+                            onPressed: controller.isBusy || _resendSecondsRemaining > 0
                                 ? null
                                 : _resendOtp,
                             child: Text(_resendButtonLabel),
@@ -201,15 +244,30 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  Widget _phoneField() => TextField(
+    key: const ValueKey('login-phone'),
+    controller: _phoneController,
+    keyboardType: TextInputType.phone,
+    autofillHints: const [AutofillHints.telephoneNumber],
+    inputFormatters: const [_MongolianPhoneFormatter()],
+    decoration: const InputDecoration(
+      labelText: 'Утасны дугаар',
+      prefixText: '+976 ',
+      hintText: '99112233',
+    ),
+  );
+
   Future<void> _submit() async {
     final controller = context.read<AuthController>();
-    final success = controller.step == AuthStep.phone
-        ? await controller.requestOtp(_phoneController.text)
-        : await controller.verifyOtp(_codeController.text);
-    if (success &&
-        controller.step == AuthStep.otp &&
-        !controller.isAuthenticated &&
-        mounted) {
+    final success = switch (controller.step) {
+      AuthStep.phone => await controller.requestOtp(_phoneController.text),
+      AuthStep.otp => await controller.verifyOtp(_codeController.text),
+      AuthStep.password => await controller.loginWithPassword(
+        _phoneController.text,
+        _passwordController.text,
+      ),
+    };
+    if (success && controller.step == AuthStep.otp && !controller.isAuthenticated && mounted) {
       _startResendCooldown();
     }
   }
@@ -261,10 +319,7 @@ class _MongolianPhoneFormatter extends TextInputFormatter {
   const _MongolianPhoneFormatter();
 
   @override
-  TextEditingValue formatEditUpdate(
-    TextEditingValue oldValue,
-    TextEditingValue newValue,
-  ) {
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
     var digits = newValue.text.replaceAll(RegExp(r'\D'), '');
     if (digits.length > 8 && digits.startsWith('976')) {
       digits = digits.substring(3);
@@ -304,17 +359,9 @@ class _TermsNotice extends StatelessWidget {
         style: base,
         children: [
           const TextSpan(text: 'Нэвтэрснээр та '),
-          TextSpan(
-            text: 'Үйлчилгээний нөхцөл',
-            style: link,
-            recognizer: termsTap,
-          ),
+          TextSpan(text: 'Үйлчилгээний нөхцөл', style: link, recognizer: termsTap),
           const TextSpan(text: ' болон '),
-          TextSpan(
-            text: 'Нууцлалын бодлого',
-            style: link,
-            recognizer: privacyTap,
-          ),
+          TextSpan(text: 'Нууцлалын бодлого', style: link, recognizer: privacyTap),
           const TextSpan(text: '-г зөвшөөрч байна.'),
         ],
       ),

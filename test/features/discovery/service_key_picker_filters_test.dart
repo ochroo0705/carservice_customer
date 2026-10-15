@@ -1,12 +1,13 @@
+import 'package:carservice_customer/app/app_messages.dart';
 import 'dart:async';
 
-import 'package:carcare_customer_mobile/app/theme/app_theme.dart';
-import 'package:carcare_customer_mobile/features/discovery/data/fake_organization_repository.dart';
-import 'package:carcare_customer_mobile/features/discovery/domain/branch.dart';
-import 'package:carcare_customer_mobile/features/discovery/domain/organization.dart';
-import 'package:carcare_customer_mobile/features/discovery/domain/organization_repository.dart';
-import 'package:carcare_customer_mobile/features/discovery/presentation/screens/service_key_picker_screen.dart';
-import 'package:carcare_customer_mobile/features/discovery/services/device_location_service.dart';
+import 'package:carservice_customer/app/theme/app_theme.dart';
+import 'package:carservice_customer/features/discovery/data/fake_organization_repository.dart';
+import 'package:carservice_customer/features/discovery/domain/branch.dart';
+import 'package:carservice_customer/features/discovery/domain/organization.dart';
+import 'package:carservice_customer/features/discovery/domain/organization_repository.dart';
+import 'package:carservice_customer/features/discovery/presentation/screens/service_key_picker_screen.dart';
+import 'package:carservice_customer/features/discovery/services/device_location_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -60,6 +61,8 @@ Future<void> _pump(
   await tester.pumpWidget(
     MaterialApp(
       theme: AppTheme.light,
+      // The picker reports a failed location lookup through the global message.
+      scaffoldMessengerKey: AppMessages.messengerKey,
       home: Scaffold(
         body: ServiceKeyPickerScreen(
           repository: repository,

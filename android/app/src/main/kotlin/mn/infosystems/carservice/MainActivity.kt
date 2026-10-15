@@ -1,4 +1,4 @@
-package mn.carcare.carcare_customer_mobile
+package mn.infosystems.carservice
 
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -10,7 +10,7 @@ class MainActivity : FlutterActivity() {
         super.configureFlutterEngine(flutterEngine)
         MethodChannel(
             flutterEngine.dartExecutor.binaryMessenger,
-            "mn.carcare.carcare_customer_mobile/map_configuration",
+            "mn.infosystems.carservice/map_configuration",
         ).setMethodCallHandler { call, result ->
             if (call.method != "isConfigured") {
                 result.notImplemented()

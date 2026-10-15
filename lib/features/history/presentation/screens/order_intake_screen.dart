@@ -1,6 +1,6 @@
-import 'package:carcare_customer_mobile/app/theme/app_surfaces.dart';
-import 'package:carcare_customer_mobile/features/history/domain/order_intake.dart';
-import 'package:carcare_customer_mobile/features/history/domain/upload_url.dart';
+import 'package:carservice_customer/app/theme/app_surfaces.dart';
+import 'package:carservice_customer/features/history/domain/order_intake.dart';
+import 'package:carservice_customer/features/history/domain/upload_url.dart';
 import 'package:flutter/material.dart';
 
 String _formatRecordedAt(DateTime t) =>

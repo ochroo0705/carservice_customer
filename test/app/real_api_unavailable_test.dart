@@ -1,10 +1,10 @@
-import 'package:carcare_customer_mobile/core/errors/app_failure.dart';
-import 'package:carcare_customer_mobile/features/history/data/unavailable_service_history_repository.dart';
-import 'package:carcare_customer_mobile/features/history/presentation/controllers/history_controller.dart';
-import 'package:carcare_customer_mobile/features/history/presentation/controllers/history_state.dart';
-import 'package:carcare_customer_mobile/features/notifications/data/unavailable_notifications_repository.dart';
-import 'package:carcare_customer_mobile/features/notifications/presentation/controllers/notifications_controller.dart';
-import 'package:carcare_customer_mobile/features/notifications/presentation/controllers/notifications_state.dart';
+import 'package:carservice_customer/core/errors/app_failure.dart';
+import 'package:carservice_customer/features/history/data/unavailable_service_history_repository.dart';
+import 'package:carservice_customer/features/history/presentation/controllers/history_controller.dart';
+import 'package:carservice_customer/features/history/presentation/controllers/history_state.dart';
+import 'package:carservice_customer/features/notifications/data/unavailable_notifications_repository.dart';
+import 'package:carservice_customer/features/notifications/presentation/controllers/notifications_controller.dart';
+import 'package:carservice_customer/features/notifications/presentation/controllers/notifications_state.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// The "real API build" behaviour (D-014): History and Notifications have no

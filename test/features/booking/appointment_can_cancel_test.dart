@@ -1,6 +1,6 @@
-import 'package:carcare_customer_mobile/features/booking/domain/appointment.dart';
-import 'package:carcare_customer_mobile/features/booking/domain/appointment_status.dart';
-import 'package:carcare_customer_mobile/features/booking/domain/service_progress.dart';
+import 'package:carservice_customer/features/booking/domain/appointment.dart';
+import 'package:carservice_customer/features/booking/domain/appointment_status.dart';
+import 'package:carservice_customer/features/booking/domain/service_progress.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Once staff confirm a booking and create the ServiceOrder, the appointment

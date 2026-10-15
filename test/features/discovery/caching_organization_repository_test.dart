@@ -1,9 +1,9 @@
-import 'package:carcare_customer_mobile/core/errors/app_failure.dart';
-import 'package:carcare_customer_mobile/data/cache/in_memory_cache_store.dart';
-import 'package:carcare_customer_mobile/features/discovery/data/caching_organization_repository.dart';
-import 'package:carcare_customer_mobile/features/discovery/domain/branch.dart';
-import 'package:carcare_customer_mobile/features/discovery/domain/organization.dart';
-import 'package:carcare_customer_mobile/features/discovery/domain/organization_repository.dart';
+import 'package:carservice_customer/core/errors/app_failure.dart';
+import 'package:carservice_customer/data/cache/in_memory_cache_store.dart';
+import 'package:carservice_customer/features/discovery/data/caching_organization_repository.dart';
+import 'package:carservice_customer/features/discovery/domain/branch.dart';
+import 'package:carservice_customer/features/discovery/domain/organization.dart';
+import 'package:carservice_customer/features/discovery/domain/organization_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 const _detail = OrganizationDetail(

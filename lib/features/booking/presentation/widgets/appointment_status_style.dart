@@ -1,6 +1,6 @@
-import 'package:carcare_customer_mobile/app/theme/app_theme.dart';
-import 'package:carcare_customer_mobile/features/booking/domain/appointment_status.dart';
-import 'package:carcare_customer_mobile/features/booking/domain/service_progress.dart';
+import 'package:carservice_customer/app/theme/app_theme.dart';
+import 'package:carservice_customer/features/booking/domain/appointment_status.dart';
+import 'package:carservice_customer/features/booking/domain/service_progress.dart';
 import 'package:flutter/material.dart';
 
 Color appointmentStatusColor(AppointmentStatus status, BuildContext context) =>

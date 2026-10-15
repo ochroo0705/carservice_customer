@@ -1,13 +1,13 @@
-import 'package:carcare_customer_mobile/app/theme/app_surfaces.dart';
-import 'package:carcare_customer_mobile/features/booking/domain/appointment_repository.dart';
-import 'package:carcare_customer_mobile/features/booking/presentation/controllers/booking_form_controller.dart';
-import 'package:carcare_customer_mobile/features/booking/presentation/widgets/booking_calendar.dart';
-import 'package:carcare_customer_mobile/features/booking/presentation/widgets/booking_form_sections.dart';
-import 'package:carcare_customer_mobile/features/booking/presentation/widgets/booking_header.dart';
-import 'package:carcare_customer_mobile/features/booking/presentation/widgets/booking_locked_notices.dart';
-import 'package:carcare_customer_mobile/features/booking/presentation/widgets/booking_vehicle_picker.dart';
-import 'package:carcare_customer_mobile/features/discovery/domain/organization.dart';
-import 'package:carcare_customer_mobile/features/vehicles/presentation/controllers/vehicles_controller.dart';
+import 'package:carservice_customer/app/theme/app_surfaces.dart';
+import 'package:carservice_customer/features/booking/domain/appointment_repository.dart';
+import 'package:carservice_customer/features/booking/presentation/controllers/booking_form_controller.dart';
+import 'package:carservice_customer/features/booking/presentation/widgets/booking_calendar.dart';
+import 'package:carservice_customer/features/booking/presentation/widgets/booking_form_sections.dart';
+import 'package:carservice_customer/features/booking/presentation/widgets/booking_header.dart';
+import 'package:carservice_customer/features/booking/presentation/widgets/booking_locked_notices.dart';
+import 'package:carservice_customer/features/booking/presentation/widgets/booking_vehicle_picker.dart';
+import 'package:carservice_customer/features/discovery/domain/organization.dart';
+import 'package:carservice_customer/features/vehicles/presentation/controllers/vehicles_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 

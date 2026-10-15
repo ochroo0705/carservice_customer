@@ -1,5 +1,5 @@
-import 'package:carcare_customer_mobile/app/customer_router.dart';
-import 'package:carcare_customer_mobile/features/discovery/data/fake_organization_repository.dart';
+import 'package:carservice_customer/app/customer_router.dart';
+import 'package:carservice_customer/features/discovery/data/fake_organization_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -36,6 +36,7 @@ void main() {
         '/walk-in-orders/w1',
         '/notifications',
         '/account/close',
+        '/account/password',
       ];
       for (final loc in protectedLocations) {
         final to = r(loc, authed: false);

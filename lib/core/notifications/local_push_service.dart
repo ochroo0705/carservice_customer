@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:carcare_customer_mobile/features/notifications/domain/app_notification.dart';
+import 'package:carservice_customer/features/notifications/domain/app_notification.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 /// Demo-only local device notifications, standing in for real push until a
@@ -56,7 +56,7 @@ class LocalPushService {
     if (!_initialized) return;
     const details = NotificationDetails(
       android: AndroidNotificationDetails(
-        'carcare_customer_default',
+        'carservice_default',
         'Carservice мэдэгдэл',
         importance: Importance.high,
         priority: Priority.high,

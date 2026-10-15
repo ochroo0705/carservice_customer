@@ -1,11 +1,11 @@
-import 'package:carcare_customer_mobile/core/errors/app_failure.dart';
-import 'package:carcare_customer_mobile/features/booking/domain/appointment.dart';
-import 'package:carcare_customer_mobile/features/booking/domain/appointment_payment.dart';
-import 'package:carcare_customer_mobile/features/booking/domain/appointment_status.dart';
-import 'package:carcare_customer_mobile/features/booking/domain/service_progress.dart';
-import 'package:carcare_customer_mobile/features/booking/domain/walk_in_order.dart';
-import 'package:carcare_customer_mobile/features/history/domain/diagnostic_report_summary.dart';
-import 'package:carcare_customer_mobile/features/history/domain/service_order_item.dart'
+import 'package:carservice_customer/core/errors/app_failure.dart';
+import 'package:carservice_customer/features/booking/domain/appointment.dart';
+import 'package:carservice_customer/features/booking/domain/appointment_payment.dart';
+import 'package:carservice_customer/features/booking/domain/appointment_status.dart';
+import 'package:carservice_customer/features/booking/domain/service_progress.dart';
+import 'package:carservice_customer/features/booking/domain/walk_in_order.dart';
+import 'package:carservice_customer/features/history/domain/diagnostic_report_summary.dart';
+import 'package:carservice_customer/features/history/domain/service_order_item.dart'
     show ServiceOrderItemKind, serviceOrderItemKindFromApi;
 
 /// `GET /appointments`-ийн rich list payload-ийг domain model-оос тусгаарлана.

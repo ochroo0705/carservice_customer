@@ -1,4 +1,4 @@
-import 'package:carcare_customer_mobile/app/theme/app_theme.dart';
+import 'package:carservice_customer/app/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 
 class MapLoadingOverlay extends StatelessWidget {
@@ -150,8 +150,8 @@ class NoMapLocations extends StatelessWidget {
     height: 280,
     alignment: Alignment.center,
     decoration: BoxDecoration(
-      color: CarCareTheme.of(context).glass,
-      border: Border.all(color: CarCareTheme.of(context).glassBorder),
+      color: CarserviceTheme.of(context).glass,
+      border: Border.all(color: CarserviceTheme.of(context).glassBorder),
       borderRadius: BorderRadius.circular(AppRadii.large),
     ),
     child: const Column(

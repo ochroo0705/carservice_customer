@@ -1,13 +1,13 @@
-import 'package:carcare_customer_mobile/app/theme/app_theme.dart';
-import 'package:carcare_customer_mobile/app/theme/app_surfaces.dart';
-import 'package:carcare_customer_mobile/core/widgets/filter_controls.dart';
-import 'package:carcare_customer_mobile/core/widgets/skeletons.dart';
-import 'package:carcare_customer_mobile/features/diagnostics/domain/diagnostic_report_list_item.dart';
-import 'package:carcare_customer_mobile/features/diagnostics/domain/diagnostics_repository.dart';
-import 'package:carcare_customer_mobile/features/diagnostics/presentation/controllers/diagnostics_controller.dart';
-import 'package:carcare_customer_mobile/features/diagnostics/presentation/widgets/severity_chip.dart';
+import 'package:carservice_customer/app/theme/app_theme.dart';
+import 'package:carservice_customer/app/theme/app_surfaces.dart';
+import 'package:carservice_customer/core/widgets/filter_controls.dart';
+import 'package:carservice_customer/core/widgets/skeletons.dart';
+import 'package:carservice_customer/features/diagnostics/domain/diagnostic_report_list_item.dart';
+import 'package:carservice_customer/features/diagnostics/domain/diagnostics_repository.dart';
+import 'package:carservice_customer/features/diagnostics/presentation/controllers/diagnostics_controller.dart';
+import 'package:carservice_customer/features/diagnostics/presentation/widgets/severity_chip.dart';
 import 'package:flutter/material.dart';
-import 'package:carcare_customer_mobile/core/widgets/state_views.dart';
+import 'package:carservice_customer/core/widgets/state_views.dart';
 
 /// "Оношилгооны түүх" — зөвхөн өнгөрсөн оношилгооны тайлангуудын жагсаалт
 /// (машин бүрээр биш, бүх байгууллага дамнасан), Түүх дэлгэцтэй ижил

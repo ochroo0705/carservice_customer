@@ -1,13 +1,13 @@
-import 'package:carcare_customer_mobile/app/bootstrap_flags.dart';
-import 'package:carcare_customer_mobile/app/app.dart';
-import 'package:carcare_customer_mobile/app/theme/app_theme.dart';
-import 'package:carcare_customer_mobile/features/auth/data/fake_auth_repository.dart';
-import 'package:carcare_customer_mobile/features/auth/domain/account.dart';
-import 'package:carcare_customer_mobile/features/auth/presentation/auth_controller.dart';
-import 'package:carcare_customer_mobile/features/booking/data/fake_appointment_repository.dart';
-import 'package:carcare_customer_mobile/features/booking/presentation/controllers/appointments_controller.dart';
-import 'package:carcare_customer_mobile/features/booking/presentation/screens/appointments_screen.dart';
-import 'package:carcare_customer_mobile/features/discovery/data/fake_organization_repository.dart';
+import 'package:carservice_customer/app/bootstrap_flags.dart';
+import 'package:carservice_customer/app/app.dart';
+import 'package:carservice_customer/app/theme/app_theme.dart';
+import 'package:carservice_customer/features/booking/auth/data/fake_auth_repository.dart';
+import 'package:carservice_customer/features/booking/auth/domain/account.dart';
+import 'package:carservice_customer/features/booking/auth/presentation/auth_controller.dart';
+import 'package:carservice_customer/features/booking/data/fake_appointment_repository.dart';
+import 'package:carservice_customer/features/booking/presentation/controllers/appointments_controller.dart';
+import 'package:carservice_customer/features/booking/presentation/screens/appointments_screen.dart';
+import 'package:carservice_customer/features/discovery/data/fake_organization_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
@@ -17,15 +17,9 @@ void main() {
   setUpAll(() => debugDisableAppBootstrap = true);
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
-  testWidgets('requires login before showing appointments, then lists them', (
-    tester,
-  ) async {
+  testWidgets('requires login before showing appointments, then lists them', (tester) async {
     await tester.pumpWidget(
-      CarCareCustomerApp(
-        organizationRepository: FakeOrganizationRepository(
-          delay: Duration.zero,
-        ),
-      ),
+      CarserviceApp(organizationRepository: FakeOrganizationRepository(delay: Duration.zero)),
     );
     await tester.pumpAndSettle();
 
@@ -35,10 +29,7 @@ void main() {
 
     await tester.tap(find.byKey(const ValueKey('appointments-login')));
     await tester.pumpAndSettle();
-    await tester.enterText(
-      find.byKey(const ValueKey('login-phone')),
-      '99112233',
-    );
+    await tester.enterText(find.byKey(const ValueKey('login-phone')), '99112233');
     await tester.tap(find.text('Код авах →'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byKey(const ValueKey('login-otp')), '123456');
@@ -65,15 +56,9 @@ void main() {
     expect(find.text('Цуцалсан'), findsOneWidget);
   });
 
-  testWidgets('cancels a pending appointment after confirmation', (
-    tester,
-  ) async {
+  testWidgets('cancels a pending appointment after confirmation', (tester) async {
     await tester.pumpWidget(
-      CarCareCustomerApp(
-        organizationRepository: FakeOrganizationRepository(
-          delay: Duration.zero,
-        ),
-      ),
+      CarserviceApp(organizationRepository: FakeOrganizationRepository(delay: Duration.zero)),
     );
     await tester.pumpAndSettle();
 
@@ -81,10 +66,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('appointments-login')));
     await tester.pumpAndSettle();
-    await tester.enterText(
-      find.byKey(const ValueKey('login-phone')),
-      '99112233',
-    );
+    await tester.enterText(find.byKey(const ValueKey('login-phone')), '99112233');
     await tester.tap(find.text('Код авах →'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byKey(const ValueKey('login-otp')), '123456');
@@ -97,11 +79,7 @@ void main() {
     // Эргэлт буцалтгүй үйлдэл — дэлгэрэнгүй хуудастай ижил аюулын өнгө
     // (харах: appointment_detail_screen_test.dart).
     expect(
-      tester
-          .widget<TextButton>(cancelButton)
-          .style
-          ?.foregroundColor
-          ?.resolve(<WidgetState>{}),
+      tester.widget<TextButton>(cancelButton).style?.foregroundColor?.resolve(<WidgetState>{}),
       AppColors.readable(AppColors.red, Brightness.light),
     );
     await tester.tap(cancelButton);
@@ -115,9 +93,7 @@ void main() {
     expect(find.text('Цуцалсан'), findsNWidgets(2));
   });
 
-  testWidgets('supports large accessibility text without overflow', (
-    tester,
-  ) async {
+  testWidgets('supports large accessibility text without overflow', (tester) async {
     final controller = AppointmentsController(FakeAppointmentRepository());
     await controller.load();
     final authController = AuthController(FakeAuthRepository())

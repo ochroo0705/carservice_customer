@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:carcare_customer_mobile/core/notifications/remote_push_service.dart';
+import 'package:carservice_customer/core/notifications/remote_push_service.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_test/flutter_test.dart';
 

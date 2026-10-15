@@ -1,5 +1,5 @@
-import 'package:carcare_customer_mobile/app/customer_routes.dart';
-import 'package:carcare_customer_mobile/features/legal/presentation/widgets/legal_widgets.dart';
+import 'package:carservice_customer/app/customer_routes.dart';
+import 'package:carservice_customer/features/legal/presentation/widgets/legal_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 

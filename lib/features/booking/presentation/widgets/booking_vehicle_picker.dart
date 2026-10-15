@@ -1,5 +1,5 @@
-import 'package:carcare_customer_mobile/features/vehicles/presentation/controllers/vehicles_controller.dart';
-import 'package:carcare_customer_mobile/features/vehicles/presentation/controllers/vehicles_state.dart';
+import 'package:carservice_customer/features/vehicles/presentation/controllers/vehicles_controller.dart';
+import 'package:carservice_customer/features/vehicles/presentation/controllers/vehicles_state.dart';
 import 'package:flutter/material.dart';
 
 class VehiclePicker extends StatelessWidget {

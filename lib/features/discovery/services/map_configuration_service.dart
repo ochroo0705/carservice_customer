@@ -10,7 +10,7 @@ class NativeMapConfigurationService implements MapConfigurationService {
   const NativeMapConfigurationService();
 
   static const _channel = MethodChannel(
-    'mn.carcare.carcare_customer_mobile/map_configuration',
+    'mn.infosystems.carservice/map_configuration',
   );
 
   @override

@@ -1,4 +1,4 @@
-import 'package:carcare_customer_mobile/features/auth/domain/account.dart';
+import 'package:carservice_customer/features/booking/auth/domain/account.dart';
 
 abstract interface class AuthRepository {
   Future<Account?> restoreSession();
@@ -12,7 +12,29 @@ abstract interface class AuthRepository {
     required String code,
     String? name,
   });
+
+  /// Нууц үгээр нэвтрэх. Зөвхөн нууц үг тохируулсан Account-д ажиллана,
+  /// шинэ Account үүсгэхгүй. Хариу болон хадгалах session нь [verifyOtp]-тэй
+  /// ижил. Дугаар бүртгэлгүй эсвэл нууц үггүй бол буруу нууц үгтэй адил
+  /// 401 буцна.
+  Future<({Account account, bool reactivated})> loginWithPassword({
+    required String phone,
+    required String password,
+  });
   Future<void> signOut();
+
+  /// Нэвтэрсэн Account нууц үг тохируулсан эсэх.
+  Future<bool> hasPassword();
+
+  /// Нууц үг тохируулах/солих/устгахад шаардлагатай OTP-г бүртгэлтэй утсанд
+  /// илгээж, masked утасны дугаар буцаана.
+  Future<String> requestPasswordOtp();
+
+  /// [requestPasswordOtp]-оор авсан кодоор нууц үг тохируулна эсвэл солино.
+  Future<void> setPassword({required String code, required String password});
+
+  /// Нууц үгийг устгана — цаашид зөвхөн OTP-оор нэвтэрнэ.
+  Future<void> removePassword(String code);
 
   /// Account closure (deactivate/delete) хийхээс өмнө утсанд OTP илгээнэ.
   /// Буцаах утга нь бүтэн дугаар биш, тухайлбал `****1234` маягийн masked утас.

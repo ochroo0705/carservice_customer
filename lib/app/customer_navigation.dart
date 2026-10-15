@@ -1,8 +1,8 @@
-import 'package:carcare_customer_mobile/app/customer_app_services.dart';
-import 'package:carcare_customer_mobile/app/customer_router.dart';
-import 'package:carcare_customer_mobile/app/customer_routes.dart';
-import 'package:carcare_customer_mobile/app/customer_shell.dart';
-import 'package:carcare_customer_mobile/features/booking/domain/appointment_repository.dart';
+import 'package:carservice_customer/app/customer_app_services.dart';
+import 'package:carservice_customer/app/customer_router.dart';
+import 'package:carservice_customer/app/customer_routes.dart';
+import 'package:carservice_customer/app/customer_shell.dart';
+import 'package:carservice_customer/features/booking/domain/appointment_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';

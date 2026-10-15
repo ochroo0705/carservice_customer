@@ -126,7 +126,7 @@ class CachedOrganizationDetails extends Table {
   ],
 )
 class CacheDatabase extends _$CacheDatabase {
-  CacheDatabase() : super(driftDatabase(name: 'carcare_cache'));
+  CacheDatabase() : super(driftDatabase(name: 'carservice_cache'));
 
   /// For tests: pass a `NativeDatabase.memory()` executor.
   CacheDatabase.forTesting(super.executor);

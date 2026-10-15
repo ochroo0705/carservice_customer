@@ -1,14 +1,14 @@
-import 'package:carcare_customer_mobile/app/theme/app_theme.dart';
-import 'package:carcare_customer_mobile/app/theme/app_surfaces.dart';
-import 'package:carcare_customer_mobile/core/widgets/animations.dart';
-import 'package:carcare_customer_mobile/core/widgets/coming_soon_view.dart';
-import 'package:carcare_customer_mobile/core/widgets/skeletons.dart';
-import 'package:carcare_customer_mobile/features/notifications/domain/app_notification.dart';
-import 'package:carcare_customer_mobile/features/notifications/presentation/controllers/notifications_controller.dart';
-import 'package:carcare_customer_mobile/features/notifications/presentation/controllers/notifications_state.dart';
+import 'package:carservice_customer/app/theme/app_theme.dart';
+import 'package:carservice_customer/app/theme/app_surfaces.dart';
+import 'package:carservice_customer/core/widgets/animations.dart';
+import 'package:carservice_customer/core/widgets/coming_soon_view.dart';
+import 'package:carservice_customer/core/widgets/skeletons.dart';
+import 'package:carservice_customer/features/notifications/domain/app_notification.dart';
+import 'package:carservice_customer/features/notifications/presentation/controllers/notifications_controller.dart';
+import 'package:carservice_customer/features/notifications/presentation/controllers/notifications_state.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:carcare_customer_mobile/core/widgets/state_views.dart';
+import 'package:carservice_customer/core/widgets/state_views.dart';
 
 class NotificationsScreen extends StatelessWidget {
   const NotificationsScreen({

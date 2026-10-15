@@ -1,5 +1,5 @@
-import 'package:carcare_customer_mobile/app/theme/app_theme.dart';
-import 'package:carcare_customer_mobile/features/history/domain/diagnostic_report_summary.dart';
+import 'package:carservice_customer/app/theme/app_theme.dart';
+import 'package:carservice_customer/features/history/domain/diagnostic_report_summary.dart';
 import 'package:flutter/material.dart';
 
 /// Нэг оношилгооны тайлангийн мөр (нэр + огноо/гүйлт) — захиалгын

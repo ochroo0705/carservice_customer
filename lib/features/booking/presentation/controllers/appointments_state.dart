@@ -1,5 +1,5 @@
-import 'package:carcare_customer_mobile/features/booking/domain/appointment.dart';
-import 'package:carcare_customer_mobile/features/booking/domain/walk_in_order.dart';
+import 'package:carservice_customer/features/booking/domain/appointment.dart';
+import 'package:carservice_customer/features/booking/domain/walk_in_order.dart';
 
 enum AppointmentsStatus { initial, loading, data, empty, error }
 

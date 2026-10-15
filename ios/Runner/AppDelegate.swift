@@ -1,6 +1,7 @@
 import Flutter
 import GoogleMaps
 import UIKit
+import UserNotifications
 
 @main
 @objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
@@ -12,6 +13,10 @@ import UIKit
        Self.isValidMapsApiKey(mapsApiKey) {
       GMSServices.provideAPIKey(mapsApiKey)
     }
+    // Required by flutter_local_notifications: routes willPresent through
+    // FlutterAppDelegate to every plugin, so the foreground banner shown for
+    // an incoming push is actually presented.
+    UNUserNotificationCenter.current().delegate = self
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 
@@ -23,7 +28,7 @@ import UIKit
       return
     }
     let channel = FlutterMethodChannel(
-      name: "mn.carcare.carcare_customer_mobile/map_configuration",
+      name: "mn.infosystems.carservice/map_configuration",
       binaryMessenger: registrar.messenger()
     )
     channel.setMethodCallHandler { call, result in

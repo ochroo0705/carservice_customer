@@ -1,18 +1,19 @@
-import 'package:carcare_customer_mobile/app/theme/app_theme.dart';
-import 'package:carcare_customer_mobile/core/errors/app_failure.dart';
-import 'package:carcare_customer_mobile/features/booking/data/fake_appointment_repository.dart';
-import 'package:carcare_customer_mobile/features/booking/domain/appointment.dart';
-import 'package:carcare_customer_mobile/features/booking/domain/appointment_repository.dart';
-import 'package:carcare_customer_mobile/features/booking/domain/appointment_status.dart';
-import 'package:carcare_customer_mobile/features/booking/domain/service_progress.dart';
-import 'package:carcare_customer_mobile/features/booking/domain/walk_in_order.dart';
-import 'package:carcare_customer_mobile/features/booking/presentation/controllers/appointments_controller.dart';
-import 'package:carcare_customer_mobile/features/booking/presentation/screens/appointment_detail_screen.dart';
-import 'package:carcare_customer_mobile/features/booking/presentation/screens/walk_in_order_detail_screen.dart';
-import 'package:carcare_customer_mobile/features/discovery/data/fake_organization_repository.dart';
-import 'package:carcare_customer_mobile/features/history/data/fake_service_history_repository.dart';
-import 'package:carcare_customer_mobile/features/history/domain/order_intake.dart';
-import 'package:carcare_customer_mobile/features/history/domain/service_order_detail.dart';
+import 'package:carservice_customer/app/app_messages.dart';
+import 'package:carservice_customer/app/theme/app_theme.dart';
+import 'package:carservice_customer/core/errors/app_failure.dart';
+import 'package:carservice_customer/features/booking/data/fake_appointment_repository.dart';
+import 'package:carservice_customer/features/booking/domain/appointment.dart';
+import 'package:carservice_customer/features/booking/domain/appointment_repository.dart';
+import 'package:carservice_customer/features/booking/domain/appointment_status.dart';
+import 'package:carservice_customer/features/booking/domain/service_progress.dart';
+import 'package:carservice_customer/features/booking/domain/walk_in_order.dart';
+import 'package:carservice_customer/features/booking/presentation/controllers/appointments_controller.dart';
+import 'package:carservice_customer/features/booking/presentation/screens/appointment_detail_screen.dart';
+import 'package:carservice_customer/features/booking/presentation/screens/walk_in_order_detail_screen.dart';
+import 'package:carservice_customer/features/discovery/data/fake_organization_repository.dart';
+import 'package:carservice_customer/features/history/data/fake_service_history_repository.dart';
+import 'package:carservice_customer/features/history/domain/order_intake.dart';
+import 'package:carservice_customer/features/history/domain/service_order_detail.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -79,7 +80,12 @@ Future<void> _pump(
   await tester.pumpWidget(
     ChangeNotifierProvider.value(
       value: controller,
-      child: MaterialApp.router(theme: AppTheme.light, routerConfig: router),
+      child: MaterialApp.router(
+        theme: AppTheme.light,
+        // The intake tile reports failures through the global message.
+        scaffoldMessengerKey: AppMessages.messengerKey,
+        routerConfig: router,
+      ),
     ),
   );
   await tester.pumpAndSettle();

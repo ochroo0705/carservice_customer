@@ -1,4 +1,4 @@
-import 'package:carcare_customer_mobile/features/notifications/data/fake_notifications_repository.dart';
+import 'package:carservice_customer/features/notifications/data/fake_notifications_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

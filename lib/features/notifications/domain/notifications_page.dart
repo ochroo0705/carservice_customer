@@ -1,4 +1,4 @@
-import 'package:carcare_customer_mobile/features/notifications/domain/app_notification.dart';
+import 'package:carservice_customer/features/notifications/domain/app_notification.dart';
 
 /// One page of notifications plus the **server's** unread total.
 ///

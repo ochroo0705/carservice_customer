@@ -1,15 +1,16 @@
-import 'package:carcare_customer_mobile/app/theme/app_surfaces.dart';
-import 'package:carcare_customer_mobile/app/theme/app_theme.dart';
-import 'package:carcare_customer_mobile/core/errors/app_failure.dart';
-import 'package:carcare_customer_mobile/features/discovery/domain/branch.dart';
-import 'package:carcare_customer_mobile/features/discovery/domain/organization.dart';
-import 'package:carcare_customer_mobile/features/discovery/domain/organization_repository.dart';
-import 'package:carcare_customer_mobile/core/widgets/skeletons.dart';
-import 'package:carcare_customer_mobile/core/widgets/skeleton.dart';
-import 'package:carcare_customer_mobile/core/widgets/state_views.dart';
-import 'package:carcare_customer_mobile/features/discovery/presentation/widgets/branch_card.dart';
-import 'package:carcare_customer_mobile/features/discovery/presentation/widgets/branch_filter_panel.dart';
-import 'package:carcare_customer_mobile/features/discovery/services/device_location_service.dart';
+import 'package:carservice_customer/app/app_messages.dart';
+import 'package:carservice_customer/app/theme/app_surfaces.dart';
+import 'package:carservice_customer/app/theme/app_theme.dart';
+import 'package:carservice_customer/core/errors/app_failure.dart';
+import 'package:carservice_customer/features/discovery/domain/branch.dart';
+import 'package:carservice_customer/features/discovery/domain/organization.dart';
+import 'package:carservice_customer/features/discovery/domain/organization_repository.dart';
+import 'package:carservice_customer/core/widgets/skeletons.dart';
+import 'package:carservice_customer/core/widgets/skeleton.dart';
+import 'package:carservice_customer/core/widgets/state_views.dart';
+import 'package:carservice_customer/features/discovery/presentation/widgets/branch_card.dart';
+import 'package:carservice_customer/features/discovery/presentation/widgets/branch_filter_panel.dart';
+import 'package:carservice_customer/features/discovery/services/device_location_service.dart';
 import 'package:flutter/material.dart';
 
 /// Cross-org "юу хийлгэх гэж байна?" — Booking tab-ийн НЭГ дэлгэц (web-ийн
@@ -319,12 +320,8 @@ class _ServiceKeyPickerScreenState extends State<ServiceKeyPickerScreen> {
         _nearMe = false;
         _nearMePending = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Байршлыг авч чадсангүй. Байршлын зөвшөөрөл, тохиргоогоо шалгана уу.',
-          ),
-        ),
+      AppMessages.show(
+        'Байршлыг авч чадсангүй. Байршлын зөвшөөрөл, тохиргоогоо шалгана уу.',
       );
       return;
     }
@@ -838,7 +835,7 @@ class _ApplyBar extends StatelessWidget {
     decoration: BoxDecoration(
       color: Theme.of(context).scaffoldBackgroundColor,
       border: Border(
-        top: BorderSide(color: CarCareTheme.of(context).glassBorder),
+        top: BorderSide(color: CarserviceTheme.of(context).glassBorder),
       ),
     ),
     child: SizedBox(

@@ -1,5 +1,5 @@
-import 'package:carcare_customer_mobile/features/discovery/domain/branch.dart';
-import 'package:carcare_customer_mobile/features/discovery/domain/organization.dart';
+import 'package:carservice_customer/features/discovery/domain/branch.dart';
+import 'package:carservice_customer/features/discovery/domain/organization.dart';
 
 abstract interface class OrganizationRepository {
   /// [filter] идэвхтэй бол сервер талын "ойролцоо"/"одоо нээлттэй" шүүлтийг

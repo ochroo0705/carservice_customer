@@ -1,11 +1,11 @@
 import 'dart:async';
 
-import 'package:carcare_customer_mobile/features/legal/data/legal_consent_store.dart';
+import 'package:carservice_customer/features/legal/data/legal_consent_store.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 const _mapChannel = MethodChannel(
-  'mn.carcare.carcare_customer_mobile/map_configuration',
+  'mn.infosystems.carservice/map_configuration',
 );
 
 /// Discover opens on the map by default (2026-09-17), so every widget test

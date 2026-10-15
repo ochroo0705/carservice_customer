@@ -1,8 +1,8 @@
-import 'package:carcare_customer_mobile/app/app.dart';
-import 'package:carcare_customer_mobile/app/bootstrap_flags.dart';
-import 'package:carcare_customer_mobile/features/auth/data/fake_auth_repository.dart';
-import 'package:carcare_customer_mobile/features/discovery/data/fake_organization_repository.dart';
-import 'package:carcare_customer_mobile/features/profile/presentation/screens/account_closure_screen.dart';
+import 'package:carservice_customer/app/app.dart';
+import 'package:carservice_customer/app/bootstrap_flags.dart';
+import 'package:carservice_customer/features/booking/auth/data/fake_auth_repository.dart';
+import 'package:carservice_customer/features/discovery/data/fake_organization_repository.dart';
+import 'package:carservice_customer/features/profile/presentation/screens/account_closure_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -17,10 +17,8 @@ void main() {
   Future<FakeAuthRepository> openProfile(WidgetTester tester) async {
     final auth = FakeAuthRepository(signedIn: true);
     await tester.pumpWidget(
-      CarCareCustomerApp(
-        organizationRepository: FakeOrganizationRepository(
-          delay: Duration.zero,
-        ),
+      CarserviceApp(
+        organizationRepository: FakeOrganizationRepository(delay: Duration.zero),
         authRepository: auth,
       ),
     );
@@ -35,19 +33,17 @@ void main() {
 
   Future<void> openClosure(WidgetTester tester) async {
     final tile = find.byKey(const ValueKey('profile-account-closure-tile'));
-    await tester.scrollUntilVisible(
-      tile,
-      200,
-      scrollable: find.byType(Scrollable).last,
-    );
+    await tester.scrollUntilVisible(tile, 200, scrollable: find.byType(Scrollable).last);
+    // Closure is the last tile: scroll to the end so the list's bottom
+    // padding lifts it clear of the "Машин нэмэх" FAB before tapping.
+    await tester.drag(find.byType(Scrollable).last, const Offset(0, -300));
+    await tester.pumpAndSettle();
     await tester.tap(tile);
     await tester.pumpAndSettle();
     expect(find.byType(AccountClosureScreen), findsOneWidget);
   }
 
-  testWidgets('Profile opens the closure page and back removes it', (
-    tester,
-  ) async {
+  testWidgets('Profile opens the closure page and back removes it', (tester) async {
     await openProfile(tester);
     await openClosure(tester);
 
@@ -55,32 +51,23 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(AccountClosureScreen), findsNothing);
-    expect(
-      find.byKey(const ValueKey('profile-account-closure-tile')),
-      findsOneWidget,
-    );
+    expect(find.byKey(const ValueKey('profile-account-closure-tile')), findsOneWidget);
   });
 
-  testWidgets(
-    'a successful deactivation drops the closure page and signs out',
-    (tester) async {
-      final auth = await openProfile(tester);
-      await openClosure(tester);
+  testWidgets('a successful deactivation drops the closure page and signs out', (tester) async {
+    final auth = await openProfile(tester);
+    await openClosure(tester);
 
-      await tester.tap(find.text('Идэвхгүй болгох'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Код авах'));
-      await tester.pumpAndSettle();
-      await tester.enterText(find.byType(TextField).last, '654321');
-      await tester.tap(find.text('Идэвхгүй болгох').last);
-      await tester.pumpAndSettle();
+    await tester.tap(find.text('Идэвхгүй болгох'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Код авах'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).last, '654321');
+    await tester.tap(find.text('Идэвхгүй болгох').last);
+    await tester.pumpAndSettle();
 
-      expect(auth.lastClosure, ('deactivate', '654321'));
-      expect(find.byType(AccountClosureScreen), findsNothing);
-      expect(
-        find.byKey(const ValueKey('profile-account-closure-tile')),
-        findsNothing,
-      );
-    },
-  );
+    expect(auth.lastClosure, ('deactivate', '654321'));
+    expect(find.byType(AccountClosureScreen), findsNothing);
+    expect(find.byKey(const ValueKey('profile-account-closure-tile')), findsNothing);
+  });
 }

@@ -1,9 +1,9 @@
-import 'package:carcare_customer_mobile/core/errors/app_failure.dart';
-import 'package:carcare_customer_mobile/features/diagnostics/domain/diagnostic_report_detail.dart';
-import 'package:carcare_customer_mobile/features/diagnostics/domain/diagnostic_report_list_item.dart';
-import 'package:carcare_customer_mobile/features/diagnostics/domain/report_severity.dart';
-import 'package:carcare_customer_mobile/features/diagnostics/domain/template_schema.dart';
-import 'package:carcare_customer_mobile/features/diagnostics/domain/diagnostics_repository.dart';
+import 'package:carservice_customer/core/errors/app_failure.dart';
+import 'package:carservice_customer/features/diagnostics/domain/diagnostic_report_detail.dart';
+import 'package:carservice_customer/features/diagnostics/domain/diagnostic_report_list_item.dart';
+import 'package:carservice_customer/features/diagnostics/domain/report_severity.dart';
+import 'package:carservice_customer/features/diagnostics/domain/template_schema.dart';
+import 'package:carservice_customer/features/diagnostics/domain/diagnostics_repository.dart';
 
 DiagnosticPage diagnosticPageFromJson(Map<String, dynamic> json) {
   final reports = parseDiagnosticReportListJson(json['reports']);

@@ -5,18 +5,18 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:carcare_customer_mobile/app/customer_router.dart';
-import 'package:carcare_customer_mobile/core/network/api_client.dart';
-import 'package:carcare_customer_mobile/data/cache/cache_store.dart';
-import 'package:carcare_customer_mobile/features/auth/data/secure_session_store.dart';
-import 'package:carcare_customer_mobile/features/auth/domain/account.dart';
-import 'package:carcare_customer_mobile/features/auth/domain/auth_repository.dart';
-import 'package:carcare_customer_mobile/features/auth/presentation/auth_controller.dart';
-import 'package:carcare_customer_mobile/features/booking/domain/appointment.dart';
-import 'package:carcare_customer_mobile/features/booking/domain/appointment_repository.dart';
-import 'package:carcare_customer_mobile/features/booking/domain/walk_in_order.dart';
-import 'package:carcare_customer_mobile/features/booking/presentation/controllers/appointments_controller.dart';
-import 'package:carcare_customer_mobile/features/booking/presentation/controllers/appointments_state.dart';
+import 'package:carservice_customer/app/customer_router.dart';
+import 'package:carservice_customer/core/network/api_client.dart';
+import 'package:carservice_customer/data/cache/cache_store.dart';
+import 'package:carservice_customer/features/booking/auth/data/secure_session_store.dart';
+import 'package:carservice_customer/features/booking/auth/domain/account.dart';
+import 'package:carservice_customer/features/booking/auth/domain/auth_repository.dart';
+import 'package:carservice_customer/features/booking/auth/presentation/auth_controller.dart';
+import 'package:carservice_customer/features/booking/domain/appointment.dart';
+import 'package:carservice_customer/features/booking/domain/appointment_repository.dart';
+import 'package:carservice_customer/features/booking/domain/walk_in_order.dart';
+import 'package:carservice_customer/features/booking/presentation/controllers/appointments_controller.dart';
+import 'package:carservice_customer/features/booking/presentation/controllers/appointments_state.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -76,8 +76,7 @@ class _EmittingClosureRepo extends Fake implements AuthRepository {
   Stream<void> get onSessionInvalidated => _invalidated.stream;
 
   @override
-  Future<Account?> restoreSession() async =>
-      const Account(id: 'a', phone: '99112233');
+  Future<Account?> restoreSession() async => const Account(id: 'a', phone: '99112233');
 
   @override
   Future<void> signOut() async => _invalidated.add(null);
@@ -101,8 +100,7 @@ class _FlowRepo extends Fake implements AuthRepository {
     required String phone,
     required String code,
     String? name,
-  }) async =>
-      (account: const Account(id: 'a', phone: '99112233'), reactivated: false);
+  }) async => (account: const Account(id: 'a', phone: '99112233'), reactivated: false);
 
   @override
   Future<void> signOut() async {}
@@ -112,8 +110,7 @@ ApiClient _client({
   required Future<String?> Function() token,
   required Future<void> Function() onUnauthorized,
 }) {
-  final dio = Dio(BaseOptions(baseUrl: 'https://api.test'))
-    ..httpClientAdapter = _Always401();
+  final dio = Dio(BaseOptions(baseUrl: 'https://api.test'))..httpClientAdapter = _Always401();
   return ApiClient(
     baseUrl: 'https://api.test',
     dio: dio,
@@ -126,10 +123,7 @@ void main() {
   group('ApiClient 401', () {
     test('clears the session when the current token was rejected', () async {
       var cleared = 0;
-      final client = _client(
-        token: () async => 'token-a',
-        onUnauthorized: () async => cleared++,
-      );
+      final client = _client(token: () async => 'token-a', onUnauthorized: () async => cleared++);
       await expectLater(client.getJson('/x'), throwsA(anything));
       expect(cleared, 1);
     });
@@ -153,10 +147,7 @@ void main() {
 
     test('ignores a 401 on a request sent without a token', () async {
       var cleared = 0;
-      final client = _client(
-        token: () async => null,
-        onUnauthorized: () async => cleared++,
-      );
+      final client = _client(token: () async => null, onUnauthorized: () async => cleared++);
       await expectLater(client.getJson('/x'), throwsA(anything));
       expect(cleared, 0);
     });
@@ -178,11 +169,7 @@ void main() {
 
   group('SecureSessionStore', () {
     late _MockStorage storage;
-    const session = {
-      'account_access_token': 't',
-      'account_id': 'a',
-      'account_phone': '99112233',
-    };
+    const session = {'account_access_token': 't', 'account_id': 'a', 'account_phone': '99112233'};
 
     setUp(() {
       storage = _MockStorage();
@@ -216,8 +203,7 @@ void main() {
 
     test('a half-written session sends no token', () async {
       SharedPreferences.setMockInitialValues({'onboarding_done': true});
-      when(() => storage.readAll())
-          .thenAnswer((_) async => {'account_access_token': 't'});
+      when(() => storage.readAll()).thenAnswer((_) async => {'account_access_token': 't'});
       final store = SecureSessionStore(storage: storage);
       expect(await store.readToken(), isNull);
     });
@@ -227,10 +213,7 @@ void main() {
     test('keeps the closure notice when storage clearing races it', () async {
       final controller = AuthController(_EmittingClosureRepo());
       await controller.restore();
-      final ok = await controller.closeAccount(
-        deleteForever: false,
-        code: '123456',
-      );
+      final ok = await controller.closeAccount(deleteForever: false, code: '123456');
       await Future<void>.delayed(Duration.zero);
       expect(ok, isTrue);
       expect(controller.isAuthenticated, isFalse);
@@ -240,10 +223,7 @@ void main() {
     test('a closure that 401s still signs out, without a notice', () async {
       final controller = AuthController(_EmittingClosureRepo(fail401: true));
       await controller.restore();
-      final ok = await controller.closeAccount(
-        deleteForever: false,
-        code: '123456',
-      );
+      final ok = await controller.closeAccount(deleteForever: false, code: '123456');
       await Future<void>.delayed(Duration.zero);
       expect(ok, isFalse);
       expect(controller.isAuthenticated, isFalse);
@@ -263,19 +243,14 @@ void main() {
           value: any(named: 'value'),
         ),
       ).thenAnswer((_) async {});
-      when(() => storage.delete(key: any(named: 'key')))
-          .thenAnswer((_) async {});
+      when(() => storage.delete(key: any(named: 'key'))).thenAnswer((_) async {});
     });
 
     test('reads hit storage once, save updates, clear invalidates', () async {
       var reads = 0;
       when(() => storage.readAll()).thenAnswer((_) async {
         reads++;
-        return {
-          'account_access_token': 't',
-          'account_id': 'a',
-          'account_phone': '99112233',
-        };
+        return {'account_access_token': 't', 'account_id': 'a', 'account_phone': '99112233'};
       });
       final store = SecureSessionStore(storage: storage);
       expect(await store.readToken(), 't');
@@ -308,11 +283,7 @@ void main() {
     });
     when(() => storage.readAll()).thenAnswer(
       (_) async => stored
-          ? {
-              'account_access_token': 't',
-              'account_id': 'a',
-              'account_phone': '99112233',
-            }
+          ? {'account_access_token': 't', 'account_id': 'a', 'account_phone': '99112233'}
           : <String, String>{},
     );
     final store = SecureSessionStore(storage: storage);
@@ -326,22 +297,19 @@ void main() {
   });
 
   group('AuthController session flow', () {
-    test(
-      'remote closure flag is set before the sign-out listener fires',
-      () async {
-        final repo = _EmittingClosureRepo();
-        final controller = AuthController(repo);
-        await controller.restore();
-        SessionEvent? seen;
-        controller.addListener(() {
-          if (controller.account == null) {
-            seen = controller.sessionEvent;
-          }
-        });
-        await controller.handleRemoteAccountClosed(deleted: true);
-        expect(seen, SessionEvent.remoteDeleted);
-      },
-    );
+    test('remote closure flag is set before the sign-out listener fires', () async {
+      final repo = _EmittingClosureRepo();
+      final controller = AuthController(repo);
+      await controller.restore();
+      SessionEvent? seen;
+      controller.addListener(() {
+        if (controller.account == null) {
+          seen = controller.sessionEvent;
+        }
+      });
+      await controller.handleRemoteAccountClosed(deleted: true);
+      expect(seen, SessionEvent.remoteDeleted);
+    });
 
     test('verifyOtp keeps the code step up; signOut resets the flow', () async {
       final controller = AuthController(_FlowRepo());
@@ -361,8 +329,7 @@ void main() {
 
     test('sign-outs that ran device removal mark it handled', () async {
       var removals = 0;
-      final controller = AuthController(_FlowRepo())
-        ..beforeSignOut = () async => removals++;
+      final controller = AuthController(_FlowRepo())..beforeSignOut = () async => removals++;
       await controller.signOut();
       expect(removals, 1);
       expect(controller.takeSessionEvent(), SessionEvent.deviceRemovalHandled);
@@ -375,10 +342,7 @@ void main() {
   });
 
   test('login only returns to in-app paths', () {
-    expect(
-      safeReturnLocation('/organizations/x/book?branch=b'),
-      '/organizations/x/book?branch=b',
-    );
+    expect(safeReturnLocation('/organizations/x/book?branch=b'), '/organizations/x/book?branch=b');
     expect(safeReturnLocation(null), isNull);
     expect(safeReturnLocation('https://evil.test/'), isNull);
     expect(safeReturnLocation('//evil.test/x'), isNull);

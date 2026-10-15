@@ -1,4 +1,4 @@
-import 'package:carcare_customer_mobile/features/discovery/presentation/controllers/discovery_state.dart';
+import 'package:carservice_customer/features/discovery/presentation/controllers/discovery_state.dart';
 import 'package:flutter/material.dart';
 
 class LoadMoreFooter extends StatelessWidget {

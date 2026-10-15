@@ -1,9 +1,9 @@
-import 'package:carcare_customer_mobile/app/bootstrap_flags.dart';
+import 'package:carservice_customer/app/bootstrap_flags.dart';
 
-import 'package:carcare_customer_mobile/app/app.dart';
-import 'package:carcare_customer_mobile/features/booking/data/fake_appointment_repository.dart';
-import 'package:carcare_customer_mobile/features/discovery/data/fake_organization_repository.dart';
-import 'package:carcare_customer_mobile/features/notifications/presentation/screens/notifications_screen.dart';
+import 'package:carservice_customer/app/app.dart';
+import 'package:carservice_customer/features/booking/data/fake_appointment_repository.dart';
+import 'package:carservice_customer/features/discovery/data/fake_organization_repository.dart';
+import 'package:carservice_customer/features/notifications/presentation/screens/notifications_screen.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -19,7 +19,7 @@ void main() {
   ) async {
     final push = ControllablePush();
     await tester.pumpWidget(
-      CarCareCustomerApp(
+      CarserviceApp(
         organizationRepository: FakeOrganizationRepository(),
         authRepository: signedInAuthRepository(),
         appointmentRepository: FakeAppointmentRepository(),
@@ -43,7 +43,7 @@ void main() {
     (tester) async {
       final push = ControllablePush();
       await tester.pumpWidget(
-        CarCareCustomerApp(
+        CarserviceApp(
           organizationRepository: FakeOrganizationRepository(),
           authRepository: signedInAuthRepository(),
           appointmentRepository: FakeAppointmentRepository(),
@@ -68,7 +68,7 @@ void main() {
   ) async {
     final push = ControllablePush();
     await tester.pumpWidget(
-      CarCareCustomerApp(
+      CarserviceApp(
         organizationRepository: FakeOrganizationRepository(),
         authRepository: signedInAuthRepository(),
         remotePushService: push,
@@ -87,7 +87,7 @@ void main() {
   ) async {
     final push = ControllablePush();
     await tester.pumpWidget(
-      CarCareCustomerApp(
+      CarserviceApp(
         organizationRepository: FakeOrganizationRepository(),
         authRepository: signedInAuthRepository(),
         appointmentRepository: FakeAppointmentRepository(),
@@ -108,7 +108,7 @@ void main() {
   ) async {
     final push = ControllablePush();
     await tester.pumpWidget(
-      CarCareCustomerApp(
+      CarserviceApp(
         organizationRepository: FakeOrganizationRepository(),
         authRepository: signedInAuthRepository(),
         remotePushService: push,

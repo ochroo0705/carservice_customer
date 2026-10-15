@@ -1,7 +1,7 @@
-import 'package:carcare_customer_mobile/features/discovery/domain/branch.dart';
-import 'package:carcare_customer_mobile/features/discovery/domain/organization.dart';
-import 'package:carcare_customer_mobile/features/discovery/presentation/map_location_limiter.dart';
-import 'package:carcare_customer_mobile/features/discovery/presentation/widgets/map_pin_icons.dart';
+import 'package:carservice_customer/features/discovery/domain/branch.dart';
+import 'package:carservice_customer/features/discovery/domain/organization.dart';
+import 'package:carservice_customer/features/discovery/presentation/map_location_limiter.dart';
+import 'package:carservice_customer/features/discovery/presentation/widgets/map_pin_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 

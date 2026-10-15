@@ -1,6 +1,6 @@
-import 'package:carcare_customer_mobile/app/bootstrap_flags.dart';
-import 'package:carcare_customer_mobile/app/app.dart';
-import 'package:carcare_customer_mobile/features/discovery/data/fake_organization_repository.dart';
+import 'package:carservice_customer/app/bootstrap_flags.dart';
+import 'package:carservice_customer/app/app.dart';
+import 'package:carservice_customer/features/discovery/data/fake_organization_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -13,7 +13,7 @@ void main() {
     'top bar swaps the sign-in button for the avatar after login, and back after sign-out',
     (tester) async {
       await tester.pumpWidget(
-        CarCareCustomerApp(
+        CarserviceApp(
           organizationRepository: FakeOrganizationRepository(
             delay: Duration.zero,
           ),

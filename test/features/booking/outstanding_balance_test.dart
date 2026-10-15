@@ -1,4 +1,4 @@
-import 'package:carcare_customer_mobile/features/booking/domain/service_progress.dart';
+import 'package:carservice_customer/features/booking/domain/service_progress.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Paid-only history (2026-09-24): a completed order that is not fully paid

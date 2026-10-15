@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:carcare_customer_mobile/features/auth/domain/account.dart';
+import 'package:carservice_customer/features/booking/auth/domain/account.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -50,17 +50,11 @@ class SecureSessionStore {
   Future<Account?> readAccount() async {
     final values = await _readAll();
     if (!_isComplete(values)) return null;
-    return Account(
-      id: values[_idKey]!,
-      phone: values[_phoneKey]!,
-      name: values[_nameKey],
-    );
+    return Account(id: values[_idKey]!, phone: values[_phoneKey]!, name: values[_nameKey]);
   }
 
   static bool _isComplete(Map<String, String> values) =>
-      values[_tokenKey] != null &&
-      values[_idKey] != null &&
-      values[_phoneKey] != null;
+      values[_tokenKey] != null && values[_idKey] != null && values[_phoneKey] != null;
 
   /// Reads the whole store, treating an unreadable store as signed out.
   ///

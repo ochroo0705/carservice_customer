@@ -1,14 +1,14 @@
-import 'package:carcare_customer_mobile/app/theme/app_theme.dart';
-import 'package:carcare_customer_mobile/features/auth/presentation/auth_controller.dart';
-import 'package:carcare_customer_mobile/features/discovery/data/fake_organization_repository.dart';
-import 'package:carcare_customer_mobile/features/discovery/domain/branch.dart';
-import 'package:carcare_customer_mobile/features/discovery/domain/organization_repository.dart';
-import 'package:carcare_customer_mobile/features/discovery/presentation/controllers/discovery_controller.dart';
-import 'package:carcare_customer_mobile/features/discovery/presentation/controllers/organization_detail_controller.dart';
-import 'package:carcare_customer_mobile/features/discovery/presentation/screens/discovery_screen.dart';
-import 'package:carcare_customer_mobile/features/discovery/presentation/widgets/discovery_map.dart';
-import 'package:carcare_customer_mobile/features/notifications/domain/notifications_page.dart';
-import 'package:carcare_customer_mobile/features/notifications/presentation/controllers/notifications_controller.dart';
+import 'package:carservice_customer/app/theme/app_theme.dart';
+import 'package:carservice_customer/features/booking/auth/presentation/auth_controller.dart';
+import 'package:carservice_customer/features/discovery/data/fake_organization_repository.dart';
+import 'package:carservice_customer/features/discovery/domain/branch.dart';
+import 'package:carservice_customer/features/discovery/domain/organization_repository.dart';
+import 'package:carservice_customer/features/discovery/presentation/controllers/discovery_controller.dart';
+import 'package:carservice_customer/features/discovery/presentation/controllers/organization_detail_controller.dart';
+import 'package:carservice_customer/features/discovery/presentation/screens/discovery_screen.dart';
+import 'package:carservice_customer/features/discovery/presentation/widgets/discovery_map.dart';
+import 'package:carservice_customer/features/notifications/domain/notifications_page.dart';
+import 'package:carservice_customer/features/notifications/presentation/controllers/notifications_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -17,9 +17,7 @@ import 'package:provider/provider.dart';
 
 import '../../support/mocks.dart';
 
-const _mapChannel = MethodChannel(
-  'mn.carcare.carcare_customer_mobile/map_configuration',
-);
+const _mapChannel = MethodChannel('mn.infosystems.carservice/map_configuration');
 
 OrganizationMapMarker _marker(String id, double lat) => OrganizationMapMarker(
   id: id,
@@ -43,12 +41,8 @@ class _MapRepo extends Fake implements OrganizationRepository {
   Future<OrganizationMapPage> getMapMarkers({
     required MapViewport viewport,
     OrganizationFilter? filter,
-  }) async => OrganizationMapPage(
-    markers: markers,
-    count: markers.length,
-    truncated: false,
-    max: 500,
-  );
+  }) async =>
+      OrganizationMapPage(markers: markers, count: markers.length, truncated: false, max: 500);
 
   @override
   Future<List<BranchTagOption>> getBranchTags() async => const [];
@@ -59,15 +53,16 @@ class _MapRepo extends Fake implements OrganizationRepository {
 
 void main() {
   setUp(() {
-    TestWidgetsFlutterBinding.ensureInitialized().defaultBinaryMessenger
-        .setMockMethodCallHandler(
-          _mapChannel,
-          (call) async => call.method == 'isConfigured' ? false : null,
-        );
+    TestWidgetsFlutterBinding.ensureInitialized().defaultBinaryMessenger.setMockMethodCallHandler(
+      _mapChannel,
+      (call) async => call.method == 'isConfigured' ? false : null,
+    );
   });
   tearDown(() {
-    TestWidgetsFlutterBinding.ensureInitialized().defaultBinaryMessenger
-        .setMockMethodCallHandler(_mapChannel, null);
+    TestWidgetsFlutterBinding.ensureInitialized().defaultBinaryMessenger.setMockMethodCallHandler(
+      _mapChannel,
+      null,
+    );
   });
 
   Future<
@@ -83,14 +78,12 @@ void main() {
     final discovery = DiscoveryController(repo);
     final detail = OrganizationDetailController(repo);
     final auth = MockAuthRepository();
-    when(() => auth.onSessionInvalidated)
-        .thenAnswer((_) => const Stream.empty());
+    when(() => auth.onSessionInvalidated).thenAnswer((_) => const Stream.empty());
     final authController = AuthController(auth)..account = testAccount;
     final notificationsRepo = MockNotificationsRepository();
     var unread = 0;
-    when(() => notificationsRepo.getNotifications()).thenAnswer(
-      (_) async => NotificationsPage(items: const [], unreadCount: unread),
-    );
+    when(() => notificationsRepo.getNotifications())
+        .thenAnswer((_) async => NotificationsPage(items: const [], unreadCount: unread));
     final notifications = NotificationsController(notificationsRepo);
     addTearDown(() {
       discovery.dispose();
@@ -99,9 +92,7 @@ void main() {
       notifications.dispose();
     });
     await discovery.load();
-    discovery.requestMapMarkers(
-      const MapViewport(north: 48, south: 47.8, east: 107, west: 106.8),
-    );
+    discovery.requestMapMarkers(const MapViewport(north: 48, south: 47.8, east: 107, west: 106.8));
     await tester.pumpWidget(
       MultiProvider(
         providers: [
@@ -113,10 +104,7 @@ void main() {
         child: MaterialApp(
           theme: AppTheme.light,
           home: Scaffold(
-            body: DiscoveryScreen(
-              onBranchSelected: (_, _) {},
-              onNotificationsRequested: () {},
-            ),
+            body: DiscoveryScreen(onBranchSelected: (_, _) {}, onNotificationsRequested: () {}),
           ),
         ),
       ),
@@ -124,9 +112,8 @@ void main() {
     await tester.pump(const Duration(milliseconds: 700));
     await tester.pumpAndSettle();
     // Stash the unread value the next `load()` should report.
-    when(() => notificationsRepo.getNotifications()).thenAnswer(
-      (_) async => NotificationsPage(items: const [], unreadCount: unread),
-    );
+    when(() => notificationsRepo.getNotifications())
+        .thenAnswer((_) async => NotificationsPage(items: const [], unreadCount: unread));
     return (
       discovery: discovery,
       notifications: notifications,
@@ -135,16 +122,13 @@ void main() {
     );
   }
 
-  testWidgets('an unread-count change does not rebuild the map', (
-    tester,
-  ) async {
+  testWidgets('an unread-count change does not rebuild the map', (tester) async {
     final h = await pumpScreen(tester);
     final before = tester.widget<DiscoveryMap>(find.byType(DiscoveryMap));
     expect(before.organizations, isNotEmpty);
 
-    when(() => h.notificationsRepo.getNotifications()).thenAnswer(
-      (_) async => const NotificationsPage(items: [], unreadCount: 3),
-    );
+    when(() => h.notificationsRepo.getNotifications())
+        .thenAnswer((_) async => const NotificationsPage(items: [], unreadCount: 3));
     await h.notifications.load();
     await tester.pumpAndSettle();
 

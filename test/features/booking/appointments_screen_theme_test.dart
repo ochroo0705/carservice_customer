@@ -1,18 +1,16 @@
-import 'package:carcare_customer_mobile/app/theme/app_theme.dart';
-import 'package:carcare_customer_mobile/features/auth/data/fake_auth_repository.dart';
-import 'package:carcare_customer_mobile/features/auth/domain/account.dart';
-import 'package:carcare_customer_mobile/features/auth/presentation/auth_controller.dart';
-import 'package:carcare_customer_mobile/features/booking/data/fake_appointment_repository.dart';
-import 'package:carcare_customer_mobile/features/booking/presentation/controllers/appointments_controller.dart';
-import 'package:carcare_customer_mobile/features/booking/presentation/screens/appointments_screen.dart';
+import 'package:carservice_customer/app/theme/app_theme.dart';
+import 'package:carservice_customer/features/booking/auth/data/fake_auth_repository.dart';
+import 'package:carservice_customer/features/booking/auth/domain/account.dart';
+import 'package:carservice_customer/features/booking/auth/presentation/auth_controller.dart';
+import 'package:carservice_customer/features/booking/data/fake_appointment_repository.dart';
+import 'package:carservice_customer/features/booking/presentation/controllers/appointments_controller.dart';
+import 'package:carservice_customer/features/booking/presentation/screens/appointments_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 
 void main() {
-  testWidgets('keeps the header text readable across a live theme switch', (
-    tester,
-  ) async {
+  testWidgets('keeps the header text readable across a live theme switch', (tester) async {
     final controller = AppointmentsController(FakeAppointmentRepository());
     await controller.load();
     final authController = AuthController(FakeAuthRepository())
@@ -43,10 +41,7 @@ void main() {
     // itemBuilder closure, still exercising the same regression class.
     await tester.pumpWidget(buildApp(AppTheme.dark));
     await tester.pumpAndSettle();
-    expect(
-      tester.widget<Text>(find.text('Инфосистемс').first).style?.color,
-      AppColors.darkText,
-    );
+    expect(tester.widget<Text>(find.text('Инфосистемс').first).style?.color, AppColors.darkText);
 
     // Live theme switch with the same widget tree staying mounted (no
     // unmount in between) — same class of bug as the Favorites header:
@@ -55,9 +50,6 @@ void main() {
     await tester.pumpWidget(buildApp(AppTheme.light));
     await tester.pumpAndSettle();
 
-    expect(
-      tester.widget<Text>(find.text('Инфосистемс').first).style?.color,
-      AppColors.lightText,
-    );
+    expect(tester.widget<Text>(find.text('Инфосистемс').first).style?.color, AppColors.lightText);
   });
 }

@@ -1,4 +1,4 @@
-import 'package:carcare_customer_mobile/features/devices/domain/device_repository.dart';
+import 'package:carservice_customer/features/devices/domain/device_repository.dart';
 import 'package:flutter/foundation.dart';
 
 /// No-op under `USE_FAKE_API=true` — there is nothing to register with.

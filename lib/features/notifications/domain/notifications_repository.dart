@@ -1,5 +1,5 @@
-import 'package:carcare_customer_mobile/features/notifications/domain/app_notification.dart';
-import 'package:carcare_customer_mobile/features/notifications/domain/notifications_page.dart';
+import 'package:carservice_customer/features/notifications/domain/app_notification.dart';
+import 'package:carservice_customer/features/notifications/domain/notifications_page.dart';
 
 abstract interface class NotificationsRepository {
   Future<NotificationsPage> getNotifications();
