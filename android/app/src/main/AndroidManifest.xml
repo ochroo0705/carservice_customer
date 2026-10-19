@@ -1,4 +1,5 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
     <!-- allowBackup="false": the session token lives in encrypted storage
          whose key can't be backed up; a restored copy is unreadable on the
          new device. Backup would also carry a live login to another phone. -->
@@ -6,6 +7,12 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- The app shows no ads and ships no analytics SDK. Strip any
+         advertising-ID permission a library manifest might merge in, so the
+         Play Console advertising-ID declaration stays "No". -->
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="remove"/>
+    <uses-permission android:name="android.permission.ACCESS_ADSERVICES_AD_ID" tools:node="remove"/>
+    <uses-permission android:name="android.permission.ACCESS_ADSERVICES_ATTRIBUTION" tools:node="remove"/>
     <application
         android:label="Carservice"
         android:name="${applicationName}"
@@ -15,8 +22,7 @@
         android:dataExtractionRules="@xml/data_extraction_rules">
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="${GOOGLE_MAP_API_KEY}" />
-        <activity
+            android:value="${GOOGLE_MAP_API_KEY}" />        <activity
             android:name=".MainActivity"
             android:exported="true"
             android:launchMode="singleTop"

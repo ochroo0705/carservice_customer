@@ -1,19 +1,11 @@
-<<<<<<< Updated upstream
-import 'package:carcare_customer_mobile/app/theme/app_theme.dart';
-import 'package:carcare_customer_mobile/core/errors/app_failure.dart';
-import 'package:carcare_customer_mobile/features/booking/domain/appointment.dart';
-import 'package:carcare_customer_mobile/features/booking/domain/appointment_payment.dart';
-import 'package:carcare_customer_mobile/features/booking/domain/appointment_repository.dart';
-import 'package:carcare_customer_mobile/features/booking/domain/walk_in_order.dart';
-import 'package:carcare_customer_mobile/features/booking/presentation/screens/appointment_payment_screen.dart';
-=======
+import 'package:carservice_customer/app/app_messages.dart';
 import 'package:carservice_customer/app/theme/app_theme.dart';
+import 'package:carservice_customer/core/errors/app_failure.dart';
 import 'package:carservice_customer/features/booking/domain/appointment.dart';
 import 'package:carservice_customer/features/booking/domain/appointment_payment.dart';
 import 'package:carservice_customer/features/booking/domain/appointment_repository.dart';
 import 'package:carservice_customer/features/booking/domain/walk_in_order.dart';
 import 'package:carservice_customer/features/booking/presentation/screens/appointment_payment_screen.dart';
->>>>>>> Stashed changes
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -62,9 +54,7 @@ class _DeadBookingRepository extends Fake implements AppointmentRepository {
       );
   @override
   Future<AppointmentPayment?> retryPayment(String id) async =>
-      throw const ConflictFailure(
-        'Энэ цаг цуцлагдсан тул хураамж төлөх боломжгүй.',
-      );
+      throw const ConflictFailure('Энэ цаг цуцлагдсан тул хураамж төлөх боломжгүй.');
   @override
   Future<AppointmentPayment?> getPayment(String id) async => null;
   @override
@@ -115,6 +105,7 @@ Future<void> _pumpPayment(
   await tester.pumpWidget(
     MaterialApp(
       theme: AppTheme.light,
+      scaffoldMessengerKey: AppMessages.messengerKey,
       home: AppointmentPaymentScreen(
         appointmentId: 'apt-1',
         repository: repository,
@@ -128,22 +119,18 @@ Future<void> _pumpPayment(
 }
 
 void main() {
-  testWidgets('paid:true with a message shows the server message', (
-    tester,
-  ) async {
+  testWidgets('paid:true with a message shows the server message', (tester) async {
     await _pumpPayment(tester, _DeadBookingRepository());
     await tester.pump(const Duration(seconds: 4));
     await tester.pump();
-    expect(
-      find.text('Төлбөр хүлээж авсан ч энэ цаг цуцлагдсан байсан.'),
-      findsOneWidget,
-    );
+    expect(find.text('Төлбөр хүлээж авсан ч энэ цаг цуцлагдсан байсан.'), findsOneWidget);
   });
 
   testWidgets('a 409 on retry shows the server message', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light,
+        scaffoldMessengerKey: AppMessages.messengerKey,
         home: AppointmentPaymentScreen(
           appointmentId: 'apt-1',
           repository: _DeadBookingRepository(),
@@ -162,34 +149,28 @@ void main() {
     await tester.tap(retry.first);
     await tester.pump();
     await tester.pump();
-    expect(
-      find.text('Энэ цаг цуцлагдсан тул хураамж төлөх боломжгүй.'),
-      findsOneWidget,
-    );
+    expect(find.text('Энэ цаг цуцлагдсан тул хураамж төлөх боломжгүй.'), findsOneWidget);
   });
 
-  testWidgets(
-    'auto-polls a pending fee and flips to paid without a manual tap',
-    (tester) async {
-      final repository = _PaysAfterRepository(paidAfter: 2);
-      var updated = 0;
-      await _pumpPayment(tester, repository, onPaymentUpdated: () => updated++);
+  testWidgets('auto-polls a pending fee and flips to paid without a manual tap', (tester) async {
+    final repository = _PaysAfterRepository(paidAfter: 2);
+    var updated = 0;
+    await _pumpPayment(tester, repository, onPaymentUpdated: () => updated++);
 
-      // Not paid yet — the check button is visible, no success banner.
-      expect(find.text('Төлбөр амжилттай төлөгдсөн.'), findsNothing);
+    // Not paid yet — the check button is visible, no success banner.
+    expect(find.text('Төлбөр амжилттай төлөгдсөн.'), findsNothing);
 
-      // First poll tick: still unpaid.
-      await tester.pump(const Duration(seconds: 4));
-      await tester.pump();
-      expect(find.text('Төлбөр амжилттай төлөгдсөн.'), findsNothing);
+    // First poll tick: still unpaid.
+    await tester.pump(const Duration(seconds: 4));
+    await tester.pump();
+    expect(find.text('Төлбөр амжилттай төлөгдсөн.'), findsNothing);
 
-      // Second poll tick: paid — the screen flips on its own.
-      await tester.pump(const Duration(seconds: 4));
-      await tester.pump();
-      expect(find.text('Төлбөр амжилттай төлөгдсөн.'), findsOneWidget);
-      expect(updated, 1);
-    },
-  );
+    // Second poll tick: paid — the screen flips on its own.
+    await tester.pump(const Duration(seconds: 4));
+    await tester.pump();
+    expect(find.text('Төлбөр амжилттай төлөгдсөн.'), findsOneWidget);
+    expect(updated, 1);
+  });
 
   testWidgets('stops polling once paid — no further checks', (tester) async {
     final repository = _PaysAfterRepository(paidAfter: 1);

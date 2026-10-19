@@ -1,4 +1,5 @@
 import 'package:carservice_customer/app/app_messages.dart';
+
 import 'dart:async';
 import 'dart:convert';
 
@@ -41,8 +42,7 @@ class AppointmentPaymentScreen extends StatefulWidget {
   final VoidCallback? onPaymentUpdated;
 
   @override
-  State<AppointmentPaymentScreen> createState() =>
-      _AppointmentPaymentScreenState();
+  State<AppointmentPaymentScreen> createState() => _AppointmentPaymentScreenState();
 }
 
 enum _LoadStatus { loading, data, error }
@@ -137,8 +137,7 @@ class _AppointmentPaymentScreenState extends State<AppointmentPaymentScreen>
   }
 
   Future<void> _autoPoll() async {
-    if (!_isPollable ||
-        (_pollDeadline != null && DateTime.now().isAfter(_pollDeadline!))) {
+    if (!_isPollable || (_pollDeadline != null && DateTime.now().isAfter(_pollDeadline!))) {
       _stopPolling();
       return;
     }
@@ -205,7 +204,7 @@ class _AppointmentPaymentScreenState extends State<AppointmentPaymentScreen>
         // the booking is not active — never show a bare "paid successfully".
         final paidMessage = result.message;
         if (paidMessage != null && paidMessage.isNotEmpty) {
-          _showSnack(paidMessage, isError: true);
+          AppMessages.show(paidMessage, isError: true);
         }
       } else if (result.underpaidAmount != null) {
         final current = _payment;
@@ -223,14 +222,12 @@ class _AppointmentPaymentScreenState extends State<AppointmentPaymentScreen>
           });
         }
         if (!silent) {
-          AppMessages.show(
-            result.message ?? 'Дутуу төлбөр ирсэн байна.',
-            isError: true,
-          );
+          AppMessages.show(result.message ?? 'Дутуу төлбөр ирсэн байна.', isError: true);
         }
       } else if (!silent) {
         AppMessages.show(
-          result.message ?? 'Төлбөр төлөгдөөгүй байна. Банкны аппаар QR-аа уншуулсны дараа дахин шалгана уу.',
+          result.message ??
+              'Төлбөр төлөгдөөгүй байна. Банкны аппаар QR-аа уншуулсны дараа дахин шалгана уу.',
         );
       }
     } on AppFailure catch (failure) {
@@ -253,9 +250,7 @@ class _AppointmentPaymentScreenState extends State<AppointmentPaymentScreen>
     if (_retrying) return;
     setState(() => _retrying = true);
     try {
-      final payment = await widget.repository.retryPayment(
-        widget.appointmentId,
-      );
+      final payment = await widget.repository.retryPayment(widget.appointmentId);
       if (!mounted) return;
       setState(() => _payment = payment);
       _maybeStartPolling(); // a fresh pending invoice — resume auto-confirm
@@ -278,10 +273,7 @@ class _AppointmentPaymentScreenState extends State<AppointmentPaymentScreen>
       return;
     }
     try {
-      final launched = await launchUrl(
-        uri,
-        mode: LaunchMode.externalApplication,
-      );
+      final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
       if (!launched && mounted) {
         // Апп суулгаагүй, эсвэл scheme-ийг Android <queries>/iOS
         // LSApplicationQueriesSchemes-д зарлаагүй үед false буцаана.
@@ -327,21 +319,11 @@ class _AppointmentPaymentScreenState extends State<AppointmentPaymentScreen>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.error_outline_rounded,
-              size: 52,
-              color: Theme.of(context).colorScheme.error,
-            ),
+            Icon(Icons.error_outline_rounded, size: 52, color: Theme.of(context).colorScheme.error),
             const SizedBox(height: 16),
-            Text(
-              _message ?? 'Тодорхойгүй алдаа гарлаа.',
-              textAlign: TextAlign.center,
-            ),
+            Text(_message ?? 'Тодорхойгүй алдаа гарлаа.', textAlign: TextAlign.center),
             const SizedBox(height: 16),
-            OutlinedButton(
-              onPressed: _load,
-              child: const Text('Дахин оролдох'),
-            ),
+            OutlinedButton(onPressed: _load, child: const Text('Дахин оролдох')),
           ],
         ),
       ),
@@ -382,16 +364,10 @@ class _NoFeeRequired extends StatelessWidget {
           Icon(
             Icons.check_circle_outline_rounded,
             size: 52,
-            color: AppColors.readable(
-              AppColors.green,
-              Theme.of(context).brightness,
-            ),
+            color: AppColors.readable(AppColors.green, Theme.of(context).brightness),
           ),
           const SizedBox(height: 16),
-          const Text(
-            'Энэ цаг захиалгад хураамж шаардлагагүй.',
-            textAlign: TextAlign.center,
-          ),
+          const Text('Энэ цаг захиалгад хураамж шаардлагагүй.', textAlign: TextAlign.center),
           const SizedBox(height: 16),
           FilledButton(onPressed: onDone, child: const Text('Дуусгах')),
         ],
@@ -445,10 +421,8 @@ class _PaymentPanel extends StatelessWidget {
               children: [
                 TextSpan(
                   text: formatAmount(payment.amount.round()),
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.w900,
-                    color: scheme.primary,
-                  ),
+                  style: Theme.of(context).textTheme.headlineMedium
+                      ?.copyWith(fontWeight: FontWeight.w900, color: scheme.primary),
                 ),
                 TextSpan(
                   text: ' ${payment.currency}',
@@ -483,36 +457,21 @@ class _PaymentPanel extends StatelessWidget {
               ),
             ),
           if (payment.status == AppointmentFeeStatus.refunded) ...[
-            const _Banner(
-              color: AppColors.accent,
-              text: 'Энэ хураамж буцаагдсан байна.',
-            ),
+            const _Banner(color: AppColors.accent, text: 'Энэ хураамж буцаагдсан байна.'),
             const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
-              child: FilledButton(
-                onPressed: onDone,
-                child: const Text('Дуусгах'),
-              ),
+              child: FilledButton(onPressed: onDone, child: const Text('Дуусгах')),
             ),
           ] else if (payment.status == AppointmentFeeStatus.paid) ...[
-            const _Banner(
-              color: AppColors.green,
-              text: 'Төлбөр амжилттай төлөгдсөн.',
-            ),
+            const _Banner(color: AppColors.green, text: 'Төлбөр амжилттай төлөгдсөн.'),
             const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
-              child: FilledButton(
-                onPressed: onDone,
-                child: const Text('Дуусгах'),
-              ),
+              child: FilledButton(onPressed: onDone, child: const Text('Дуусгах')),
             ),
           ] else if (failed) ...[
-            const _Banner(
-              color: AppColors.red,
-              text: 'Invoice үүсгэхэд алдаа гарсан байна.',
-            ),
+            const _Banner(color: AppColors.red, text: 'Invoice үүсгэхэд алдаа гарсан байна.'),
             const SizedBox(height: 16),
             FilledButton(
               onPressed: retrying ? null : onRetry,
@@ -598,8 +557,7 @@ class _BankPickerSheet extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
             child: Text(
               'Банкаа сонгоно уу',
-              style: Theme.of(context).textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w700),
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
             ),
           ),
           Flexible(
@@ -614,13 +572,9 @@ class _BankPickerSheet extends StatelessWidget {
                   key: ValueKey('bank-${bank.name}-$i'),
                   leading: CircleAvatar(
                     backgroundColor: scheme.surfaceContainerHighest,
-                    foregroundImage: bank.logo.isNotEmpty
-                        ? NetworkImage(bank.logo)
-                        : null,
+                    foregroundImage: bank.logo.isNotEmpty ? NetworkImage(bank.logo) : null,
                     child: Text(
-                      bank.label.isNotEmpty
-                          ? bank.label.substring(0, 1).toUpperCase()
-                          : '?',
+                      bank.label.isNotEmpty ? bank.label.substring(0, 1).toUpperCase() : '?',
                       style: TextStyle(color: scheme.onSurfaceVariant),
                     ),
                   ),
@@ -655,9 +609,7 @@ class _Banner extends StatelessWidget {
     child: Text(
       text,
       textAlign: TextAlign.center,
-      style: TextStyle(
-        color: AppColors.readable(color, Theme.of(context).brightness),
-      ),
+      style: TextStyle(color: AppColors.readable(color, Theme.of(context).brightness)),
     ),
   );
 }
