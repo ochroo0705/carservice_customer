@@ -52,7 +52,7 @@ void main() async {
   final dependencies = AppDependencies.build(
     cacheStore: DriftCacheStore(CacheDatabase()),
     remotePushService: FirebaseRemotePushService(),
-    analytics: FirebaseAnalyticsService(),
+    analytics: const NoopAnalyticsService(),
   );
   // Who accepted the terms, checked by the router after sign-in.
   await LegalConsentStore.instance.init();

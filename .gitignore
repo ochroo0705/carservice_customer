@@ -64,3 +64,6 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# Xcode derived-data build logs
+ios/.derived-data-log-*

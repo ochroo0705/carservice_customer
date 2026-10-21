@@ -1,24 +1,14 @@
-<<<<<<< Updated upstream
-import 'package:carcare_customer_mobile/features/booking/data/appointment_dto.dart';
-import 'package:carcare_customer_mobile/features/booking/domain/appointment_payment.dart';
-import 'package:carcare_customer_mobile/features/booking/domain/appointment_status.dart';
-import 'package:carcare_customer_mobile/features/booking/domain/service_progress.dart';
-import 'package:carcare_customer_mobile/core/errors/app_failure.dart';
-=======
 import 'package:carservice_customer/features/booking/data/appointment_dto.dart';
+import 'package:carservice_customer/features/booking/domain/appointment_payment.dart';
 import 'package:carservice_customer/features/booking/domain/appointment_status.dart';
 import 'package:carservice_customer/features/booking/domain/service_progress.dart';
 import 'package:carservice_customer/core/errors/app_failure.dart';
->>>>>>> Stashed changes
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('appointment fee status mapping', () {
     test('maps REFUNDED explicitly (not pending/paid)', () {
-      expect(
-        appointmentFeeStatusFromApi('REFUNDED'),
-        AppointmentFeeStatus.refunded,
-      );
+      expect(appointmentFeeStatusFromApi('REFUNDED'), AppointmentFeeStatus.refunded);
       expect(appointmentFeeStatusFromApi('PAID'), AppointmentFeeStatus.paid);
     });
 
@@ -83,21 +73,18 @@ void main() {
       expect(payment.urls.first.label, 'Хаан банк');
     });
 
-    test(
-      'falls back to the english name for the label when name_mn is empty',
-      () {
-        final payment = appointmentPaymentFromJson({
-          'status': 'PENDING',
-          'amount': 5000,
-          'currency': 'MNT',
-          'urls': [
-            {'name': 'Pocket', 'name_mn': '', 'link': 'pocket://q'},
-          ],
-        });
+    test('falls back to the english name for the label when name_mn is empty', () {
+      final payment = appointmentPaymentFromJson({
+        'status': 'PENDING',
+        'amount': 5000,
+        'currency': 'MNT',
+        'urls': [
+          {'name': 'Pocket', 'name_mn': '', 'link': 'pocket://q'},
+        ],
+      });
 
-        expect(payment!.urls.single.label, 'Pocket');
-      },
-    );
+      expect(payment!.urls.single.label, 'Pocket');
+    });
   });
 
   test('parses a full appointment matching the published contract', () {
@@ -157,11 +144,7 @@ void main() {
         'completedAt': null,
         'items': [
           {'id': 'item-1', 'description': 'Тос солих', 'status': 'COMPLETED'},
-          {
-            'id': 'item-2',
-            'description': 'Тоормос шалгах',
-            'status': 'IN_PROGRESS',
-          },
+          {'id': 'item-2', 'description': 'Тоормос шалгах', 'status': 'IN_PROGRESS'},
         ],
       },
     }).toDomain();
@@ -188,9 +171,7 @@ void main() {
       final on = AppointmentDto.fromJson(
         apt({'id': 'o1', 'status': 'IN_PROGRESS', 'hasIntake': true}),
       ).toDomain();
-      final off = AppointmentDto.fromJson(
-        apt({'id': 'o1', 'status': 'IN_PROGRESS'}),
-      ).toDomain();
+      final off = AppointmentDto.fromJson(apt({'id': 'o1', 'status': 'IN_PROGRESS'})).toDomain();
       expect(on.serviceProgress!.hasIntake, isTrue);
       expect(off.serviceProgress!.hasIntake, isFalse);
     });
@@ -226,10 +207,7 @@ void main() {
   });
 
   test('throws on a malformed appointment list', () {
-    expect(
-      () => parseAppointmentListJson('not-a-list'),
-      throwsA(isA<UnexpectedFailure>()),
-    );
+    expect(() => parseAppointmentListJson('not-a-list'), throwsA(isA<UnexpectedFailure>()));
   });
 
   test('throws when a required nested field is missing', () {
