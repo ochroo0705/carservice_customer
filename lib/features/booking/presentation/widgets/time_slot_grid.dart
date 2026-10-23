@@ -2,9 +2,17 @@ import 'package:carservice_customer/app/theme/app_theme.dart';
 import 'package:carservice_customer/features/booking/domain/availability.dart';
 import 'package:flutter/material.dart';
 
-/// A slot chip grid driven by the branch availability endpoint (booking v2):
-/// slots are sized to the selected categories' summed duration, and slots that
-/// are full or in the past render disabled.
+/// Parts of the day the slots are grouped under, by start hour.
+const _periods = [
+  (label: 'Өглөө', from: 0, until: 12),
+  (label: 'Өдөр', from: 12, until: 18),
+  (label: 'Орой', from: 18, until: 24),
+];
+
+/// The slot grid driven by the branch availability endpoint (booking v2):
+/// slots are sized to the selected categories' summed duration, grouped by
+/// part of the day in even four-column rows; full or past slots render
+/// disabled and struck through.
 class TimeSlotGrid extends StatelessWidget {
   const TimeSlotGrid({
     required this.slots,
@@ -19,38 +27,65 @@ class TimeSlotGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final muted = CarserviceTheme.of(context).mutedText;
     if (slots.isEmpty) {
       return Text(
         'Энэ өдөр сул цаг алга.',
-        style: Theme.of(context).textTheme.bodySmall
-            ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+        style: TextStyle(fontSize: 13, color: muted),
       );
     }
-    final scheme = Theme.of(context).colorScheme;
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
+    final groups = [
+      for (final period in _periods)
+        (
+          label: period.label,
+          slots: slots
+              .where((s) => s.hour >= period.from && s.hour < period.until)
+              .toList(growable: false),
+        ),
+    ].where((group) => group.slots.isNotEmpty).toList(growable: false);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        for (final slot in slots)
-          _SlotChip(
-            key: ValueKey('booking-slot-${slot.hour}-${slot.minute}'),
-            label: _formatSlot(slot),
-            selected: selected == slot.time,
-            enabled: slot.available,
-            scheme: scheme,
-            onTap: slot.available ? () => onSelected(slot.time) : null,
+        for (final (index, group) in groups.indexed) ...[
+          if (index > 0) const SizedBox(height: 14),
+          Text(
+            group.label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: muted,
+            ),
           ),
+          const SizedBox(height: 8),
+          GridView.count(
+            crossAxisCount: 4,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 8,
+            crossAxisSpacing: 8,
+            childAspectRatio: 2.1,
+            children: [
+              for (final slot in group.slots)
+                _SlotCell(
+                  key: ValueKey('booking-slot-${slot.hour}-${slot.minute}'),
+                  label: _formatSlot(slot),
+                  selected: selected == slot.time,
+                  enabled: slot.available,
+                  onTap: slot.available ? () => onSelected(slot.time) : null,
+                ),
+            ],
+          ),
+        ],
       ],
     );
   }
 }
 
-class _SlotChip extends StatelessWidget {
-  const _SlotChip({
+class _SlotCell extends StatelessWidget {
+  const _SlotCell({
     required this.label,
     required this.selected,
     required this.enabled,
-    required this.scheme,
     required this.onTap,
     super.key,
   });
@@ -58,43 +93,44 @@ class _SlotChip extends StatelessWidget {
   final String label;
   final bool selected;
   final bool enabled;
-  final ColorScheme scheme;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    final Color background;
-    final Color foreground;
-    if (selected) {
-      background = AppColors.accent;
-      foreground = AppColors.onAccent;
-    } else if (!enabled) {
-      background = scheme.surface;
-      foreground = scheme.onSurfaceVariant.withValues(alpha: 0.5);
-    } else {
-      background = scheme.surface;
-      foreground = scheme.onSurface;
-    }
-    return Material(
-      color: background,
-      borderRadius: BorderRadius.circular(AppRadii.medium),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppRadii.medium),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadii.medium),
-            border: Border.all(
-              color: selected ? Colors.transparent : scheme.outlineVariant,
-            ),
-          ),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontWeight: FontWeight.w700,
-              color: foreground,
-              decoration: enabled ? null : TextDecoration.lineThrough,
+    final theme = CarserviceTheme.of(context);
+    final scheme = Theme.of(context).colorScheme;
+    final foreground = selected
+        ? AppColors.onAccent
+        : enabled
+        ? scheme.onSurface
+        : theme.mutedText.withValues(alpha: 0.6);
+    return Semantics(
+      selected: selected,
+      enabled: enabled,
+      child: Material(
+        color: selected ? AppColors.accent : Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadii.medium),
+          side: selected
+              ? BorderSide.none
+              : BorderSide(
+                  color: enabled
+                      ? theme.glassBorder
+                      : theme.glassBorder.withValues(alpha: 0.5),
+                ),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Center(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: foreground,
+                decoration: enabled ? null : TextDecoration.lineThrough,
+              ),
             ),
           ),
         ),

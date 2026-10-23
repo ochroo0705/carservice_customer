@@ -194,7 +194,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     await _switchToList(tester);
-    expect(find.text('Нэр, хот эсвэл дүүргээр хайх'), findsOneWidget);
+    expect(find.text('Сервис, дүүрэг хайх'), findsOneWidget);
 
     // Auto Doctor Service has two branches, so the tenant name (the card's
     // subtext) appears once per branch card.
@@ -212,11 +212,8 @@ void main() {
     expect(find.text('Цаг захиалах'), findsOneWidget);
     expect(find.text('Сүхбаатар салбар'), findsOneWidget);
     expect(find.text('Баянзүрх салбар'), findsNothing);
-    expect(
-      find.text('Улаанбаатар · Сүхбаатар · 1-р хороо, Олимпын гудамж 9'),
-      findsOneWidget,
-    );
-    expect(find.text('09:00–18:00'), findsOneWidget);
+    expect(find.text('Сүхбаатар, 1-р хороо, Олимпын гудамж 9'), findsOneWidget);
+    expect(find.text('Өнөөдөр 09:00–18:00'), findsOneWidget);
   });
 
   testWidgets('shows an explicit empty state', (tester) async {

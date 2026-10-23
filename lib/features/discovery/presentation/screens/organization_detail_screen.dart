@@ -1,18 +1,26 @@
 import 'package:carservice_customer/app/app_messages.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:carservice_customer/app/theme/app_surfaces.dart';
-import 'package:carservice_customer/core/widgets/skeletons.dart';
 import 'package:carservice_customer/app/theme/app_theme.dart';
+import 'package:carservice_customer/core/widgets/skeletons.dart';
+import 'package:carservice_customer/core/widgets/state_views.dart';
+import 'package:carservice_customer/features/booking/domain/next_available_slot.dart';
 import 'package:carservice_customer/features/discovery/domain/branch.dart';
 import 'package:carservice_customer/features/discovery/domain/organization.dart';
+import 'package:carservice_customer/features/discovery/presentation/branch_actions.dart';
 import 'package:carservice_customer/features/discovery/presentation/controllers/organization_detail_controller.dart';
-import 'package:carservice_customer/features/discovery/services/location_permission_service.dart';
-import 'package:flutter/foundation.dart';
+import 'package:carservice_customer/features/discovery/presentation/widgets/branch_location_map.dart';
+import 'package:carservice_customer/features/discovery/presentation/widgets/branch_open_status_line.dart';
+import 'package:carservice_customer/features/discovery/presentation/widgets/organization_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:carservice_customer/core/widgets/state_views.dart';
-import 'package:carservice_customer/features/discovery/presentation/branch_open_style.dart';
+import 'package:share_plus/share_plus.dart';
+
+/// The public web origin a shared branch link points at — its
+/// `/org/[slug]/branch/[branchId]` page needs no sign-in.
+const _webOrigin = 'https://carservice.mn';
+
+/// Services listed before "Бүгд" (all) reveals the rest.
+const _collapsedServiceCount = 4;
 
 class OrganizationDetailScreen extends StatelessWidget {
   const OrganizationDetailScreen({
@@ -24,6 +32,7 @@ class OrganizationDetailScreen extends StatelessWidget {
     required this.onRetry,
     required this.onBack,
     required this.onBook,
+    this.nextAvailableSlot,
     super.key,
   });
 
@@ -36,57 +45,11 @@ class OrganizationDetailScreen extends StatelessWidget {
   final VoidCallback onBack;
   final VoidCallback onBook;
 
-  @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      leading: BackButton(onPressed: onBack),
-      title: const Text('Сервисийн мэдээлэл'),
-    ),
-    body: AppShellBackground(
-      child: SafeArea(
-        top: false,
-        child:
-            status == OrganizationDetailStatus.loading ||
-                status == OrganizationDetailStatus.initial
-            ? const SkeletonDetail()
-            : status == OrganizationDetailStatus.error
-            ? OrganizationLoadError(
-                message: errorMessage ?? 'Мэдээлэл ачаалсангүй.',
-                onRetry: onRetry,
-              )
-            : organization == null
-            ? _NotFound(onBack: onBack)
-            : _BranchDetailView(
-                organization: organization!,
-                branchId: branchId,
-                distanceLocation: distanceLocation,
-                onBook: onBook,
-              ),
-      ),
-    ),
-  );
-}
+  /// Looks up the branch's earliest free slot for the booking bar. Without
+  /// it, or when it fails, the bar shows the branch's open status instead.
+  final Future<NextAvailableSlot?> Function(String branchId)? nextAvailableSlot;
 
-/// Нэг салбарын танилцах хуудас — байгууллагын танилцуулга (лого, утас,
-/// хадгалах) дээр дарж орсон яг тэр салбарынхаа хаяг/цаг/үйлчилгээг
-/// харуулна. Цаг захиалах эндээс шууд эхэлдэг (`onBook`) — өмнө нь энэ
-/// боломж Booking таб руу зөвхөн шилжсэн байсан нь backend-ийн global
-/// service-key системийг хүлээж байсан учиртай; тэр саад одоо арилсан тул
-/// (D-093-ийг үзнэ үү, `../../../../COWORK.md`) энд буцаан холбов.
-class _BranchDetailView extends StatelessWidget {
-  const _BranchDetailView({
-    required this.organization,
-    required this.branchId,
-    required this.distanceLocation,
-    required this.onBook,
-  });
-
-  final OrganizationDetail organization;
-  final String? branchId;
-  final ({double lat, double lng})? distanceLocation;
-  final VoidCallback onBook;
-
-  BranchDetail? get _branch {
+  BranchDetail? _branchOf(OrganizationDetail organization) {
     if (organization.branches.isEmpty) return null;
     final id = branchId;
     if (id == null) return organization.branches.first;
@@ -96,344 +59,847 @@ class _BranchDetailView extends StatelessWidget {
     return organization.branches.first;
   }
 
+  /// Loading, error and empty states keep a plain AppBar; only a loaded
+  /// branch gets the full-bleed map header.
+  Widget _plainPage(Widget body) => Scaffold(
+    appBar: AppBar(
+      leading: BackButton(onPressed: onBack),
+      title: const Text('Сервисийн мэдээлэл'),
+    ),
+    body: AppShellBackground(child: SafeArea(top: false, child: body)),
+  );
+
   @override
   Widget build(BuildContext context) {
-    final branch = _branch;
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 14, 20, 36),
-      children: [
-        _OrganizationHero(organization: organization),
-        const SizedBox(height: 24),
-        if (branch == null)
-          const _NoBranches()
-        else
-          _BranchInfoCard(
-            branch: branch,
-            distanceLocation: distanceLocation,
-            highlightLabel: null,
-            onBook: onBook,
+    final organization = this.organization;
+    if (status == OrganizationDetailStatus.loading ||
+        status == OrganizationDetailStatus.initial) {
+      return _plainPage(const SkeletonDetail());
+    }
+    if (status == OrganizationDetailStatus.error) {
+      return _plainPage(
+        OrganizationLoadError(
+          message: errorMessage ?? 'Мэдээлэл ачаалсангүй.',
+          onRetry: onRetry,
+        ),
+      );
+    }
+    if (organization == null) return _plainPage(_NotFound(onBack: onBack));
+    final branch = _branchOf(organization);
+    if (branch == null) {
+      return _plainPage(
+        const Padding(padding: EdgeInsets.all(20), child: _NoBranches()),
+      );
+    }
+    return _BranchDetailView(
+      organization: organization,
+      branch: branch,
+      distanceLocation: distanceLocation,
+      onBack: onBack,
+      onBook: onBook,
+      nextAvailableSlot: nextAvailableSlot,
+    );
+  }
+}
+
+/// Нэг салбарын танилцах хуудас — байгууллагын танилцуулга (лого, утас)
+/// дээр дарж орсон яг тэр салбарынхаа хаяг/цаг/үйлчилгээг харуулна. Цаг
+/// захиалах эндээс шууд эхэлдэг (`onBook`) — өмнө нь энэ боломж Booking таб
+/// руу зөвхөн шилжсэн байсан нь backend-ийн global service-key системийг
+/// хүлээж байсан учиртай; тэр саад одоо арилсан тул (D-093-ийг үзнэ үү,
+/// `../../../../COWORK.md`) энд буцаан холбов.
+class _BranchDetailView extends StatelessWidget {
+  const _BranchDetailView({
+    required this.organization,
+    required this.branch,
+    required this.distanceLocation,
+    required this.onBack,
+    required this.onBook,
+    required this.nextAvailableSlot,
+  });
+
+  final OrganizationDetail organization;
+  final BranchDetail branch;
+  final ({double lat, double lng})? distanceLocation;
+  final VoidCallback onBack;
+  final VoidCallback onBook;
+  final Future<NextAvailableSlot?> Function(String branchId)? nextAvailableSlot;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = CarserviceTheme.of(context);
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final topInset = MediaQuery.paddingOf(context).top;
+    final located = branch.latitude != null && branch.longitude != null;
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: dark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+      child: Scaffold(
+        body: AppShellBackground(
+          child: Stack(
+            children: [
+              CustomScrollView(
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: BranchLocationMap(
+                      latitude: branch.latitude,
+                      longitude: branch.longitude,
+                      closed:
+                          branch.openStatusAt(DateTime.now()) ==
+                          BranchOpenStatus.closed,
+                      height: topInset + (located ? 156 : 60),
+                    ),
+                  ),
+                  SliverPadding(
+                    // No overlap into the map: an earlier sliver paints over
+                    // a later one, and nothing should cover the native map.
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
+                    sliver: SliverToBoxAdapter(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _IdentityRow(
+                            organization: organization,
+                            branch: branch,
+                            distanceLocation: distanceLocation,
+                          ),
+                          const SizedBox(height: 20),
+                          _ActionTiles(
+                            organization: organization,
+                            branch: branch,
+                          ),
+                          const SizedBox(height: 20),
+                          _InfoGroup(
+                            organization: organization,
+                            branch: branch,
+                          ),
+                          if (branch.categories.isNotEmpty) ...[
+                            const SizedBox(height: 24),
+                            _ServicesSection(categories: branch.categories),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              // Dims whatever scrolls up under the status bar.
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                height: topInset + 12,
+                child: IgnorePointer(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          theme.shellBackground.withValues(alpha: 0.85),
+                          theme.shellBackground.withValues(alpha: 0),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                top: topInset + 8,
+                left: 16,
+                child: _FloatingBackButton(onPressed: onBack),
+              ),
+            ],
           ),
+        ),
+        bottomNavigationBar: _BookingBar(
+          branch: branch,
+          nextAvailableSlot: nextAvailableSlot,
+          onBook: onBook,
+        ),
+      ),
+    );
+  }
+}
+
+class _FloatingBackButton extends StatelessWidget {
+  const _FloatingBackButton({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = CarserviceTheme.of(context);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: theme.shellSurface.withValues(alpha: 0.92),
+        shape: BoxShape.circle,
+        border: Border.all(color: theme.glassBorder),
+      ),
+      child: SizedBox.square(
+        dimension: 44,
+        child: BackButton(
+          onPressed: onPressed,
+          style: IconButton.styleFrom(
+            minimumSize: const Size.square(44),
+            padding: EdgeInsets.zero,
+            foregroundColor: Theme.of(context).colorScheme.onSurface,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Logo, name, "branch · distance" and the live open-status line.
+class _IdentityRow extends StatelessWidget {
+  const _IdentityRow({
+    required this.organization,
+    required this.branch,
+    required this.distanceLocation,
+  });
+
+  final OrganizationDetail organization;
+  final BranchDetail branch;
+  final ({double lat, double lng})? distanceLocation;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = CarserviceTheme.of(context);
+    final location = distanceLocation;
+    final distance = location == null
+        ? null
+        : branch.distanceKmFrom(
+            userLatitude: location.lat,
+            userLongitude: location.lng,
+          );
+    final subtitle = [
+      branch.name,
+      if (distance != null) '${distance.toStringAsFixed(1)} км',
+    ].where((part) => part.trim().isNotEmpty).join(' · ');
+    return Row(
+      children: [
+        Container(
+          foregroundDecoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppRadii.large),
+            border: Border.all(color: theme.glassBorder),
+          ),
+          child: OrganizationLogoTile(
+            name: organization.name,
+            logoUrl: organization.logoUrl,
+            size: 64,
+          ),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                organization.name,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.2,
+                  height: 1.2,
+                ),
+              ),
+              if (subtitle.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: TextStyle(fontSize: 13, color: theme.mutedText),
+                ),
+              ],
+              const SizedBox(height: 4),
+              BranchOpenStatusLine(branch: branch),
+            ],
+          ),
+        ),
       ],
     );
   }
 }
 
-class _OrganizationHero extends StatelessWidget {
-  const _OrganizationHero({required this.organization});
+/// Call / directions / share — equal tiles, each only when it can work.
+class _ActionTiles extends StatelessWidget {
+  const _ActionTiles({required this.organization, required this.branch});
 
   final OrganizationDetail organization;
+  final BranchDetail branch;
+
+  Future<void> _share(Rect? origin) async {
+    final link =
+        '$_webOrigin/org/${Uri.encodeComponent(organization.slug)}'
+        '/branch/${Uri.encodeComponent(branch.id)}';
+    try {
+      await SharePlus.instance.share(
+        ShareParams(
+          text: '${organization.name} · ${branch.name}\n$link',
+          subject: organization.name,
+          // iPad presents the share sheet as a popover anchored here.
+          sharePositionOrigin: origin,
+        ),
+      );
+    } catch (_) {
+      AppMessages.show('Хуваалцах боломжгүй байна');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final phone = organization.phone?.trim();
+    final latitude = branch.latitude;
+    final longitude = branch.longitude;
+    final tiles = [
+      if (phone != null && phone.isNotEmpty)
+        _ActionTile(
+          key: const ValueKey('detail-action-call'),
+          icon: Icons.call_outlined,
+          label: 'Залгах',
+          onPressed: (_) => callBranchPhone(phone),
+        ),
+      if (latitude != null && longitude != null)
+        _ActionTile(
+          key: const ValueKey('detail-action-directions'),
+          icon: Icons.near_me_outlined,
+          label: 'Чиглэл',
+          onPressed: (_) =>
+              openBranchDirections(latitude: latitude, longitude: longitude),
+        ),
+      _ActionTile(
+        key: const ValueKey('detail-action-share'),
+        icon: Icons.share_outlined,
+        label: 'Хуваалцах',
+        onPressed: _share,
+      ),
+    ];
+    return Row(
+      children: [
+        for (final (index, tile) in tiles.indexed) ...[
+          if (index > 0) const SizedBox(width: 10),
+          Expanded(child: tile),
+        ],
+      ],
+    );
+  }
+}
+
+class _ActionTile extends StatelessWidget {
+  const _ActionTile({
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+    super.key,
+  });
+
+  final IconData icon;
+  final String label;
+
+  /// Called with the tile's on-screen rect (the share sheet's iPad anchor).
+  final ValueChanged<Rect?> onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = CarserviceTheme.of(context);
     final scheme = Theme.of(context).colorScheme;
-    return GlassSurface(
-      padding: EdgeInsets.zero,
-      child: Stack(
-        children: [
-          Positioned(
-            right: -44,
-            top: -52,
-            child: Container(
-              width: 150,
-              height: 150,
-              decoration: BoxDecoration(
-                color: scheme.primary.withValues(alpha: 0.16),
-                shape: BoxShape.circle,
+    return Material(
+      color: theme.glass,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadii.large),
+        side: BorderSide(color: theme.glassBorder),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () {
+          final box = context.findRenderObject() as RenderBox?;
+          onPressed(
+            box == null || !box.hasSize
+                ? null
+                : box.localToGlobal(Offset.zero) & box.size,
+          );
+        },
+        child: SizedBox(
+          height: 68,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 20, color: scheme.primary),
+              const SizedBox(height: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: scheme.onSurface,
+                ),
               ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Address, hours and phone as one grouped card, rows split by hairlines.
+class _InfoGroup extends StatelessWidget {
+  const _InfoGroup({required this.organization, required this.branch});
+
+  final OrganizationDetail organization;
+  final BranchDetail branch;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = CarserviceTheme.of(context);
+    final scheme = Theme.of(context).colorScheme;
+    final street = [
+      branch.district,
+      branch.fullAddress,
+    ].where((part) => part.trim().isNotEmpty).join(', ');
+    final city = branch.city.trim();
+    final fullAddress = [
+      city,
+      street,
+    ].where((part) => part.isNotEmpty).join(', ');
+    final phone = organization.phone?.trim();
+    final rows = <Widget>[
+      if (fullAddress.isNotEmpty)
+        _InfoRow(
+          icon: Icons.place_outlined,
+          title: street.isEmpty ? city : street,
+          subtitle: street.isEmpty || city.isEmpty ? null : city,
+          trailing: IconButton(
+            key: const ValueKey('detail-copy-address'),
+            tooltip: 'Хаяг хуулах',
+            icon: Icon(Icons.copy_rounded, size: 18, color: theme.mutedText),
+            onPressed: () async {
+              await Clipboard.setData(ClipboardData(text: fullAddress));
+              AppMessages.show('Хаяг хууллаа');
+            },
+          ),
+        ),
+      _HoursRow(branch: branch),
+      if (phone != null && phone.isNotEmpty)
+        _InfoRow(
+          key: const ValueKey('detail-phone-row'),
+          icon: Icons.call_outlined,
+          title: phone,
+          titleColor: scheme.primary,
+          semanticsHint: 'Залгах. Удаан дарж хуулна.',
+          trailing: Icon(Icons.chevron_right_rounded, color: theme.mutedText),
+          onTap: () => callBranchPhone(phone),
+          onLongPress: () async {
+            await Clipboard.setData(ClipboardData(text: phone));
+            AppMessages.show('Утасны дугаар хууллаа');
+          },
+        ),
+    ];
+    return _GroupCard(children: rows);
+  }
+}
+
+/// A rounded card of rows with hairline dividers between them.
+class _GroupCard extends StatelessWidget {
+  const _GroupCard({required this.children});
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = CarserviceTheme.of(context);
+    return Material(
+      color: theme.glass,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: BorderSide(color: theme.glassBorder),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          for (final (index, child) in children.indexed) ...[
+            if (index > 0) Divider(height: 1, color: theme.glassBorder),
+            child,
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _InfoRow extends StatelessWidget {
+  const _InfoRow({
+    required this.icon,
+    required this.title,
+    this.subtitle,
+    this.titleColor,
+    this.trailing,
+    this.onTap,
+    this.onLongPress,
+    this.semanticsHint,
+    super.key,
+  });
+
+  final IconData icon;
+  final String title;
+  final String? subtitle;
+  final Color? titleColor;
+  final Widget? trailing;
+  final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
+  final String? semanticsHint;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = CarserviceTheme.of(context);
+    return Semantics(
+      hint: semanticsHint,
+      child: InkWell(
+        onTap: onTap,
+        onLongPress: onLongPress,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 60),
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(16, 10, trailing == null ? 16 : 6, 10),
+            child: Row(
+              children: [
+                Icon(icon, size: 20, color: theme.mutedText),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: titleColor,
+                        ),
+                      ),
+                      if (subtitle != null) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          subtitle!,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: theme.mutedText,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                if (trailing != null)
+                  SizedBox(
+                    width: 44,
+                    height: 44,
+                    child: Center(child: trailing),
+                  ),
+              ],
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+        ),
+      ),
+    );
+  }
+}
+
+/// Today's hours; when the branch publishes a weekly schedule or upcoming
+/// special days, tapping expands them in place.
+class _HoursRow extends StatefulWidget {
+  const _HoursRow({required this.branch});
+
+  final BranchDetail branch;
+
+  @override
+  State<_HoursRow> createState() => _HoursRowState();
+}
+
+class _HoursRowState extends State<_HoursRow> {
+  bool _expanded = false;
+
+  /// "Өнөөдөр 09:00–18:00", "Өнөөдөр амарна", with the reason appended when
+  /// it isn't the ordinary weekday rule ("… · Наадам").
+  String get _todayText {
+    final branch = widget.branch;
+    final now = DateTime.now();
+    final today = branch.effectiveScheduleDetailAt(now);
+    final base = switch (branch.openStatusAt(now)) {
+      BranchOpenStatus.unknown => 'Цагийн мэдээлэл тодорхойгүй',
+      _ when !today.rule.isOpen => 'Өнөөдөр амарна',
+      _ => 'Өнөөдөр ${branch.hoursLabel}',
+    };
+    return today.label == null ? base : '$base · ${today.label}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final branch = widget.branch;
+    final theme = CarserviceTheme.of(context);
+    final hasSchedule = branch.schedules.isNotEmpty;
+    final hasNotices = _UpcomingScheduleNotices.hasAny(branch);
+    final expandable = hasSchedule || hasNotices;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _InfoRow(
+          key: const ValueKey('detail-hours-row'),
+          icon: Icons.schedule_rounded,
+          title: _todayText,
+          subtitle: expandable ? '7 хоногийн хуваарь' : null,
+          trailing: expandable
+              ? AnimatedRotation(
+                  turns: _expanded ? 0.5 : 0,
+                  duration: const Duration(milliseconds: 200),
+                  child: Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    color: theme.mutedText,
+                  ),
+                )
+              : null,
+          onTap: expandable
+              ? () => setState(() => _expanded = !_expanded)
+              : null,
+        ),
+        AnimatedSize(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeInOut,
+          alignment: Alignment.topCenter,
+          child: !_expanded
+              ? const SizedBox(width: double.infinity)
+              : Padding(
+                  // Lines the table up with the row's text, past its icon.
+                  padding: const EdgeInsets.fromLTRB(48, 0, 16, 14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (hasSchedule) _WeeklyHoursTable(branch: branch),
+                      if (hasNotices) ...[
+                        if (hasSchedule) const SizedBox(height: 12),
+                        _UpcomingScheduleNotices(branch: branch),
+                      ],
+                    ],
+                  ),
+                ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Ангиллын жагсаалт (booking v2) — нэг салбарын санал болгож буй
+/// үйлчилгээ, тус бүрийн хугацаатай. Эхний хэдийг харуулж, үлдсэнийг
+/// "Бүгд"-ээр дэлгэнэ.
+class _ServicesSection extends StatefulWidget {
+  const _ServicesSection({required this.categories});
+
+  final List<BranchServiceCategory> categories;
+
+  @override
+  State<_ServicesSection> createState() => _ServicesSectionState();
+}
+
+class _ServicesSectionState extends State<_ServicesSection> {
+  bool _showAll = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = CarserviceTheme.of(context);
+    final scheme = Theme.of(context).colorScheme;
+    final categories = widget.categories;
+    final overflow = categories.length > _collapsedServiceCount;
+    final visible = _showAll || !overflow
+        ? categories
+        : categories.take(_collapsedServiceCount);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            const Expanded(
+              child: Text(
+                'Үйлчилгээ',
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+              ),
+            ),
+            if (overflow)
+              TextButton(
+                key: const ValueKey('detail-services-all'),
+                onPressed: () => setState(() => _showAll = !_showAll),
+                child: Text(
+                  _showAll ? 'Хураах' : 'Бүгд (${categories.length})',
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        _GroupCard(
+          children: [
+            for (final category in visible)
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                child: Row(
                   children: [
                     Container(
-                      width: 66,
-                      height: 66,
-                      alignment: Alignment.center,
+                      width: 40,
+                      height: 40,
                       decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            scheme.primary.withValues(alpha: 0.34),
-                            AppColors.blue.withValues(alpha: 0.22),
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(AppRadii.large),
-                        border: Border.all(
-                          color: CarserviceTheme.of(context).glassBorder,
-                        ),
+                        color: scheme.surfaceContainerHigh,
+                        borderRadius: BorderRadius.circular(AppRadii.medium),
                       ),
-                      clipBehavior: Clip.antiAlias,
-                      child: _HeroLogo(
-                        name: organization.name,
-                        logoUrl: organization.logoUrl,
+                      child: Icon(
+                        Icons.build_outlined,
+                        size: 20,
+                        color: scheme.primary,
                       ),
                     ),
-                    const SizedBox(width: 15),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            organization.name,
-                            style: Theme.of(context).textTheme.titleLarge
-                                ?.copyWith(
-                                  fontWeight: FontWeight.w900,
-                                  height: 1.15,
-                                ),
+                            category.name,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                          const SizedBox(height: 7),
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.phone_outlined,
-                                size: 16,
-                                color: scheme.onSurfaceVariant,
-                              ),
-                              const SizedBox(width: 6),
-                              Expanded(
-                                child: Text(
-                                  organization.phone ?? 'Утас тодорхойгүй',
-                                  style: TextStyle(
-                                    color: scheme.onSurfaceVariant,
-                                  ),
-                                ),
-                              ),
-                              if (organization.phone != null)
-                                InkWell(
-                                  key: ValueKey(
-                                    'detail-copy-phone-${organization.slug}',
-                                  ),
-                                  borderRadius: BorderRadius.circular(
-                                    AppRadii.pill,
-                                  ),
-                                  onTap: () async {
-                                    await Clipboard.setData(
-                                      ClipboardData(text: organization.phone!),
-                                    );
-                                    if (!context.mounted) return;
-                                    AppMessages.show('Утасны дугаар хууллаа');
-                                  },
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(4),
-                                    child: Icon(
-                                      Icons.copy_outlined,
-                                      size: 15,
-                                      color: scheme.onSurfaceVariant,
-                                    ),
-                                  ),
-                                ),
-                            ],
+                          const SizedBox(height: 2),
+                          Text(
+                            '~ ${category.durationMinutes} мин',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: theme.mutedText,
+                            ),
                           ),
                         ],
                       ),
                     ),
                   ],
                 ),
-              ],
-            ),
-          ),
-        ],
-      ),
+              ),
+          ],
+        ),
+      ],
     );
   }
 }
 
-/// Байгууллагын лого — hero-гийн gradient хүрээ дотор дүүргэж харуулна
-/// (`OrganizationAvatar`-тай ижил `CachedNetworkImage` cache-ийг URL-ээр
-/// хуваалцана). Лого байхгүй/уншиж байх/алдаа гарвал нэрний эхний үсэг рүү
-/// уначна — дискавери жагсаалттай ижил зан төлөв, hero-гийн загварыг хадгална.
-class _HeroLogo extends StatelessWidget {
-  const _HeroLogo({required this.name, required this.logoUrl});
-
-  final String name;
-  final String? logoUrl;
-
-  @override
-  Widget build(BuildContext context) {
-    // Center the letter itself: as a CachedNetworkImage placeholder/errorWidget
-    // it fills the 66×66 image box, which does not center its child (the letter
-    // would otherwise stick to the top-left).
-    final letter = Center(
-      child: Text(
-        name.characters.isEmpty ? '?' : name.characters.first.toUpperCase(),
-        style: Theme.of(context).textTheme.headlineSmall
-            ?.copyWith(fontWeight: FontWeight.w900),
-      ),
-    );
-    final url = logoUrl?.trim();
-    if (url == null || url.isEmpty) return letter;
-    return CachedNetworkImage(
-      imageUrl: url,
-      width: 66,
-      height: 66,
-      fit: BoxFit.cover,
-      placeholder: (_, _) => letter,
-      errorWidget: (_, _, _) => letter,
-    );
-  }
-}
-
-/// Нэг салбарын танилцах мэдээлэл (хаяг, цагийн хуваарь, санал болгож буй
-/// үйлчилгээ) болон цаг захиалах CTA.
-class _BranchInfoCard extends StatelessWidget {
-  const _BranchInfoCard({
+/// The sticky bottom bar: the earliest free slot (or, failing that, the
+/// open status) beside the booking button.
+class _BookingBar extends StatefulWidget {
+  const _BookingBar({
     required this.branch,
-    required this.distanceLocation,
-    required this.highlightLabel,
+    required this.nextAvailableSlot,
     required this.onBook,
   });
 
   final BranchDetail branch;
-  final ({double lat, double lng})? distanceLocation;
-  final String? highlightLabel;
+  final Future<NextAvailableSlot?> Function(String branchId)? nextAvailableSlot;
   final VoidCallback onBook;
 
-  Future<void> _openDirections(BuildContext context) async {
-    final destination = '${branch.latitude},${branch.longitude}';
-    // With location permission, open turn-by-turn directions (the map app
-    // routes from the user's position). Without it, just drop a pin — we
-    // don't force a permission prompt from a plain "view this place" tap.
-    LocationAccessState access;
-    try {
-      access = await const PermissionHandlerLocationPermissionService().check();
-    } catch (_) {
-      access = LocationAccessState.denied;
-    }
-    final directions = access == LocationAccessState.granted;
-    // Prefer each platform's native map app: Apple Maps on iOS, Google Maps
-    // on Android. Both are https universal links, so if the native app is
-    // absent they still open in the browser.
-    final Uri uri;
-    if (defaultTargetPlatform == TargetPlatform.iOS) {
-      uri = directions
-          ? Uri.parse('https://maps.apple.com/?daddr=$destination&dirflg=d')
-          : Uri.parse('https://maps.apple.com/?q=$destination');
-    } else {
-      uri = directions
-          ? Uri.parse(
-              'https://www.google.com/maps/dir/?api=1&destination=$destination',
-            )
-          : Uri.parse(
-              'https://www.google.com/maps/search/?api=1&query=$destination',
-            );
-    }
-    try {
-      final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
-      if (!ok) throw Exception('launch returned false');
-    } catch (_) {
-      if (!context.mounted) return;
-      AppMessages.show('Газрын зураг нээх боломжгүй байна');
-    }
-  }
+  @override
+  State<_BookingBar> createState() => _BookingBarState();
+}
 
-  /// Today's hours line, with the reason appended when it isn't just the
-  /// ordinary weekday rule (e.g. "09:00–18:00 · Наадам").
-  String get _todayHoursText {
-    final today = branch.effectiveScheduleDetailAt(DateTime.now());
-    return today.label == null
-        ? branch.hoursLabel
-        : '${branch.hoursLabel} · ${today.label}';
+class _BookingBarState extends State<_BookingBar> {
+  Future<NextAvailableSlot?>? _slot;
+
+  @override
+  void initState() {
+    super.initState();
+    _slot = widget.nextAvailableSlot?.call(widget.branch.id);
   }
 
   @override
-  Widget build(BuildContext context) => GlassSurface(
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    branch.name,
-                    style: Theme.of(context).textTheme.titleMedium
-                        ?.copyWith(fontWeight: FontWeight.w800),
+  void didUpdateWidget(covariant _BookingBar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.branch.id != widget.branch.id) {
+      _slot = widget.nextAvailableSlot?.call(widget.branch.id);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = CarserviceTheme.of(context);
+    return Container(
+      padding: EdgeInsets.fromLTRB(
+        20,
+        14,
+        20,
+        14 + MediaQuery.paddingOf(context).bottom,
+      ),
+      decoration: BoxDecoration(
+        color: theme.shellSurface,
+        border: Border(top: BorderSide(color: theme.glassBorder)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: FutureBuilder<NextAvailableSlot?>(
+              future: _slot,
+              builder: (context, snapshot) {
+                final failed = _slot == null || snapshot.hasError;
+                if (failed) return BranchOpenStatusLine(branch: widget.branch);
+                final value = switch (snapshot.connectionState) {
+                  ConnectionState.done =>
+                    snapshot.data?.label ?? '3 хоногт сул цаг алга',
+                  _ => '…',
+                };
+                return Semantics(
+                  liveRegion: true,
+                  child: Column(
+                    key: const ValueKey('detail-next-slot'),
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Ойрын сул цаг',
+                        style: TextStyle(fontSize: 12, color: theme.mutedText),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        value,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
                   ),
-                  if (highlightLabel != null) ...[
-                    const SizedBox(height: 5),
-                    _InfoPill(
-                      icon: Icons.near_me_outlined,
-                      label: highlightLabel!,
-                      positive: true,
-                    ),
-                  ],
-                ],
+                );
+              },
+            ),
+          ),
+          const SizedBox(width: 14),
+          FilledButton.icon(
+            key: const ValueKey('detail-book-button'),
+            onPressed: widget.onBook,
+            icon: const Icon(Icons.event_available_outlined, size: 20),
+            label: const Text('Цаг захиалах'),
+            style: FilledButton.styleFrom(
+              minimumSize: const Size(0, 52),
+              padding: const EdgeInsets.symmetric(horizontal: 22),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadii.large),
+              ),
+              textStyle: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
               ),
             ),
-            _OpenBadge(status: branch.openStatusAt(DateTime.now())),
-          ],
-        ),
-        const SizedBox(height: 12),
-        _DetailLine(
-          icon: Icons.place_outlined,
-          // Хот/дүүрэг + хороо/хаяг нэг мөрөнд — өмнө нь тусдаа мөр, тусдаа
-          // дүрстэй байсан нь ижил төстэй мэдээллийг давхар харуулж байсан.
-          text: [
-            branch.locationLabel,
-            branch.fullAddress,
-          ].where((part) => part.trim().isNotEmpty).join(' · '),
-        ),
-        if (distanceLocation != null &&
-            branch.distanceLabelFrom(
-                  userLatitude: distanceLocation!.lat,
-                  userLongitude: distanceLocation!.lng,
-                ) !=
-                null) ...[
-          const SizedBox(height: 9),
-          _DetailLine(
-            icon: Icons.near_me_outlined,
-            text: branch.distanceLabelFrom(
-              userLatitude: distanceLocation!.lat,
-              userLongitude: distanceLocation!.lng,
-            )!,
           ),
         ],
-        if (branch.latitude != null && branch.longitude != null) ...[
-          const SizedBox(height: 12),
-          OutlinedButton.icon(
-            onPressed: () => _openDirections(context),
-            icon: const Icon(Icons.directions_outlined, size: 18),
-            label: const Text('Чиглэл харах'),
-          ),
-        ],
-        const SizedBox(height: 9),
-        _DetailLine(icon: Icons.schedule_rounded, text: _todayHoursText),
-        if (branch.schedules.isNotEmpty ||
-            _UpcomingScheduleNotices.hasAny(branch)) ...[
-          const SizedBox(height: 8),
-          _HoursDisclosure(branch: branch),
-        ],
-        if (branch.categories.isNotEmpty) ...[
-          const SizedBox(height: 16),
-          Text(
-            'Үзүүлдэг үйлчилгээнүүд',
-            style: Theme.of(context).textTheme.labelLarge
-                ?.copyWith(fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 8),
-          _CategoryChipRow(categories: branch.categories),
-        ],
-        const SizedBox(height: 18),
-        SizedBox(
-          width: double.infinity,
-          child: FilledButton.icon(
-            key: const ValueKey('detail-book-button'),
-            onPressed: onBook,
-            icon: const Icon(Icons.event_available_outlined, size: 18),
-            label: const Text('Цаг захиалах'),
-          ),
-        ),
-      ],
-    ),
-  );
+      ),
+    );
+  }
 }
 
 const _weekdayOrder = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
@@ -446,110 +912,6 @@ const _weekdayLabels = {
   'SAT': 'Бямба',
   'SUN': 'Ням',
 };
-
-/// Долоо хоногийн бүтэн хуваарь + онцгой өдрүүдийг нэг дарж
-/// нээх/хаах блок дор нуусан — өнөөдрийн цагийг дээрх мөрөнд аль хэдийн
-/// харуулсан тул анхны байдлаараа хаалттай, зайлшгүй биш дэлгэрэнгүйг
-/// хэрэглэгч өөрөө хүсвэл л дэлгэнэ.
-class _HoursDisclosure extends StatefulWidget {
-  const _HoursDisclosure({required this.branch});
-
-  final BranchDetail branch;
-
-  @override
-  State<_HoursDisclosure> createState() => _HoursDisclosureState();
-}
-
-class _HoursDisclosureState extends State<_HoursDisclosure> {
-  bool _expanded = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final color = scheme.primary;
-    // Mirrors the dashboard's order-status dropdown (status-controls.tsx):
-    // a full-width tinted/bordered toggle whose bottom corners square off
-    // when open, directly attached to a panel of the same tint below it.
-    final toggleRadius = _expanded
-        ? const BorderRadius.vertical(top: Radius.circular(AppRadii.medium))
-        : BorderRadius.circular(AppRadii.medium);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Material(
-          color: color.withValues(alpha: 0.12),
-          borderRadius: toggleRadius,
-          child: InkWell(
-            borderRadius: toggleRadius,
-            onTap: () => setState(() => _expanded = !_expanded),
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                borderRadius: toggleRadius,
-                border: Border(
-                  top: BorderSide(color: color.withValues(alpha: 0.3)),
-                  left: BorderSide(color: color.withValues(alpha: 0.3)),
-                  right: BorderSide(color: color.withValues(alpha: 0.3)),
-                  bottom: _expanded
-                      ? BorderSide.none
-                      : BorderSide(color: color.withValues(alpha: 0.3)),
-                ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'Бүтэн долоо хоногийн хуваарь',
-                    style: Theme.of(context).textTheme.bodySmall
-                        ?.copyWith(color: color, fontWeight: FontWeight.w700),
-                  ),
-                  const SizedBox(width: 6),
-                  AnimatedRotation(
-                    turns: _expanded ? 0.5 : 0,
-                    duration: const Duration(milliseconds: 200),
-                    child: Icon(
-                      Icons.keyboard_arrow_down_rounded,
-                      size: 18,
-                      color: color,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        if (_expanded)
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.05),
-              borderRadius: const BorderRadius.vertical(
-                bottom: Radius.circular(AppRadii.medium),
-              ),
-              border: Border(
-                left: BorderSide(color: color.withValues(alpha: 0.3)),
-                right: BorderSide(color: color.withValues(alpha: 0.3)),
-                bottom: BorderSide(color: color.withValues(alpha: 0.3)),
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (widget.branch.schedules.isNotEmpty)
-                  _WeeklyHoursTable(branch: widget.branch),
-                if (_UpcomingScheduleNotices.hasAny(widget.branch)) ...[
-                  const SizedBox(height: 12),
-                  _UpcomingScheduleNotices(branch: widget.branch),
-                ],
-              ],
-            ),
-          ),
-      ],
-    );
-  }
-}
 
 /// Долоо хоногийн бүтэн цагийн хуваарь — `branch.hoursLabel` зөвхөн өнөөдрийн
 /// нэг мөрийг харуулдаг тул үүнийг долоо хоног бүрээр дэлгэв. Idэвхтэй
@@ -570,12 +932,6 @@ class _WeeklyHoursTable extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Долоо хоногийн цагийн хуваарь',
-          style: Theme.of(context).textTheme.labelLarge
-              ?.copyWith(fontWeight: FontWeight.w700),
-        ),
-        const SizedBox(height: 8),
         for (final weekday in _weekdayOrder)
           Builder(
             builder: (context) {
@@ -682,159 +1038,6 @@ class _UpcomingScheduleNotices extends StatelessWidget {
       ],
     );
   }
-}
-
-/// Ангиллын жагсаалт (booking v2) — нэг салбарын санал болгож буй БҮХ
-/// үйлчилгээг харуулна. Энэ хуудас нь ганц салбарт зориулагдсан тул
-/// (жагсаалт дахь бусад мэдээллийг эзэлдэггүй) хязгаарлах шаардлагагүй.
-class _CategoryChipRow extends StatelessWidget {
-  const _CategoryChipRow({required this.categories});
-
-  final List<BranchServiceCategory> categories;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = Theme.of(context).colorScheme.onSurfaceVariant;
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        for (final category in categories)
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.09),
-              borderRadius: BorderRadius.circular(AppRadii.pill),
-              border: Border.all(color: color.withValues(alpha: 0.16)),
-            ),
-            child: Text(
-              category.name,
-              style: Theme.of(context).textTheme.labelSmall,
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-class _InfoPill extends StatelessWidget {
-  const _InfoPill({
-    required this.icon,
-    required this.label,
-    this.positive = false,
-  });
-
-  final IconData icon;
-  final String label;
-  final bool positive;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = positive
-        ? AppColors.green
-        : Theme.of(context).colorScheme.onSurfaceVariant;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.09),
-        borderRadius: BorderRadius.circular(AppRadii.pill),
-        border: Border.all(color: color.withValues(alpha: 0.16)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            size: 14,
-            color: AppColors.readable(color, Theme.of(context).brightness),
-          ),
-          const SizedBox(width: 5),
-          Text(label, style: Theme.of(context).textTheme.labelSmall),
-        ],
-      ),
-    );
-  }
-}
-
-class _OpenBadge extends StatelessWidget {
-  const _OpenBadge({required this.status});
-
-  final BranchOpenStatus status;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = branchOpenColor(status, context);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(AppRadii.pill),
-        border: Border.all(color: color.withValues(alpha: 0.2)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _StatusDot(status: status),
-          const SizedBox(width: 6),
-          Text(
-            switch (status) {
-              BranchOpenStatus.open => 'Нээлттэй',
-              BranchOpenStatus.closed => 'Хаалттай',
-              BranchOpenStatus.unknown => 'Төлөв тодорхойгүй',
-            },
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: AppColors.readable(color, Theme.of(context).brightness),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _StatusDot extends StatelessWidget {
-  const _StatusDot({required this.status});
-
-  final BranchOpenStatus status;
-
-  @override
-  Widget build(BuildContext context) => Container(
-    width: 8,
-    height: 8,
-    decoration: BoxDecoration(
-      color: branchOpenColor(status, context),
-      shape: BoxShape.circle,
-    ),
-  );
-}
-
-class _DetailLine extends StatelessWidget {
-  const _DetailLine({required this.icon, required this.text});
-
-  final IconData icon;
-  final String text;
-
-  @override
-  Widget build(BuildContext context) => Row(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Icon(
-        icon,
-        size: 19,
-        color: Theme.of(context).colorScheme.onSurfaceVariant,
-      ),
-      const SizedBox(width: 9),
-      Expanded(
-        child: Text(
-          text,
-          style: TextStyle(
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-            height: 1.35,
-          ),
-        ),
-      ),
-    ],
-  );
 }
 
 class _NoBranches extends StatelessWidget {

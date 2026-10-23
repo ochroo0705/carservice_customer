@@ -73,10 +73,10 @@ class CustomerShellState extends State<CustomerShell> with SingleTickerProviderS
           child: IndexedStack(index: _selectedIndex, children: widget.destinations),
         );
         // Map mode wants the whole screen (search/filters/notifications/
-        // list-toggle/zoom/locate-me all float on top of the map itself —
-        // see DiscoveryScreen), so the shell's own AppBar (and its FAB,
-        // below) step aside for it entirely rather than eating space above
-        // the map.
+        // list-toggle/locate-me all float on top of the map itself — see
+        // DiscoveryScreen), so the shell's own AppBar steps aside for it
+        // entirely rather than eating space above the map. Хайх's map/list
+        // toggle lives in DiscoveryScreen in both modes.
         final isDiscoveryMap = _selectedIndex == _discoveryIndex && discoveryMapView;
         return Scaffold(
           appBar: isDiscoveryMap
@@ -147,22 +147,6 @@ class CustomerShellState extends State<CustomerShell> with SingleTickerProviderS
                   ],
                 )
               : content,
-          floatingActionButton: (_selectedIndex == _discoveryIndex && !isDiscoveryMap)
-              ? FloatingActionButton.extended(
-                  key: const ValueKey('discovery-toggle-view'),
-                  // This FAB never needs to Hero-fly anywhere, but the
-                  // shell (and its FAB) stays mounted underneath pushed
-                  // routes (login, org detail, ...); Scaffold's default FAB
-                  // hero tag then collides mid-transition with itself across
-                  // the old/new widget tree ("multiple heroes share the same
-                  // tag"). Disable the hero entirely to sidestep that.
-                  heroTag: null,
-                  onPressed: () =>
-                      context.read<DiscoveryController>().setMapView(!discoveryMapView),
-                  icon: Icon(discoveryMapView ? Icons.view_list_outlined : Icons.map_outlined),
-                  label: Text(discoveryMapView ? 'Жагсаалт' : 'Газрын зураг'),
-                )
-              : null,
           bottomNavigationBar: useRail
               ? null
               : NavigationBar(
@@ -223,17 +207,12 @@ class _ThemeModeMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // A plain light ↔ dark flip of what's on screen now — from "system" too.
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return PopupMenuButton<ThemeMode>(
-      tooltip: 'Өнгөний горим',
-      initialValue: controller.mode,
-      onSelected: controller.setMode,
+    return IconButton(
+      tooltip: isDark ? 'Гэрэлтэй горим' : 'Бараан горим',
+      onPressed: () => controller.setMode(isDark ? ThemeMode.light : ThemeMode.dark),
       icon: Icon(isDark ? Icons.dark_mode_outlined : Icons.light_mode_outlined),
-      itemBuilder: (context) => const [
-        PopupMenuItem(value: ThemeMode.system, child: Text('Системийн тохиргоо')),
-        PopupMenuItem(value: ThemeMode.light, child: Text('Гэрэлтэй')),
-        PopupMenuItem(value: ThemeMode.dark, child: Text('Бараан')),
-      ],
     );
   }
 }

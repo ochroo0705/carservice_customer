@@ -1,134 +1,257 @@
 import 'package:carservice_customer/app/app_messages.dart';
-import 'package:carservice_customer/app/theme/app_surfaces.dart';
 import 'package:carservice_customer/app/theme/app_theme.dart';
 import 'package:carservice_customer/features/discovery/presentation/controllers/discovery_controller.dart';
 import 'package:carservice_customer/features/discovery/presentation/widgets/branch_filter_panel.dart';
+import 'package:carservice_customer/features/discovery/presentation/widgets/discovery_map_controls.dart';
 import 'package:carservice_customer/features/discovery/services/device_location_service.dart';
 import 'package:flutter/material.dart';
 
-class DiscoveryHeader extends StatelessWidget {
-  const DiscoveryHeader({
+/// Хайх's search pill — shared by the map (floating over the tiles) and the
+/// list (above the cards), so switching views keeps the same header. The
+/// round button inside opens the full filter sheet; its dot flags filters
+/// that only live in that sheet (the chip row below shows the rest).
+class DiscoverySearchBar extends StatelessWidget {
+  const DiscoverySearchBar({
     required this.controller,
     required this.searchController,
-    required this.filtersExpanded,
-    required this.onFiltersExpandedChanged,
+    required this.onOpenFilters,
     super.key,
   });
 
   final DiscoveryController controller;
   final TextEditingController searchController;
-  final bool filtersExpanded;
-  final ValueChanged<bool> onFiltersExpandedChanged;
+  final VoidCallback onOpenFilters;
 
   @override
   Widget build(BuildContext context) {
+    final theme = CarserviceTheme.of(context);
     final scheme = Theme.of(context).colorScheme;
-    // Идэвхтэй шүүлт байвал хэрэглэгч түүнийг далдлагдсан хэсэгт
-    // "мартахгүйн" тулд үргэлж дэлгэсэн байлгана — гар аргаар хаасан ч.
-    final showFilters = filtersExpanded || controller.hasActiveFilters;
+    final sheetOnlyFilters =
+        controller.city.isNotEmpty ||
+        controller.district.isNotEmpty ||
+        controller.nearMe ||
+        controller.weekend;
+    return Container(
+      height: 52,
+      padding: const EdgeInsets.only(left: 16, right: 6),
+      decoration: BoxDecoration(
+        color: theme.shellSurface,
+        borderRadius: BorderRadius.circular(AppRadii.pill),
+        border: Border.all(color: theme.glassBorder),
+        boxShadow: floatingControlShadow(context),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.search_rounded, size: 20, color: theme.mutedText),
+          const SizedBox(width: 10),
+          Expanded(
+            child: TextField(
+              controller: searchController,
+              onChanged: controller.setQuery,
+              textInputAction: TextInputAction.search,
+              onSubmitted: (_) => FocusScope.of(context).unfocus(),
+              style: TextStyle(
+                color: scheme.onSurface,
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+              ),
+              decoration: const InputDecoration(
+                isDense: true,
+                filled: false,
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                contentPadding: EdgeInsets.zero,
+                hintText: 'Сервис, дүүрэг хайх',
+              ),
+            ),
+          ),
+          ValueListenableBuilder(
+            valueListenable: searchController,
+            builder: (context, value, _) => value.text.isEmpty
+                ? const SizedBox.shrink()
+                : IconButton(
+                    key: const ValueKey('discovery-search-clear'),
+                    onPressed: () {
+                      searchController.clear();
+                      controller.setQuery('');
+                    },
+                    tooltip: 'Арилгах',
+                    icon: const Icon(Icons.close_rounded, size: 20),
+                  ),
+          ),
+          Tooltip(
+            message: 'Шүүлтүүрүүд',
+            child: Material(
+              color: scheme.surfaceContainerHigh,
+              shape: const CircleBorder(),
+              clipBehavior: Clip.antiAlias,
+              child: InkWell(
+                key: const ValueKey('discovery-filters-button'),
+                onTap: onOpenFilters,
+                child: SizedBox.square(
+                  dimension: 40,
+                  child: Center(
+                    child: Badge(
+                      isLabelVisible: sheetOnlyFilters,
+                      smallSize: 8,
+                      backgroundColor: AppColors.accent,
+                      child: Icon(
+                        Icons.tune_rounded,
+                        size: 20,
+                        color: scheme.onSurface,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
-    return Column(
-      children: [
-        GlassSurface(
-          padding: EdgeInsets.zero,
-          child: Stack(
-            children: [
-              Positioned(
-                right: -54,
-                top: -68,
-                child: AmbientOrb(color: scheme.primary.withValues(alpha: 0.2)),
-              ),
-              Positioned(
-                left: -76,
-                bottom: -92,
-                child: AmbientOrb(
-                  color: AppColors.blue.withValues(alpha: 0.13),
-                  size: 180,
+/// The one-tap filters under the search bar: "Нээлттэй" (open now) and the
+/// platform's business-type tags, plus the Booking tab's hand-off service
+/// key while one is active. Scrolls sideways edge to edge; everything else
+/// (city/district, near me, weekend) lives in the filter sheet.
+class DiscoveryQuickFilters extends StatelessWidget {
+  const DiscoveryQuickFilters({
+    required this.controller,
+    this.padding = const EdgeInsets.symmetric(horizontal: 16),
+    super.key,
+  });
+
+  final DiscoveryController controller;
+  final EdgeInsets padding;
+
+  @override
+  Widget build(BuildContext context) {
+    final chips = [
+      if (controller.serviceKey.isNotEmpty)
+        QuickFilterChip(
+          key: const ValueKey('discovery-service-key-chip'),
+          label: controller.serviceKeyName.isEmpty
+              ? 'Сонгосон ажил'
+              : controller.serviceKeyName,
+          selected: true,
+          trailingIcon: Icons.close_rounded,
+          semanticsHint: 'Хасах',
+          onTap: () => controller.setServiceKey(''),
+        ),
+      QuickFilterChip(
+        key: const ValueKey('discovery-chip-open-now'),
+        label: 'Нээлттэй',
+        selected: controller.openNow,
+        pending: controller.openNowPending,
+        onTap: () => controller.setOpenNow(!controller.openNow),
+      ),
+      for (final option in controller.tagOptions)
+        QuickFilterChip(
+          key: ValueKey('discovery-chip-tag-${option.id}'),
+          label: option.name,
+          selected: controller.tag == option.id,
+          // Single-select, like the sheet's dropdown: tapping the active tag
+          // clears it, tapping another switches to it.
+          onTap: () => controller.tag == option.id
+              ? controller.setTag('')
+              : controller.setTag(option.id, name: option.name),
+        ),
+    ];
+    return SizedBox(
+      height: 36,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: padding,
+        itemCount: chips.length,
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
+        itemBuilder: (_, index) => chips[index],
+      ),
+    );
+  }
+}
+
+/// A pill-shaped toggle in [DiscoveryQuickFilters]: cyan when on, the shell
+/// surface with a border when off.
+class QuickFilterChip extends StatelessWidget {
+  const QuickFilterChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+    this.pending = false,
+    this.trailingIcon,
+    this.semanticsHint,
+    super.key,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  final bool pending;
+  final IconData? trailingIcon;
+  final String? semanticsHint;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = CarserviceTheme.of(context);
+    final foreground = selected
+        ? AppColors.onAccent
+        : Theme.of(context).colorScheme.onSurface;
+    return Semantics(
+      button: true,
+      selected: selected,
+      hint: semanticsHint,
+      child: Material(
+        color: selected ? AppColors.accent : theme.shellSurface,
+        shape: StadiumBorder(
+          side: selected
+              ? BorderSide.none
+              : BorderSide(color: theme.glassBorder),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (pending) ...[
+                  SizedBox.square(
+                    dimension: 12,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: foreground,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                ],
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: foreground,
+                    fontSize: 13,
+                    fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                  ),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 22, 20, 20),
-                child: Column(
-                  children: [
-                    TextField(
-                      controller: searchController,
-                      onChanged: controller.setQuery,
-                      textInputAction: TextInputAction.search,
-                      onSubmitted: (_) => FocusScope.of(context).unfocus(),
-                      decoration: InputDecoration(
-                        hintText: 'Нэр, хот эсвэл дүүргээр хайх',
-                        prefixIcon: IconButton(
-                          key: const ValueKey('discovery-search-submit'),
-                          onPressed: () => FocusScope.of(context).unfocus(),
-                          tooltip: 'Хайх',
-                          icon: const Icon(Icons.search),
-                        ),
-                        suffixIcon: controller.hasActiveFilters
-                            ? IconButton(
-                                onPressed: () {
-                                  searchController.clear();
-                                  controller.clearFilters();
-                                },
-                                tooltip: 'Шүүлтүүр цэвэрлэх',
-                                icon: const Icon(Icons.close_rounded),
-                              )
-                            : null,
-                      ),
-                    ),
-                    // Хайлтын мөрийн зэрэгцээ дан icon товч байсан нь
-                    // "хайх" товч мэт андуурагдах эрсдэлтэй тул хайлтын мөртэй
-                    // адил өргөнтэй, тодорхой бичигтэй товч болгов — далд
-                    // байдлаар анхны төлөвт хаалттай (хот/дүүрэг, ойролцоо/
-                    // нээлттэй/амралтын өдөр хайлтын мөрийг бөглөрүүлж
-                    // байсан); идэвхтэй шүүлттэй үед автоматаар дэлгэгдсэн
-                    // хэвээр үлдэнэ (`showFilters`).
-                    const SizedBox(height: 10),
-                    SizedBox(
-                      width: double.infinity,
-                      child: FilledButton.tonalIcon(
-                        key: const ValueKey('discovery-filters-toggle'),
-                        onPressed: () =>
-                            onFiltersExpandedChanged(!filtersExpanded),
-                        icon: Icon(
-                          filtersExpanded
-                              ? Icons.expand_less_rounded
-                              : Icons.tune_rounded,
-                        ),
-                        label: Text(
-                          filtersExpanded
-                              ? 'Шүүлтүүрүүд нуух'
-                              : 'Шүүлтүүрүүд харуулах',
-                        ),
-                      ),
-                    ),
-                    AnimatedSize(
-                      duration: const Duration(milliseconds: 200),
-                      curve: Curves.easeInOut,
-                      alignment: Alignment.topCenter,
-                      child: !showFilters
-                          ? const SizedBox.shrink()
-                          : Padding(
-                              padding: const EdgeInsets.only(top: 4),
-                              child: DiscoveryFiltersPanel(
-                                controller: controller,
-                              ),
-                            ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+                if (trailingIcon != null) ...[
+                  const SizedBox(width: 4),
+                  Icon(trailingIcon, size: 16, color: foreground),
+                ],
+              ],
+            ),
           ),
         ),
-      ],
+      ),
     );
   }
 }
 
 /// The filter controls (city/district, business-type tag, server chips)
-/// shared between the list header's expandable section and the map view's
-/// bottom sheet — kept as one widget so a filter added in one place is never
-/// forgotten in the other.
+/// in the filter sheet both Хайх views open — kept as one widget so a
+/// filter added for one view is never forgotten in the other.
 class DiscoveryFiltersPanel extends StatelessWidget {
   const DiscoveryFiltersPanel({required this.controller, super.key});
 
@@ -180,94 +303,5 @@ class DiscoveryFiltersPanel extends StatelessWidget {
     onOpenNowChanged: controller.setOpenNow,
     onWeekendChanged: controller.setWeekend,
     showChips: controller.hasCatalog || controller.hasActiveFilters,
-    leadingChips: [
-      if (controller.serviceKey.isNotEmpty)
-        InputChip(
-          key: const ValueKey('discovery-service-key-chip'),
-          label: Text(
-            controller.serviceKeyName.isEmpty
-                ? 'Сонгосон ажил'
-                : controller.serviceKeyName,
-          ),
-          avatar: const Icon(Icons.build_outlined, size: 18),
-          onDeleted: () => controller.setServiceKey(''),
-          deleteButtonTooltipMessage: 'Хасах',
-        ),
-    ],
-  );
-}
-
-/// Compact search + filters bar for map mode — a floating pill instead of
-/// the list header's tall glass card, so the map underneath keeps most of
-/// the screen.
-class CompactDiscoveryBar extends StatelessWidget {
-  const CompactDiscoveryBar({
-    required this.controller,
-    required this.searchController,
-    required this.onOpenFilters,
-    super.key,
-  });
-
-  final DiscoveryController controller;
-  final TextEditingController searchController;
-  final VoidCallback onOpenFilters;
-
-  @override
-  Widget build(BuildContext context) => GlassSurface(
-    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-    child: Row(
-      children: [
-        Expanded(
-          child: TextField(
-            controller: searchController,
-            onChanged: controller.setQuery,
-            textInputAction: TextInputAction.search,
-            onSubmitted: (_) => FocusScope.of(context).unfocus(),
-            decoration: InputDecoration(
-              isDense: true,
-              border: InputBorder.none,
-              hintText: 'Нэр, хот эсвэл дүүргээр хайх',
-              prefixIcon: const Icon(Icons.search, size: 20),
-              suffixIcon: controller.hasActiveFilters
-                  ? IconButton(
-                      onPressed: () {
-                        searchController.clear();
-                        controller.clearFilters();
-                      },
-                      tooltip: 'Шүүлтүүр цэвэрлэх',
-                      icon: const Icon(Icons.close_rounded, size: 20),
-                    )
-                  : null,
-            ),
-          ),
-        ),
-        IconButton(
-          key: const ValueKey('discovery-map-filters-toggle'),
-          onPressed: onOpenFilters,
-          tooltip: 'Шүүлтүүрүүд',
-          icon: Badge(
-            isLabelVisible: controller.hasActiveFilters,
-            smallSize: 8,
-            child: const Icon(Icons.tune_rounded),
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
-class AmbientOrb extends StatelessWidget {
-  const AmbientOrb({required this.color, this.size = 150, super.key});
-
-  final Color color;
-  final double size;
-
-  @override
-  Widget build(BuildContext context) => IgnorePointer(
-    child: Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-    ),
   );
 }

@@ -1,3 +1,4 @@
+import 'package:carservice_customer/app/theme/app_theme.dart';
 import 'package:carservice_customer/features/discovery/presentation/controllers/discovery_state.dart';
 import 'package:flutter/material.dart';
 
@@ -30,6 +31,45 @@ class LoadMoreFooter extends StatelessWidget {
     return const Padding(
       padding: EdgeInsets.all(12),
       child: SizedBox(height: 1),
+    );
+  }
+}
+
+/// A small read-only label pill — a branch's business types on its list
+/// card, its service categories on the map sheet.
+class DiscoveryPill extends StatelessWidget {
+  const DiscoveryPill({required this.label, this.muted = false, super.key});
+
+  final String label;
+
+  /// For a "+N" overflow count rather than a real label.
+  final bool muted;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      height: 30,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(AppRadii.pill),
+      ),
+      // widthFactor keeps the pill hugging its label inside a Wrap, where
+      // a plain alignment would stretch it to the full row.
+      child: Align(
+        widthFactor: 1,
+        child: Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            color: muted ? scheme.onSurfaceVariant : scheme.onSurface,
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ),
     );
   }
 }

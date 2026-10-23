@@ -1,6 +1,7 @@
 import 'package:carservice_customer/app/theme/app_surfaces.dart';
 import 'package:carservice_customer/app/theme/app_theme.dart';
 import 'package:carservice_customer/core/widgets/animations.dart';
+import 'package:carservice_customer/core/widgets/measure_size.dart';
 import 'package:carservice_customer/core/widgets/offline_banner.dart';
 import 'package:carservice_customer/core/widgets/skeletons.dart';
 import 'package:carservice_customer/features/discovery/domain/branch.dart';
@@ -23,18 +24,23 @@ class DiscoveryScreen extends StatefulWidget {
   const DiscoveryScreen({
     required this.onBranchSelected,
     required this.onNotificationsRequested,
+    this.onBookRequested,
     super.key,
   });
   final void Function(Organization organization, Branch branch)
   onBranchSelected;
   final VoidCallback onNotificationsRequested;
 
+  /// The map sheet's "Цаг захиалах" — straight into booking at that branch.
+  /// Without it the sheet opens the detail page instead.
+  final void Function(Organization organization, Branch branch)?
+  onBookRequested;
+
   @override
   State<DiscoveryScreen> createState() => _DiscoveryScreenState();
 }
 
 class _DiscoveryScreenState extends State<DiscoveryScreen> {
-  bool _filtersExpanded = false;
   final _searchController = TextEditingController();
   final _scrollController = ScrollController();
   final _mapKey = GlobalKey<DiscoveryMapState>();
@@ -42,6 +48,9 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
   // floating search bar instead of behind it.
   LocationAccessState? _mapLocationAccess;
   MapViewport? _lastMapViewport;
+  // How much of the map the floating header covers, status bar included —
+  // handed to the map as top padding.
+  double _mapHeaderHeight = 0;
 
   @override
   void initState() {
@@ -79,28 +88,51 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
     );
   }
 
-  Widget _buildListBody(DiscoveryController controller) => RefreshIndicator(
-    onRefresh: controller.load,
-    child: CustomScrollView(
-      controller: _scrollController,
-      key: const PageStorageKey('discovery-scroll'),
-      physics: const AlwaysScrollableScrollPhysics(),
-      slivers: [
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(20, 18, 20, 10),
-          sliver: SliverToBoxAdapter(
-            child: DiscoveryHeader(
+  /// List mode keeps the map's header — the same search pill and quick
+  /// filters, fixed above the scrolling cards — with the high-contrast
+  /// toggle pill floating back to the map.
+  Widget _buildListBody(DiscoveryController controller) => Stack(
+    children: [
+      Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: DiscoverySearchBar(
               controller: controller,
               searchController: _searchController,
-              filtersExpanded: _filtersExpanded,
-              onFiltersExpandedChanged: (expanded) =>
-                  setState(() => _filtersExpanded = expanded),
+              onOpenFilters: () => _openFiltersSheet(controller),
             ),
           ),
+          const SizedBox(height: 10),
+          DiscoveryQuickFilters(controller: controller),
+          const SizedBox(height: 6),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: controller.load,
+              child: CustomScrollView(
+                controller: _scrollController,
+                key: const PageStorageKey('discovery-scroll'),
+                physics: const AlwaysScrollableScrollPhysics(),
+                slivers: _content(controller),
+              ),
+            ),
+          ),
+        ],
+      ),
+      Positioned(
+        left: 0,
+        right: 0,
+        bottom: 16,
+        child: Center(
+          child: MapViewToggleButton(
+            key: const ValueKey('discovery-toggle-view'),
+            icon: Icons.map_outlined,
+            label: 'Газрын зураг',
+            onPressed: () => controller.setMapView(true),
+          ),
         ),
-        ..._content(controller),
-      ],
-    ),
+      ),
+    ],
   );
 
   // The map's organizations are re-derived only when the source list
@@ -130,13 +162,11 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
         : controller.mapFallbackOrganizations;
   }
 
-  /// Map-first Discover (2026-09-17): the map fills the whole screen (the
-  /// shell hides its AppBar for this tab in this mode — see
-  /// CustomerShell), with search, filters, and the notifications/list/zoom/
-  /// locate-me controls floating on top instead of pushing the map down.
-  /// The map fell back to the list on its own long before this (init
-  /// failure, no located branches); this just makes that fallback the
-  /// primary way most people reach the list, via the action stack's toggle.
+  /// Map-first Хайх: the map fills the whole screen (the shell hides its
+  /// AppBar for this tab in this mode — see CustomerShell), with the search
+  /// pill, notifications bell and quick-filter chips floating along the top
+  /// and the list toggle and locate-me along the bottom — lifted above the
+  /// branch sheet while a pin is selected.
   Widget _buildMapBody(DiscoveryController controller) {
     final detailController = context.read<OrganizationDetailController>();
     final mapOrganizations = _mapOrganizationsFor(controller);
@@ -149,6 +179,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
               organizations: mapOrganizations,
               hasActiveFilters: controller.hasActiveFilters,
               height: constraints.maxHeight,
+              topPadding: _mapHeaderHeight,
               showLocationBanner: false,
               onLocationAccessChanged: (state) {
                 if (state != _mapLocationAccess) {
@@ -168,105 +199,171 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                 controller.requestMapMarkers(viewport);
               },
               onBranchSelected: widget.onBranchSelected,
+              onBookRequested: widget.onBookRequested,
               onShowList: () => controller.setMapView(false),
+              bottomControlsBuilder: _buildMapBottomControls,
             ),
           ),
           Positioned(
             top: 0,
             left: 0,
             right: 0,
-            child: SafeArea(
-              bottom: false,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                child: Column(
-                  children: [
-                    CompactDiscoveryBar(
-                      controller: controller,
-                      searchController: _searchController,
-                      onOpenFilters: () => _openFiltersSheet(controller),
-                    ),
-                    if (_mapLocationAccess != null &&
-                        _mapLocationAccess != LocationAccessState.granted)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 10),
-                        child: LocationPermissionBanner(
-                          state: _mapLocationAccess!,
-                          onRequest: () =>
-                              _mapKey.currentState?.requestLocationPermission(),
-                          onOpenSettings: () =>
-                              _mapKey.currentState?.openLocationSettings(),
-                        ),
-                      ),
-                    // A search/filter change re-fetches markers for the
-                    // current viewport in the background (see
-                    // DiscoveryController._invalidateMapForFilterChange)
-                    // without hiding the map — this is the only sign that
-                    // fetch is happening, so dropping it (as the
-                    // map-default rewrite originally did) made a working
-                    // refresh look like a stall.
-                    if (controller.mapLoading && controller.mapError == null)
-                      const Padding(
-                        padding: EdgeInsets.only(top: 10),
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: MapRefreshSpinner(),
-                        ),
-                      ),
-                    if (controller.mapError != null &&
-                        (!controller.mapLoaded ||
-                            controller.mapMarkers.isEmpty))
-                      Padding(
-                        padding: const EdgeInsets.only(top: 10),
-                        child: Card(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 8,
-                            ),
-                            child: Row(
-                              children: [
-                                Expanded(child: Text(controller.mapError!)),
-                                if (_lastMapViewport != null)
-                                  TextButton(
-                                    onPressed: () =>
-                                        controller.requestMapMarkers(
-                                          _lastMapViewport!,
-                                          force: true,
-                                        ),
-                                    child: const Text('Дахин оролдох'),
-                                  ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
+            child: MeasureSize(
+              onChange: (size) {
+                if ((size.height - _mapHeaderHeight).abs() >= 1) {
+                  setState(() => _mapHeaderHeight = size.height);
+                }
+              },
+              child: SafeArea(
+                bottom: false,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 12, bottom: 8),
+                  child: _buildMapHeader(controller),
                 ),
               ),
             ),
           ),
-          if (controller.mapTruncated)
-            const Positioned(
-              left: 16,
-              bottom: 16,
-              child: SafeArea(
-                child: Chip(
-                  label: Text(
-                    'Зарим цэгийг нуусан. Газрын зургийг томруулна уу.',
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMapHeader(DiscoveryController controller) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Row(
+          children: [
+            Expanded(
+              child: DiscoverySearchBar(
+                controller: controller,
+                searchController: _searchController,
+                onOpenFilters: () => _openFiltersSheet(controller),
+              ),
+            ),
+            MapNotificationsButton(onPressed: widget.onNotificationsRequested),
+          ],
+        ),
+      ),
+      const SizedBox(height: 10),
+      DiscoveryQuickFilters(controller: controller),
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (_mapLocationAccess != null &&
+                _mapLocationAccess != LocationAccessState.granted)
+              Padding(
+                padding: const EdgeInsets.only(top: 10),
+                child: LocationPermissionBanner(
+                  state: _mapLocationAccess!,
+                  onRequest: () =>
+                      _mapKey.currentState?.requestLocationPermission(),
+                  onOpenSettings: () =>
+                      _mapKey.currentState?.openLocationSettings(),
+                ),
+              ),
+            // A search/filter change re-fetches markers for the current
+            // viewport in the background (see
+            // DiscoveryController._invalidateMapForFilterChange) without
+            // hiding the map — this is the only sign that fetch is
+            // happening, so dropping it (as the map-default rewrite
+            // originally did) made a working refresh look like a stall.
+            if (controller.mapLoading && controller.mapError == null)
+              const Padding(
+                padding: EdgeInsets.only(top: 10),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: MapRefreshSpinner(),
+                ),
+              ),
+            if (controller.mapError != null &&
+                (!controller.mapLoaded || controller.mapMarkers.isEmpty))
+              Padding(
+                padding: const EdgeInsets.only(top: 10),
+                child: Container(
+                  padding: const EdgeInsets.fromLTRB(14, 6, 6, 6),
+                  decoration: BoxDecoration(
+                    color: CarserviceTheme.of(context).shellSurface,
+                    border: Border.all(
+                      color: CarserviceTheme.of(context).glassBorder,
+                    ),
+                    borderRadius: BorderRadius.circular(AppRadii.large),
+                    boxShadow: floatingControlShadow(context),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(child: Text(controller.mapError!)),
+                      if (_lastMapViewport != null)
+                        TextButton(
+                          onPressed: () => controller.requestMapMarkers(
+                            _lastMapViewport!,
+                            force: true,
+                          ),
+                          child: const Text('Дахин оролдох'),
+                        ),
+                    ],
                   ),
                 ),
               ),
-            ),
-          Positioned(
-            right: 16,
-            bottom: 16,
-            child: SafeArea(
-              child: MapActionStack(
-                mapKey: _mapKey,
-                onNotificationsRequested: widget.onNotificationsRequested,
-                onToggleList: () => controller.setMapView(false),
+          ],
+        ),
+      ),
+    ],
+  );
+
+  /// The map's bottom row: the list toggle centred (hidden behind a selected
+  /// branch's sheet, which takes over the bottom of the screen) and
+  /// locate-me on the right (only once the map can act on it). Google's
+  /// logo keeps the left corner.
+  Widget _buildMapBottomControls(
+    BuildContext context, {
+    required bool sheetVisible,
+    required bool mapReady,
+  }) {
+    final controller = context.read<DiscoveryController>();
+    final bottomInset = sheetVisible ? 0.0 : MediaQuery.paddingOf(context).bottom;
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16, 0, 16, 16 + bottomInset),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (controller.mapTruncated && !sheetVisible)
+            const Padding(
+              padding: EdgeInsets.only(bottom: 10),
+              child: Chip(
+                label: Text(
+                  'Зарим цэгийг нуусан. Газрын зургийг томруулна уу.',
+                ),
               ),
+            ),
+          SizedBox(
+            height: 48,
+            child: Stack(
+              children: [
+                if (!sheetVisible)
+                  Align(
+                    child: MapViewToggleButton(
+                      key: const ValueKey('discovery-map-list-toggle'),
+                      icon: Icons.format_list_bulleted_rounded,
+                      label: 'Жагсаалт',
+                      onPressed: () => controller.setMapView(false),
+                    ),
+                  ),
+                if (mapReady)
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: MapRoundButton(
+                      key: const ValueKey('discovery-map-locate-me'),
+                      icon: Icons.my_location_rounded,
+                      tooltip: 'Миний байршил',
+                      iconColor: Theme.of(context).colorScheme.primary,
+                      onPressed: () => _mapKey.currentState?.locateMe(),
+                    ),
+                  ),
+              ],
             ),
           ),
         ],
@@ -343,7 +440,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
     final banner = state.isFromCache
         ? [
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 6),
               sliver: SliverToBoxAdapter(
                 child: OfflineBanner(
                   message: 'Сүлжээгүй байна — сүүлд ачаалсан жагсаалтыг харуулж байна',
@@ -365,7 +462,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
   ) {
     // Жагсаалт одоо байгууллагын биш салбарын түвшинд харагддаг тул
     // байгууллага бүрийг өөрийн салбаруудаар нь тэгшлэв — эзэн байгууллагын
-    // нэрийг картын дэд гарчиг болгон ашиглахын тулд хосолсон хэвээр үлдээв.
+    // нэрийг картын гарчиг болгон ашиглахын тулд хосолсон хэвээр үлдээв.
     final branchEntries = [
       for (final organization in organizations)
         for (final branch in organization.branches)
@@ -425,10 +522,10 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
       ],
       DiscoveryStatus.data => [
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
+          padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
           sliver: SliverList.separated(
             itemCount: branchEntries.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 12),
+            separatorBuilder: (_, _) => const SizedBox(height: 10),
             itemBuilder: (context, index) {
               final entry = branchEntries[index];
               return RiseIn(
@@ -449,9 +546,9 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
           SliverToBoxAdapter(
             child: LoadMoreFooter(state: state, onRetry: controller.loadMore),
           ),
-        const SliverToBoxAdapter(child: SizedBox(height: 32)),
+        // Room to scroll the last card out from under the map toggle pill.
+        const SliverToBoxAdapter(child: SizedBox(height: 84)),
       ],
     };
   }
 }
-

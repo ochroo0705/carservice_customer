@@ -5,6 +5,7 @@ import 'package:carservice_customer/app/customer_shell.dart';
 import 'package:carservice_customer/features/booking/auth/presentation/auth_controller.dart';
 import 'package:carservice_customer/features/booking/auth/presentation/login_screen.dart';
 import 'package:carservice_customer/features/booking/domain/appointment_payment.dart';
+import 'package:carservice_customer/features/booking/domain/next_available_slot.dart';
 import 'package:carservice_customer/features/booking/presentation/screens/appointment_detail_screen.dart';
 import 'package:carservice_customer/features/booking/presentation/screens/appointment_payment_screen.dart';
 import 'package:carservice_customer/features/booking/presentation/screens/appointments_screen.dart';
@@ -156,6 +157,9 @@ GoRouter buildCustomerRouter(CustomerAppServices services, CustomerNavigation na
               DiscoveryScreen(
                 onBranchSelected: (org, branch) =>
                     context.push(CustomerRoutes.organization(org.slug, branchId: branch.id)),
+                onBookRequested: (org, branch) => context.push(
+                  CustomerRoutes.booking(org.slug, branchId: branch.id, lockBranch: true),
+                ),
                 onNotificationsRequested: () => context.push(CustomerRoutes.notifications),
               ),
               ServiceKeyPickerScreen(
@@ -217,6 +221,10 @@ GoRouter buildCustomerRouter(CustomerAppServices services, CustomerNavigation na
                 onBack: () => context.pop(),
                 onBook: () => context.push(
                   CustomerRoutes.booking(slug, branchId: branchId, lockBranch: branchId != null),
+                ),
+                nextAvailableSlot: (branchId) => findNextAvailableSlot(
+                  services.appointmentRepository,
+                  branchId: branchId,
                 ),
               ),
             ),

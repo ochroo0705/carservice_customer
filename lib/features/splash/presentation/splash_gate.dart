@@ -9,7 +9,7 @@ import 'package:flutter/scheduler.dart';
 /// Router. Crucially, the heavy app subtree (controllers, the Discovery map, the
 /// whole render tree) is only built when [child] is actually **mounted** — so
 /// for the first [floor] the gate mounts *only* the splash, keeping those
-/// frames cheap enough for the pop-in/spin to animate smoothly. Then it mounts
+/// frames cheap enough for the pop-in/pulse to animate smoothly. Then it mounts
 /// the app behind the splash (its build cost is now hidden under the overlay)
 /// and, after a short settle, cross-fades the splash out.
 ///

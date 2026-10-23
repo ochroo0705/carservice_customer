@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 
-import 'package:carservice_customer/app/theme/app_theme.dart';
+import 'package:carservice_customer/core/widgets/measure_size.dart';
 import 'package:carservice_customer/features/discovery/domain/branch.dart';
 import 'package:carservice_customer/features/discovery/domain/organization.dart';
 import 'package:carservice_customer/features/discovery/presentation/controllers/organization_detail_controller.dart';
@@ -9,7 +9,7 @@ import 'package:carservice_customer/features/discovery/presentation/widgets/disc
 import 'package:carservice_customer/features/discovery/presentation/widgets/location_permission_banner.dart';
 import 'package:carservice_customer/features/discovery/presentation/widgets/map_pin_icons.dart';
 import 'package:carservice_customer/features/discovery/presentation/widgets/map_snapshot.dart';
-import 'package:carservice_customer/features/discovery/presentation/widgets/selected_branch_card.dart';
+import 'package:carservice_customer/features/discovery/presentation/widgets/selected_branch_sheet.dart';
 import 'package:carservice_customer/features/discovery/services/device_location_service.dart';
 import 'package:carservice_customer/features/discovery/services/location_permission_service.dart';
 import 'package:carservice_customer/features/discovery/services/map_configuration_service.dart';
@@ -24,11 +24,14 @@ class DiscoveryMap extends StatefulWidget {
     required this.organizations,
     this.hasActiveFilters = false,
     required this.onBranchSelected,
+    this.onBookRequested,
     required this.onShowList,
     required this.organizationDetailController,
     this.onViewportChanged,
     this.refitSignal,
     this.height = 430,
+    this.topPadding = 0,
+    this.bottomControlsBuilder,
     this.showLocationBanner = true,
     this.onLocationAccessChanged,
     this.locationPermissionService =
@@ -42,6 +45,10 @@ class DiscoveryMap extends StatefulWidget {
   final bool hasActiveFilters;
   final void Function(Organization organization, Branch branch)
   onBranchSelected;
+  // The selected-branch sheet's "Цаг захиалах". Falls back to
+  // [onBranchSelected] (the detail page, which has its own booking button).
+  final void Function(Organization organization, Branch branch)?
+  onBookRequested;
   final VoidCallback onShowList;
   // Пин дарахад дэлгэрэнгүй (цаг/хаяг/утас/ангилал) картыг web-тэй ижил
   // түвшинд харуулахын тулд тухайн байгууллагын дэлгэрэнгүйг цөөнгүй
@@ -54,6 +61,19 @@ class DiscoveryMap extends StatefulWidget {
   // avoid fighting the user's own panning/zooming.
   final int? refitSignal;
   final double height;
+  // How much of the map's top a parent's floating overlay covers (the
+  // discovery screen's search header) — passed to Google Maps as padding so
+  // fit-to-results, centering and the platform's own UI avoid it.
+  final double topPadding;
+  // Controls the parent floats along the map's bottom edge (list toggle,
+  // locate-me). Built here rather than by the parent so they ride on top of
+  // the selected-branch sheet, and can hide what the sheet replaces.
+  final Widget Function(
+    BuildContext context, {
+    required bool sheetVisible,
+    required bool mapReady,
+  })?
+  bottomControlsBuilder;
   // A parent with its own top overlay (the discovery screen's floating
   // search bar) sets this false and renders [LocationPermissionBanner]
   // itself, below that overlay, driven by [onLocationAccessChanged] and
@@ -77,6 +97,13 @@ class DiscoveryMapState extends State<DiscoveryMap>
   LocationAccessState? _locationAccessState;
   ({Organization organization, Branch branch})? _selected;
   MapPinIcons? _pins;
+  // The theme the pins were drawn for — their ring matches the map's
+  // background, so a theme switch redraws them.
+  Brightness? _pinBrightness;
+  bool _configured = false;
+  // Height of the docked selected-branch sheet, reported after layout; the
+  // map is padded by it so the Google logo and the selection stay visible.
+  double _sheetHeight = 0;
   String? _lightMapStyle;
   String? _darkMapStyle;
   Timer? _initializationTimer;
@@ -111,6 +138,15 @@ class DiscoveryMapState extends State<DiscoveryMap>
     WidgetsBinding.instance.addObserver(this);
     widget.organizationDetailController.addListener(_handleDetailChanged);
     _initializeMap();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final brightness = Theme.of(context).brightness;
+    if (brightness == _pinBrightness) return;
+    _pinBrightness = brightness;
+    if (_configured) _loadPinIcons();
   }
 
   void _handleDetailChanged() {
@@ -151,6 +187,7 @@ class DiscoveryMapState extends State<DiscoveryMap>
       setState(() => _mapLoadState = _MapLoadState.unavailable);
       return;
     }
+    _configured = true;
     // Check only — onboarding already offered the prompt. Asking again here
     // would spend iOS's single prompt (and one of Android's two) on a user
     // who just skipped it; the banner and locate-me ask on an explicit tap.
@@ -237,10 +274,6 @@ class DiscoveryMapState extends State<DiscoveryMap>
     await widget.locationPermissionService.openSettings();
   }
 
-  void zoomIn() => _mapController?.animateCamera(CameraUpdate.zoomIn());
-
-  void zoomOut() => _mapController?.animateCamera(CameraUpdate.zoomOut());
-
   /// Stand-in for Google Maps' own locate-me button, which (like the zoom
   /// control) is pinned by the platform and can't be moved or restyled.
   Future<void> locateMe() async {
@@ -277,6 +310,11 @@ class DiscoveryMapState extends State<DiscoveryMap>
   void _dismissSelection() {
     if (_selected == null) return;
     setState(() => _selected = null);
+  }
+
+  void _handleSheetSize(Size size) {
+    if (!mounted || (size.height - _sheetHeight).abs() < 1) return;
+    setState(() => _sheetHeight = size.height);
   }
 
   Future<void> _handleClusterTap(Cluster cluster) async {
@@ -368,9 +406,28 @@ class DiscoveryMapState extends State<DiscoveryMap>
   }
 
   Future<void> _loadPinIcons() async {
-    final pins = await loadMapPinIcons();
-    if (!mounted) return;
+    final brightness = _pinBrightness ?? Brightness.light;
+    final pins = await loadMapPinIcons(brightness: brightness);
+    // A theme switch mid-load already started the right set.
+    if (!mounted || brightness != _pinBrightness) return;
     setState(() => _pins = pins);
+  }
+
+  /// Whether the selected branch's loaded hours say it's closed right now.
+  bool get _selectedClosed {
+    final selected = _selected;
+    final detail = widget.organizationDetailController.organization;
+    if (selected == null ||
+        detail == null ||
+        detail.slug != selected.organization.slug) {
+      return false;
+    }
+    for (final branch in detail.branches) {
+      if (branch.id == selected.branch.id) {
+        return branch.openStatusAt(DateTime.now()) == BranchOpenStatus.closed;
+      }
+    }
+    return false;
   }
 
   // Everything derived from (organizations, selection, visible bounds, pins)
@@ -383,15 +440,18 @@ class DiscoveryMapState extends State<DiscoveryMap>
   ({Organization organization, Branch branch})? _snapshotSelected;
   LatLngBounds? _snapshotBounds;
   MapPinIcons? _snapshotPins;
+  bool? _snapshotSelectedClosed;
 
   MapSnapshot _currentSnapshot() {
     final pins = _pins;
     final cached = _snapshot;
+    final selectedClosed = _selectedClosed;
     if (cached != null &&
         identical(_snapshotOrganizations, widget.organizations) &&
         _snapshotSelected == _selected &&
         _snapshotBounds == _visibleBounds &&
-        identical(_snapshotPins, pins)) {
+        identical(_snapshotPins, pins) &&
+        _snapshotSelectedClosed == selectedClosed) {
       return cached;
     }
     final snapshot = buildMapSnapshot(
@@ -399,6 +459,7 @@ class DiscoveryMapState extends State<DiscoveryMap>
       selected: _selected,
       visibleBounds: _visibleBounds,
       pins: pins,
+      selectedClosed: selectedClosed,
       onMarkerTap: (organization, branch) {
         setState(
           () => _selected = (organization: organization, branch: branch),
@@ -411,35 +472,30 @@ class DiscoveryMapState extends State<DiscoveryMap>
     _snapshotSelected = _selected;
     _snapshotBounds = _visibleBounds;
     _snapshotPins = pins;
+    _snapshotSelectedClosed = selectedClosed;
     return snapshot;
   }
 
   @override
   Widget build(BuildContext context) {
     final snapshot = _currentSnapshot();
-    if (!snapshot.hasLocations) {
-      return const NoMapLocations();
-    }
     final positions = snapshot.positions;
     final visibleSelection = snapshot.visibleSelection;
     final markers = snapshot.markers;
-
+    final mapUnavailable = _mapLoadState == _MapLoadState.unavailable;
+    final mapReady = _mapLoadState == _MapLoadState.ready;
+    final reduceMotion = MediaQuery.of(context).disableAnimations;
+    final sheetPadding = visibleSelection == null ? 0.0 : _sheetHeight;
     final initialTarget = positions.length == 1
         ? positions.first
         : _ulaanbaatar;
-    final mapUnavailable = _mapLoadState == _MapLoadState.unavailable;
-    return Container(
+    return SizedBox(
       height: widget.height,
-      decoration: BoxDecoration(
-        border: Border.all(color: CarserviceTheme.of(context).glassBorder),
-        borderRadius: BorderRadius.circular(AppRadii.large),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(AppRadii.large),
-        child: Stack(
-          children: [
-            if (!mapUnavailable)
-              Semantics(
+      child: Stack(
+        children: [
+          if (!mapUnavailable)
+            Positioned.fill(
+              child: Semantics(
                 container: true,
                 label: 'Сервисийн байршлын интерактив газрын зураг',
                 child: GoogleMap(
@@ -461,10 +517,17 @@ class DiscoveryMapState extends State<DiscoveryMap>
                       onClusterTap: _handleClusterTap,
                     ),
                   },
+                  // Keeps fit-to-results, marker centering and the Google
+                  // logo clear of the floating header and the docked sheet.
                   padding: EdgeInsets.only(
-                    top: _locationAccessState == LocationAccessState.granted
-                        ? 0
-                        : 68,
+                    top:
+                        widget.topPadding +
+                        (widget.showLocationBanner &&
+                                _locationAccessState !=
+                                    LocationAccessState.granted
+                            ? 68
+                            : 0),
+                    bottom: sheetPadding,
                   ),
                   gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
                     Factory<EagerGestureRecognizer>(EagerGestureRecognizer.new),
@@ -479,9 +542,8 @@ class DiscoveryMapState extends State<DiscoveryMap>
                   scrollGesturesEnabled: true,
                   // The platform's own zoom control is pinned to the
                   // bottom-right by the SDK — no padding/position knob
-                  // moves it, and that corner is where the shell's map/list
-                  // toggle FAB sits. Use our own buttons instead, placed
-                  // wherever fits.
+                  // moves it, and that corner is where the locate-me
+                  // button sits. Pinch, double-tap and cluster taps zoom.
                   zoomControlsEnabled: false,
                   buildingsEnabled: false,
                   rotateGesturesEnabled: false,
@@ -489,51 +551,109 @@ class DiscoveryMapState extends State<DiscoveryMap>
                   minMaxZoomPreference: const MinMaxZoomPreference(5, 19),
                 ),
               ),
-            if (widget.showLocationBanner &&
-                _mapLoadState == _MapLoadState.ready &&
-                _locationAccessState != null &&
-                _locationAccessState != LocationAccessState.granted)
-              Positioned(
-                top: 10,
-                left: 10,
-                right: 10,
-                child: LocationPermissionBanner(
-                  state: _locationAccessState!,
-                  onRequest: requestLocationPermission,
-                  onOpenSettings: openLocationSettings,
+            ),
+          // Nothing to pin in this viewport (or under these filters): say so
+          // without unmounting the map, so the user can pan or zoom out.
+          if (mapReady && !snapshot.hasLocations)
+            Positioned.fill(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  top: widget.topPadding,
+                  bottom: sheetPadding + 80,
                 ),
+                child: const Center(child: NoMapLocations()),
               ),
-            if (visibleSelection != null)
-              Positioned(
-                left: 10,
-                right: 10,
-                bottom: 10,
-                child: SelectedBranchCard(
-                  organization: visibleSelection.organization,
-                  branch: visibleSelection.branch,
-                  detailController: widget.organizationDetailController,
-                  onClose: _dismissSelection,
-                  onDetails: () => widget.onBranchSelected(
-                    visibleSelection.organization,
-                    visibleSelection.branch,
+            ),
+          if (widget.showLocationBanner &&
+              mapReady &&
+              _locationAccessState != null &&
+              _locationAccessState != LocationAccessState.granted)
+            Positioned(
+              top: widget.topPadding + 10,
+              left: 10,
+              right: 10,
+              child: LocationPermissionBanner(
+                state: _locationAccessState!,
+                onRequest: requestLocationPermission,
+                onOpenSettings: openLocationSettings,
+              ),
+            ),
+          if (_mapLoadState == _MapLoadState.loading)
+            const Positioned.fill(child: MapLoadingOverlay()),
+          if (_mapLoadState == _MapLoadState.failed)
+            Positioned.fill(
+              child: MapFailureOverlay(
+                onRetry: _retryMap,
+                onShowList: widget.onShowList,
+              ),
+            ),
+          if (mapUnavailable)
+            Positioned.fill(
+              child: MapUnavailableOverlay(onShowList: widget.onShowList),
+            ),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (widget.bottomControlsBuilder case final builder?)
+                  builder(
+                    context,
+                    sheetVisible: visibleSelection != null,
+                    mapReady: mapReady,
+                  ),
+                MeasureSize(
+                  onChange: _handleSheetSize,
+                  child: AnimatedSwitcher(
+                    duration: reduceMotion
+                        ? Duration.zero
+                        : const Duration(milliseconds: 240),
+                    switchInCurve: Curves.easeOutCubic,
+                    switchOutCurve: Curves.easeInCubic,
+                    transitionBuilder: (child, animation) => SlideTransition(
+                      position: Tween<Offset>(
+                        begin: const Offset(0, 0.2),
+                        end: Offset.zero,
+                      ).animate(animation),
+                      child: FadeTransition(opacity: animation, child: child),
+                    ),
+                    layoutBuilder: (current, previous) => Stack(
+                      alignment: Alignment.bottomCenter,
+                      fit: StackFit.passthrough,
+                      children: [...previous, ?current],
+                    ),
+                    child: visibleSelection == null
+                        ? const SizedBox(width: double.infinity)
+                        : SelectedBranchSheet(
+                            key: ValueKey(
+                              '${visibleSelection.organization.slug}:'
+                              '${visibleSelection.branch.id}',
+                            ),
+                            organization: visibleSelection.organization,
+                            branch: visibleSelection.branch,
+                            detailController:
+                                widget.organizationDetailController,
+                            onClose: _dismissSelection,
+                            onDetails: () => widget.onBranchSelected(
+                              visibleSelection.organization,
+                              visibleSelection.branch,
+                            ),
+                            onBook: () =>
+                                (widget.onBookRequested ??
+                                widget.onBranchSelected)(
+                                  visibleSelection.organization,
+                                  visibleSelection.branch,
+                                ),
+                          ),
                   ),
                 ),
-              ),
-            if (_mapLoadState == _MapLoadState.loading)
-              const Positioned.fill(child: MapLoadingOverlay()),
-            if (_mapLoadState == _MapLoadState.failed)
-              Positioned.fill(
-                child: MapFailureOverlay(
-                  onRetry: _retryMap,
-                  onShowList: widget.onShowList,
-                ),
-              ),
-            if (mapUnavailable)
-              Positioned.fill(
-                child: MapUnavailableOverlay(onShowList: widget.onShowList),
-              ),
-          ],
-        ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

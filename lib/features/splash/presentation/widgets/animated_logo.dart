@@ -1,13 +1,8 @@
-import 'dart:math' as math;
-
-import 'package:carservice_customer/app/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 
-/// The Carservice mark drawn as a vector so the gear and heart animate
-/// independently: the whole mark **pops in** on load (scale-up with a slight
-/// overshoot + fade), then the gear **rotates** continuously while the heart
-/// **pulses** in the centre (staying upright). No raster asset — crisp at any
-/// size. Mirrors `assets/brand/mark.png`.
+/// The Carservice mark (`assets/brand/mark.png` — the wrench in the chamfered
+/// frame). It **pops in** on load (scale-up with a slight overshoot + fade),
+/// then **breathes** with a gentle scale pulse while the splash is up.
 class AnimatedLogo extends StatefulWidget {
   const AnimatedLogo({this.size = 140, super.key});
 
@@ -22,10 +17,6 @@ class _AnimatedLogoState extends State<AnimatedLogo>
   late final AnimationController _pop = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 650),
-  );
-  late final AnimationController _spin = AnimationController(
-    vsync: this,
-    duration: const Duration(seconds: 7),
   );
   late final AnimationController _pulse = AnimationController(
     vsync: this,
@@ -52,7 +43,7 @@ class _AnimatedLogoState extends State<AnimatedLogo>
     parent: _pop,
     curve: const Interval(0, 0.5, curve: Curves.easeOut),
   );
-  late final Animation<double> _heartScale = Tween(begin: 1.0, end: 1.07)
+  late final Animation<double> _pulseScale = Tween(begin: 1.0, end: 1.04)
       .chain(CurveTween(curve: Curves.easeInOut))
       .animate(_pulse);
 
@@ -60,11 +51,10 @@ class _AnimatedLogoState extends State<AnimatedLogo>
   void initState() {
     super.initState();
     _pop.forward();
-    // Gear/heart start only once the pop settles, so the entrance reads as one
-    // beat (matches the design preview).
+    // The pulse starts only once the pop settles, so the entrance reads as one
+    // beat.
     _pop.addStatusListener((status) {
       if (status == AnimationStatus.completed && mounted) {
-        _spin.repeat();
         _pulse.repeat(reverse: true);
       }
     });
@@ -73,98 +63,32 @@ class _AnimatedLogoState extends State<AnimatedLogo>
   @override
   void dispose() {
     _pop.dispose();
-    _spin.dispose();
     _pulse.dispose();
     super.dispose();
   }
 
   @override
-  Widget build(BuildContext context) => AnimatedBuilder(
-    animation: Listenable.merge([_pop, _spin, _pulse]),
-    builder: (context, _) => Opacity(
-      opacity: _popOpacity.value,
-      child: Transform.scale(
-        scale: _popScale.value,
-        child: CustomPaint(
-          size: Size.square(widget.size),
-          painter: _GearHeartPainter(
-            gearAngle: _spin.value * 2 * math.pi,
-            heartScale: _heartScale.value,
-          ),
+  Widget build(BuildContext context) {
+    // Decode at the on-screen size rather than the 1024px source.
+    final cacheSize =
+        (widget.size * MediaQuery.devicePixelRatioOf(context)).round();
+    final mark = Image.asset(
+      'assets/brand/mark.png',
+      width: widget.size,
+      height: widget.size,
+      cacheWidth: cacheSize,
+      filterQuality: FilterQuality.medium,
+    );
+    return AnimatedBuilder(
+      animation: Listenable.merge([_pop, _pulse]),
+      builder: (context, child) => Opacity(
+        opacity: _popOpacity.value,
+        child: Transform.scale(
+          scale: _popScale.value * _pulseScale.value,
+          child: child,
         ),
       ),
-    ),
-  );
-}
-
-class _GearHeartPainter extends CustomPainter {
-  _GearHeartPainter({required this.gearAngle, required this.heartScale});
-
-  final double gearAngle;
-  final double heartScale;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final u = size.width / 200; // design in a 200-unit box
-    final accentPaint = Paint()
-      ..color = AppColors.accent
-      ..isAntiAlias = true;
-
-    // --- gear (rotates about the centre) ---
-    canvas.save();
-    canvas.translate(center.dx, center.dy);
-    canvas.rotate(gearAngle);
-    const toothW = 27.0, toothH = 40.0, toothR = 10.0, tip = 86.0;
-    for (var i = 0; i < 8; i++) {
-      canvas.save();
-      canvas.rotate(i * math.pi / 4);
-      canvas.drawRRect(
-        RRect.fromRectAndRadius(
-          Rect.fromCenter(
-            center: Offset(0, -(tip - toothH / 2) * u),
-            width: toothW * u,
-            height: toothH * u,
-          ),
-          Radius.circular(toothR * u),
-        ),
-        accentPaint,
-      );
-      canvas.restore();
-    }
-    canvas.drawCircle(Offset.zero, 59 * u, accentPaint); // gear body
-    canvas.restore();
-
-    // --- white centre hole (static; a circle, so rotation would be invisible) ---
-    canvas.drawCircle(center, 32 * u, Paint()..color = Colors.white);
-
-    // --- heart (pulses, stays upright) ---
-    canvas.drawPath(
-      _heartPath(center.translate(0, 1 * u), 34 * u * heartScale),
-      Paint()
-        ..color = AppColors.accentHover
-        ..isAntiAlias = true,
+      child: mark,
     );
   }
-
-  Path _heartPath(Offset c, double w) {
-    final h = w * 0.9;
-    return Path()
-      ..moveTo(c.dx, c.dy + h * 0.38)
-      ..cubicTo(
-        c.dx - w * 0.5, c.dy - h * 0.05,
-        c.dx - w * 0.5, c.dy - h * 0.45,
-        c.dx, c.dy - h * 0.18,
-      )
-      ..cubicTo(
-        c.dx + w * 0.5, c.dy - h * 0.45,
-        c.dx + w * 0.5, c.dy - h * 0.05,
-        c.dx, c.dy + h * 0.38,
-      )
-      ..close();
-  }
-
-  @override
-  bool shouldRepaint(_GearHeartPainter old) =>
-      old.gearAngle != gearAngle || old.heartScale != heartScale;
 }

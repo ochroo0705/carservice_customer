@@ -37,7 +37,7 @@ class BookingCalendar extends StatelessWidget {
     final daysInMonth = DateTime(month.year, month.month + 1, 0).day;
     final leadingBlanks = firstWeekday - 1;
     final totalCells = ((leadingBlanks + daysInMonth) / 7).ceil() * 7;
-    final scheme = Theme.of(context).colorScheme;
+    final muted = CarserviceTheme.of(context).mutedText;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -56,10 +56,12 @@ class BookingCalendar extends StatelessWidget {
             ),
             Expanded(
               child: Text(
-                '${month.year}.${month.month.toString().padLeft(2, '0')}',
+                '${month.year} оны ${month.month}-р сар',
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.titleMedium
-                    ?.copyWith(fontWeight: FontWeight.w700),
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
             IconButton(
@@ -72,26 +74,31 @@ class BookingCalendar extends StatelessWidget {
             ),
           ],
         ),
-        GridView.count(
-          crossAxisCount: 7,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
+        const SizedBox(height: 6),
+        Row(
           children: [
             for (final label in _weekdayLabels)
-              Center(
+              Expanded(
                 child: Text(
                   label,
-                  style: Theme.of(context).textTheme.labelSmall
-                      ?.copyWith(color: scheme.onSurfaceVariant),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: muted,
+                  ),
                 ),
               ),
           ],
         ),
+        const SizedBox(height: 6),
         GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 7,
+            mainAxisSpacing: 4,
+            crossAxisSpacing: 4,
           ),
           itemCount: totalCells,
           itemBuilder: (context, index) {
@@ -114,42 +121,80 @@ class BookingCalendar extends StatelessWidget {
                       selectedDate!.day,
                     ) ==
                     date;
-            return Padding(
-              padding: const EdgeInsets.all(2),
-              child: Material(
-                color: isSelected ? AppColors.accent : Colors.transparent,
-                shape: CircleBorder(
-                  side: isToday && !isSelected
-                      ? BorderSide(color: AppColors.accent)
-                      : BorderSide.none,
-                ),
-                child: InkWell(
-                  key: ValueKey(
-                    'booking-date-${date.year}-${date.month}-${date.day}',
-                  ),
-                  onTap: isPast || isClosed ? null : () => onDateSelected(date),
-                  customBorder: const CircleBorder(),
-                  child: Center(
-                    child: Text(
-                      '$dayNumber',
-                      style: TextStyle(
-                        fontWeight: isSelected
-                            ? FontWeight.w800
-                            : FontWeight.w500,
-                        color: isSelected
-                            ? AppColors.onAccent
-                            : isPast || isClosed
-                            ? scheme.onSurfaceVariant.withValues(alpha: 0.35)
-                            : scheme.onSurface,
-                      ),
-                    ),
-                  ),
-                ),
+            return _DayCell(
+              key: ValueKey(
+                'booking-date-${date.year}-${date.month}-${date.day}',
               ),
+              day: dayNumber,
+              selected: isSelected,
+              today: isToday,
+              closed: isClosed && !isPast,
+              enabled: !isPast && !isClosed,
+              onTap: () => onDateSelected(date),
             );
           },
         ),
       ],
+    );
+  }
+}
+
+class _DayCell extends StatelessWidget {
+  const _DayCell({
+    required this.day,
+    required this.selected,
+    required this.today,
+    required this.closed,
+    required this.enabled,
+    required this.onTap,
+    super.key,
+  });
+
+  final int day;
+  final bool selected;
+  final bool today;
+
+  /// A future day the branch's schedule keeps closed (vs. simply past).
+  final bool closed;
+  final bool enabled;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final muted = CarserviceTheme.of(context).mutedText;
+    final scheme = Theme.of(context).colorScheme;
+    return Semantics(
+      selected: selected,
+      enabled: enabled,
+      hint: closed ? 'Хаалттай' : null,
+      child: Material(
+        color: selected ? AppColors.accent : Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadii.medium),
+          side: today && !selected
+              ? const BorderSide(color: AppColors.accent, width: 1.5)
+              : BorderSide.none,
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: enabled ? onTap : null,
+          child: Center(
+            child: Text(
+              '$day',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: selected ? FontWeight.w800 : FontWeight.w500,
+                color: selected
+                    ? AppColors.onAccent
+                    : enabled
+                    ? scheme.onSurface
+                    : muted.withValues(alpha: 0.4),
+                decoration: closed ? TextDecoration.lineThrough : null,
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

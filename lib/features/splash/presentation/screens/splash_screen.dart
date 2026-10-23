@@ -2,8 +2,8 @@ import 'package:carservice_customer/app/theme/app_theme.dart';
 import 'package:carservice_customer/features/splash/presentation/widgets/animated_logo.dart';
 import 'package:flutter/material.dart';
 
-/// First-launch splash: the animated Carservice mark (pop-in → spinning gear +
-/// pulsing heart), the wordmark, and a loading indicator. Shown over the app
+/// First-launch splash: the animated Carservice mark (pop-in → gentle pulse),
+/// the wordmark, and a loading indicator. Shown over the app
 /// while it warms up, then faded out by [SplashGate].
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});

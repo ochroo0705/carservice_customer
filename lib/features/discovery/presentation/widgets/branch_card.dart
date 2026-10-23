@@ -1,12 +1,18 @@
-import 'package:carservice_customer/app/theme/app_theme.dart';
 import 'package:carservice_customer/app/theme/app_surfaces.dart';
+import 'package:carservice_customer/app/theme/app_theme.dart';
 import 'package:carservice_customer/features/discovery/domain/branch.dart';
 import 'package:carservice_customer/features/discovery/domain/organization.dart';
+import 'package:carservice_customer/features/discovery/presentation/widgets/discovery_list_parts.dart';
 import 'package:carservice_customer/features/discovery/presentation/widgets/organization_avatar.dart';
 import 'package:flutter/material.dart';
 
-/// Салбарын карт — Explore жагсаалт одоо байгууллагын биш салбарын түвшинд
-/// харагдана; эзэн байгууллагын нэрийг дэд гарчиг болгож үлдээв.
+/// Business-type pills a list card shows before collapsing the rest into
+/// "+N" — the card is a scan line, not the branch's full profile.
+const _maxCardTags = 3;
+
+/// Салбарын карт — Хайх жагсаалт салбарын түвшинд харагдана. Газрын зургийн
+/// салбарын sheet-ийн толгойтой ижил бүтэцтэй: байгууллагын нэр гарчиг,
+/// салбарын нэр · зай дэд гарчиг, дараа нь байршил ба бизнесийн төрлүүд.
 class BranchCard extends StatelessWidget {
   const BranchCard({
     required this.organization,
@@ -20,14 +26,18 @@ class BranchCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    final theme = CarserviceTheme.of(context);
+    final subtitle = [
+      branch.name,
+      ?branch.distanceLabel,
+    ].where((part) => part.trim().isNotEmpty).join(' · ');
     return GlassSurface(
       key: ValueKey('branch-${organization.slug}-${branch.id}'),
       onTap: onTap,
+      padding: const EdgeInsets.all(14),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          OrganizationAvatar(
+          OrganizationLogoTile(
             name: organization.name,
             logoUrl: organization.logoUrl,
           ),
@@ -37,85 +47,65 @@ class BranchCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  branch.name,
-                  style: Theme.of(context).textTheme.titleMedium
-                      ?.copyWith(fontWeight: FontWeight.w700),
-                ),
-                // Бизнесийн төрлийн шошго (жиш: "Угаалгын газар") — нэрийн
-                // яг доор, тухайн салбар "ямар газар вэ" гэдгийг эхлээд
-                // харуулна (хаяг/зайнаас илүү тэргүүлэх ач холбогдолтой тул).
-                // Олон шошготой бол ердийн текстээр таслалаар нэгтгэнэ — chip
-                // биш, гарчгийн мөр өнгөлөг/түгжрэлтэй болохоос сэргийлнэ.
-                if (branch.tags.isNotEmpty) ...[
-                  const SizedBox(height: 1),
-                  Text(
-                    branch.tags.map((t) => t.name).join(' · '),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: scheme.primary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 3),
-                Text(
                   organization.name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall
-                      ?.copyWith(color: scheme.onSurfaceVariant),
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  branch.locationLabel,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-                if (branch.distanceLabel != null) ...[
+                if (subtitle.isNotEmpty) ...[
+                  const SizedBox(height: 3),
+                  Text(
+                    subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 13, color: theme.mutedText),
+                  ),
+                ],
+                if (branch.locationLabel.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.place_outlined,
+                        size: 15,
+                        color: theme.mutedText,
+                      ),
+                      const SizedBox(width: 5),
+                      Expanded(
+                        child: Text(
+                          branch.locationLabel,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 13),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+                if (branch.tags.isNotEmpty) ...[
                   const SizedBox(height: 10),
                   Wrap(
-                    spacing: 8,
+                    spacing: 6,
                     runSpacing: 6,
                     children: [
-                      _InfoChip(
-                        icon: Icons.near_me_outlined,
-                        label: branch.distanceLabel!,
-                      ),
+                      for (final tag in branch.tags.take(_maxCardTags))
+                        DiscoveryPill(label: tag.name),
+                      if (branch.tags.length > _maxCardTags)
+                        DiscoveryPill(
+                          label: '+${branch.tags.length - _maxCardTags}',
+                          muted: true,
+                        ),
                     ],
                   ),
                 ],
               ],
             ),
           ),
-          const Icon(Icons.chevron_right),
-        ],
-      ),
-    );
-  }
-}
-
-class _InfoChip extends StatelessWidget {
-  const _InfoChip({required this.icon, required this.label});
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-      decoration: BoxDecoration(
-        color: scheme.surfaceContainer,
-        borderRadius: BorderRadius.circular(AppRadii.pill),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14),
-          const SizedBox(width: 5),
-          Text(label, style: Theme.of(context).textTheme.labelSmall),
+          const SizedBox(width: 8),
+          Icon(Icons.chevron_right_rounded, color: theme.mutedText),
         ],
       ),
     );

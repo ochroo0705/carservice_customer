@@ -142,25 +142,53 @@ class MapUnavailableOverlay extends StatelessWidget {
   );
 }
 
+/// A note floating over an empty viewport. Ignores touches, so the map
+/// under it still pans and zooms — the way out of an empty area.
 class NoMapLocations extends StatelessWidget {
   const NoMapLocations({super.key});
 
   @override
-  Widget build(BuildContext context) => Container(
-    height: 280,
-    alignment: Alignment.center,
-    decoration: BoxDecoration(
-      color: CarserviceTheme.of(context).glass,
-      border: Border.all(color: CarserviceTheme.of(context).glassBorder),
-      borderRadius: BorderRadius.circular(AppRadii.large),
-    ),
-    child: const Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(Icons.location_off_outlined, size: 42),
-        SizedBox(height: 12),
-        Text('Газрын зурагт харуулах байршил алга'),
-      ],
-    ),
-  );
+  Widget build(BuildContext context) {
+    final theme = CarserviceTheme.of(context);
+    return IgnorePointer(
+      child: Semantics(
+        container: true,
+        liveRegion: true,
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 32),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+          decoration: BoxDecoration(
+            color: theme.shellSurface,
+            border: Border.all(color: theme.glassBorder),
+            borderRadius: BorderRadius.circular(AppRadii.large),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.2),
+                blurRadius: 16,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.location_off_outlined, color: theme.mutedText),
+              const SizedBox(height: 8),
+              const Text(
+                'Энэ хэсэгт сервис олдсонгүй',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Газрын зургийг хөдөлгөх эсвэл шүүлтүүрээ өөрчилж үзээрэй.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 13, color: theme.mutedText),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

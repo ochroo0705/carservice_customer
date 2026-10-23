@@ -1,4 +1,5 @@
 import 'package:carservice_customer/app/theme/app_surfaces.dart';
+import 'package:carservice_customer/app/theme/app_theme.dart';
 import 'package:carservice_customer/features/booking/domain/appointment_repository.dart';
 import 'package:carservice_customer/features/booking/presentation/controllers/booking_form_controller.dart';
 import 'package:carservice_customer/features/booking/presentation/widgets/booking_calendar.dart';
@@ -61,6 +62,12 @@ class _BookingRequestScreenState extends State<BookingRequestScreen>
   final _noteController = TextEditingController();
   late final BookingFormController _form;
 
+  // Step anchors, for scrolling the form to the step that needs attention.
+  final _servicesKey = GlobalKey();
+  final _branchKey = GlobalKey();
+  final _dateKey = GlobalKey();
+  final _slotKey = GlobalKey();
+
   @override
   void initState() {
     super.initState();
@@ -91,7 +98,40 @@ class _BookingRequestScreenState extends State<BookingRequestScreen>
     super.dispose();
   }
 
+  /// Brings [key]'s step into view after the next frame (it may only be
+  /// built by the change that triggered the scroll).
+  void _scrollTo(GlobalKey key) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final target = key.currentContext;
+      if (!mounted || target == null) return;
+      final reduceMotion = MediaQuery.of(context).disableAnimations;
+      Scrollable.ensureVisible(
+        target,
+        alignment: 0.05,
+        duration: reduceMotion
+            ? Duration.zero
+            : const Duration(milliseconds: 320),
+        curve: Curves.easeOutCubic,
+      );
+    });
+  }
+
+  /// The first step still missing a choice, matching
+  /// [bookingNextStepHint].
+  GlobalKey? get _firstIncompleteStep {
+    final form = _form;
+    if (form.selectedBranch == null) {
+      return form.selectedCategoryIds.isEmpty && !form.lockCategories
+          ? _servicesKey
+          : _branchKey;
+    }
+    if (form.selectedDate == null) return _dateKey;
+    if (form.selectedSlot == null) return _slotKey;
+    return null;
+  }
+
   Future<void> _submit() async {
+    final missing = _firstIncompleteStep;
     final outcome = await _form.submit(_noteController.text);
     if (!mounted) return;
     switch (outcome.status) {
@@ -100,23 +140,25 @@ class _BookingRequestScreenState extends State<BookingRequestScreen>
       case BookingSubmitStatus.unauthenticated:
         widget.onUnauthenticated();
       case BookingSubmitStatus.ignored:
+        if (missing != null) _scrollTo(missing);
       case BookingSubmitStatus.failed:
         break;
     }
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      leading: BackButton(onPressed: widget.onBack),
-      title: const Text('Цаг хүсэх'),
-    ),
-    body: AppShellBackground(
-      child: SafeArea(
-        top: false,
-        child: ListenableBuilder(
-          listenable: _form,
-          builder: (context, _) => _form.lockedFlowBlocked
+  Widget build(BuildContext context) => ListenableBuilder(
+    listenable: _form,
+    builder: (context, _) => Scaffold(
+      appBar: AppBar(
+        leading: BackButton(onPressed: widget.onBack),
+        title: const Text('Цаг хүсэх'),
+      ),
+      body: AppShellBackground(
+        child: SafeArea(
+          top: false,
+          bottom: false,
+          child: _form.lockedFlowBlocked
               ? LockedFlowUnavailable(
                   branchMissing: _form.lockedBranchMissing,
                   onBack: widget.onBack,
@@ -124,73 +166,127 @@ class _BookingRequestScreenState extends State<BookingRequestScreen>
               : _buildForm(context),
         ),
       ),
+      bottomNavigationBar: _form.lockedFlowBlocked
+          ? null
+          : BookingSummaryBar(form: _form, onSubmit: _submit),
     ),
   );
 
   Widget _buildForm(BuildContext context) {
     final form = _form;
-    return ListView(
-      padding: const EdgeInsets.all(20),
-      children: [
-        BookingHeader(
-          organization: widget.organization,
-          selectedBranch: form.selectedBranch,
-          categoryCount: form.allCategories.length,
-        ),
-        BookingCategorySection(form: form),
-        BookingBranchSection(form: form),
-        if (form.selectedBranch != null) ...[
-          const SizedBox(height: 16),
-          GlassSurface(
-            child: BookingCalendar(
-              month: form.displayedMonth,
-              selectedDate: form.selectedDate,
-              branch: form.selectedBranch,
-              onMonthChanged: form.setDisplayedMonth,
-              onDateSelected: form.selectDate,
+    final muted = CarserviceTheme.of(context).mutedText;
+    final showServices = form.lockCategories || form.allCategories.isNotEmpty;
+    final showBranch = bookingBranchStepVisible(form);
+    var step = 0;
+    // Not a lazy ListView: every step stays built, so scrolling to whichever
+    // one needs attention always has a target.
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          BookingHeader(
+            organization: widget.organization,
+            selectedBranch: form.selectedBranch,
+            categoryCount: form.allCategories.length,
+          ),
+          if (showServices) ...[
+            const SizedBox(height: 24),
+            KeyedSubtree(
+              key: _servicesKey,
+              child: BookingCategorySection(form: form, number: ++step),
+            ),
+          ],
+          if (showBranch) ...[
+            const SizedBox(height: 24),
+            KeyedSubtree(
+              key: _branchKey,
+              child: BookingBranchSection(form: form, number: ++step),
+            ),
+          ],
+          const SizedBox(height: 24),
+          BookingStep(
+            key: _dateKey,
+            number: ++step,
+            title: 'Өдөр',
+            complete: form.selectedDate != null,
+            trailing: form.selectedDate == null
+                ? null
+                : bookingDateLabel(form.selectedDate!, DateTime.now()),
+            child: form.selectedBranch == null
+                ? BookingStepHint(
+                    text: showServices && form.selectedCategoryIds.isEmpty
+                        ? 'Эхлээд үйлчилгээ, салбараа сонгоно уу.'
+                        : 'Эхлээд салбараа сонгоно уу.',
+                  )
+                : GlassSurface(
+                    padding: const EdgeInsets.fromLTRB(8, 6, 8, 10),
+                    child: BookingCalendar(
+                      month: form.displayedMonth,
+                      selectedDate: form.selectedDate,
+                      branch: form.selectedBranch,
+                      onMonthChanged: form.setDisplayedMonth,
+                      onDateSelected: (date) {
+                        form.selectDate(date);
+                        _scrollTo(_slotKey);
+                      },
+                    ),
+                  ),
+          ),
+          const SizedBox(height: 24),
+          KeyedSubtree(
+            key: _slotKey,
+            child: BookingSlotSection(form: form, number: ++step),
+          ),
+          const SizedBox(height: 24),
+          BookingStep(
+            number: ++step,
+            title: 'Нэмэлт мэдээлэл',
+            complete: false,
+            trailing: 'Заавал биш',
+            child: GlassSurface(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  VehiclePicker(
+                    controller: form.vehiclesController,
+                    selectedVehicleId: form.selectedVehicleId,
+                    onChanged: form.selectVehicle,
+                    onAddVehicle: widget.onAddVehicle,
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _noteController,
+                    maxLines: 4,
+                    minLines: 2,
+                    maxLength: 500,
+                    decoration: const InputDecoration(
+                      labelText: 'Тэмдэглэл',
+                      hintText: 'Машины асуудал, хүсэлтээ товч бичнэ үү',
+                      alignLabelWithHint: true,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-        ],
-        if (form.selectedBranch != null && form.selectedDate != null) ...[
-          const SizedBox(height: 12),
-          BookingSlotSection(form: form),
-        ],
-        const SizedBox(height: 12),
-        VehiclePicker(
-          controller: form.vehiclesController,
-          selectedVehicleId: form.selectedVehicleId,
-          onChanged: form.selectVehicle,
-          onAddVehicle: widget.onAddVehicle,
-        ),
-        const SizedBox(height: 12),
-        TextField(
-          controller: _noteController,
-          maxLines: 4,
-          maxLength: 500,
-          decoration: const InputDecoration(
-            labelText: 'Тэмдэглэл (заавал биш)',
-            alignLabelWithHint: true,
-          ),
-        ),
-        Text(
-          'Энэ нь хүсэлт илгээх үйлдэл. Сервис баталгаажуулсны дараа цаг баталгаажна.',
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
-        if (form.error != null) ...[
-          const SizedBox(height: 12),
-          Text(
-            form.error!,
-            style: TextStyle(color: Theme.of(context).colorScheme.error),
+          const SizedBox(height: 16),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.info_outline_rounded, size: 16, color: muted),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Энэ нь хүсэлт илгээх үйлдэл. Сервис баталгаажуулсны дараа '
+                  'цаг баталгаажна.',
+                  style: TextStyle(fontSize: 12, color: muted),
+                ),
+              ),
+            ],
           ),
         ],
-        const SizedBox(height: 20),
-        FilledButton.icon(
-          key: const ValueKey('submit-booking'),
-          onPressed: form.submitting ? null : _submit,
-          icon: const Icon(Icons.send_outlined),
-          label: Text(form.submitting ? 'Илгээж байна…' : 'Хүсэлт илгээх'),
-        ),
-      ],
+      ),
     );
   }
 }

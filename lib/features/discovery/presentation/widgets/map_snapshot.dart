@@ -39,6 +39,9 @@ MapSnapshot buildMapSnapshot({
   required LatLngBounds? visibleBounds,
   required MapPinIcons? pins,
   required void Function(Organization organization, Branch branch) onMarkerTap,
+  // Whether the selected branch's loaded hours say it's closed right now —
+  // the selected pin turns grey then (see [MapPinIcons]).
+  bool selectedClosed = false,
 }) {
   final locations = <BranchMapLocation>[];
   final positions = <LatLng>[];
@@ -92,9 +95,11 @@ MapSnapshot buildMapSnapshot({
           ),
           position: location.position,
           anchor: const Offset(0.5, 1),
-          icon: location.selected
-              ? (pins?.selected ?? BitmapDescriptor.defaultMarker)
-              : (pins?.closed ?? pins?.open ?? BitmapDescriptor.defaultMarker),
+          icon:
+              (location.selected
+                  ? (selectedClosed ? pins?.selectedClosed : pins?.selected)
+                  : pins?.pin) ??
+              BitmapDescriptor.defaultMarker,
           zIndexInt: location.selected ? 1000 : 0,
           clusterManagerId: const ClusterManagerId('discovery'),
           infoWindow: InfoWindow.noText,

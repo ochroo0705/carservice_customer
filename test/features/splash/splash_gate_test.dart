@@ -13,7 +13,20 @@ void main() {
     await tester.pump(); // start the pop-in
 
     expect(find.byType(AnimatedLogo), findsOneWidget);
-    expect(find.byType(CustomPaint), findsWidgets);
+    expect(
+      find.descendant(
+        of: find.byType(AnimatedLogo),
+        matching: find.byWidgetPredicate(
+          (w) =>
+              w is Image &&
+              w.image is ResizeImage &&
+              ((w.image as ResizeImage).imageProvider as AssetImage)
+                      .assetName ==
+                  'assets/brand/mark.png',
+        ),
+      ),
+      findsOneWidget,
+    );
     // wordmark is a two-tone RichText — assert the concatenated text.
     expect(
       find.byWidgetPredicate(
@@ -22,8 +35,8 @@ void main() {
       findsOneWidget,
     );
 
-    // Let the pop-in finish so the gear/heart loops start, then stop pumping
-    // (the spin repeats forever — never pumpAndSettle a splash).
+    // Let the pop-in finish so the pulse loop starts, then stop pumping
+    // (the pulse repeats forever — never pumpAndSettle a splash).
     await tester.pump(const Duration(milliseconds: 700));
   });
 
