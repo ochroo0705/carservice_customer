@@ -306,7 +306,7 @@ class _ProgressItemRow extends StatelessWidget {
       ),
       ServiceProgressStatus.inProgress => (
         Icons.play_circle_fill_rounded,
-        AppColors.accent,
+        AppColors.blue,
       ),
       ServiceProgressStatus.cancelled => (Icons.cancel_rounded, AppColors.red),
       _ => (Icons.radio_button_unchecked_rounded, muted),

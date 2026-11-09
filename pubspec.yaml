@@ -61,14 +61,15 @@ flutter_launcher_icons:
 
 # apply a shape mask.
 flutter_native_splash:
-  color: "#F6F5F2"
+  # carservice.mn --oc-carbon: #ECF0F1 (light) / #1E2B38 (dark)
+  color: "#ECF0F1"
   image: assets/brand/logo-wordmark.png
-  color_dark: "#F6F5F2"
-  image_dark: assets/brand/logo-wordmark.png
+  color_dark: "#1E2B38"
+  image_dark: assets/brand/logo-wordmark-dark.png
   android_12:
-    color: "#F6F5F2"
+    color: "#ECF0F1"
     image: assets/brand/splash-android12.png
-    color_dark: "#F6F5F2"
+    color_dark: "#1E2B38"
     image_dark: assets/brand/splash-android12.png
   android: true
   ios: true

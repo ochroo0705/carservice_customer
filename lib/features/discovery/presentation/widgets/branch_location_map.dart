@@ -99,7 +99,7 @@ class _BranchLocationMapState extends State<BranchLocationMap> {
       child: position != null && _configured
           ? ClipRRect(
               borderRadius: const BorderRadius.vertical(
-                bottom: Radius.circular(24),
+                bottom: Radius.circular(AppRadii.extraLarge),
               ),
               child: IgnorePointer(
                 child: Semantics(

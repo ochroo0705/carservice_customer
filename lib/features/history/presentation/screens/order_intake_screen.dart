@@ -2,6 +2,7 @@ import 'package:carservice_customer/app/theme/app_surfaces.dart';
 import 'package:carservice_customer/features/history/domain/order_intake.dart';
 import 'package:carservice_customer/features/history/domain/upload_url.dart';
 import 'package:flutter/material.dart';
+import 'package:carservice_customer/app/theme/app_theme.dart';
 
 String _formatRecordedAt(DateTime t) =>
     '${t.year}.${t.month.toString().padLeft(2, '0')}.${t.day.toString().padLeft(2, '0')} '
@@ -96,7 +97,7 @@ class OrderIntakeScreen extends StatelessWidget {
                     key: ValueKey('intake-photo-$i'),
                     onTap: () => _openPhoto(context, i),
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(AppRadii.small),
                       child: _networkImage(
                         intake.photos[i].url,
                         baseUrl: baseUrl,
@@ -118,7 +119,7 @@ class OrderIntakeScreen extends StatelessWidget {
                   height: 140,
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppRadii.medium),
                   ),
                   padding: const EdgeInsets.all(8),
                   child: _networkImage(

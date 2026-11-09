@@ -374,7 +374,7 @@ class _SelectionMark extends StatelessWidget {
     final theme = CarserviceTheme.of(context);
     final shape = radio
         ? const CircleBorder()
-        : RoundedRectangleBorder(borderRadius: BorderRadius.circular(7));
+        : RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadii.small));
     return AnimatedContainer(
       duration: const Duration(milliseconds: 150),
       width: 22,
@@ -388,7 +388,7 @@ class _SelectionMark extends StatelessWidget {
                     : BorderSide(color: theme.mutedText, width: 1.5),
               )
             : RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(7),
+                borderRadius: BorderRadius.circular(AppRadii.small),
                 side: selected
                     ? BorderSide.none
                     : BorderSide(color: theme.mutedText, width: 1.5),

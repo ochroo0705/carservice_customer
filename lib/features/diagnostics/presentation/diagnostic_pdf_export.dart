@@ -5,6 +5,7 @@ import 'package:carservice_customer/features/diagnostics/domain/template_schema.
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+import 'package:carservice_customer/app/theme/app_theme.dart';
 
 /// Builds the customer-facing version of a diagnostic report.
 ///
@@ -72,7 +73,7 @@ Future<Uint8List> buildDiagnosticPdf(DiagnosticReportDetail detail) async {
               padding: const pw.EdgeInsets.all(10),
               decoration: pw.BoxDecoration(
                 border: pw.Border.all(color: PdfColors.grey300),
-                borderRadius: pw.BorderRadius.circular(8),
+                borderRadius: pw.BorderRadius.circular(AppRadii.small),
               ),
               child: pw.Column(
                 crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -138,7 +139,7 @@ pw.Widget _metadataCard(DiagnosticReportDetail detail) {
     padding: const pw.EdgeInsets.all(12),
     decoration: pw.BoxDecoration(
       color: PdfColors.grey100,
-      borderRadius: pw.BorderRadius.circular(8),
+      borderRadius: pw.BorderRadius.circular(AppRadii.small),
     ),
     child: pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -170,7 +171,7 @@ pw.Widget _notesCard(String notes) => pw.Container(
   padding: const pw.EdgeInsets.all(10),
   decoration: pw.BoxDecoration(
     border: pw.Border.all(color: PdfColors.grey300),
-    borderRadius: pw.BorderRadius.circular(8),
+    borderRadius: pw.BorderRadius.circular(AppRadii.small),
   ),
   child: pw.Column(
     crossAxisAlignment: pw.CrossAxisAlignment.start,

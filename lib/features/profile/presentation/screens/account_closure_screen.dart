@@ -6,8 +6,9 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 final _destructiveStyle = FilledButton.styleFrom(
-  backgroundColor: AppColors.red,
-  foregroundColor: Colors.white,
+  // Deep red so white label text stays readable in both brightnesses.
+  backgroundColor: AppColors.redLightText,
+  foregroundColor: AppColors.onAccent,
 );
 
 /// Self-service account closure: deactivate (reversible by logging back in)

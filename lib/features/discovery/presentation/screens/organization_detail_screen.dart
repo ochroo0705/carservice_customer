@@ -510,7 +510,7 @@ class _GroupCard extends StatelessWidget {
     return Material(
       color: theme.glass,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(AppRadii.large),
         side: BorderSide(color: theme.glassBorder),
       ),
       clipBehavior: Clip.antiAlias,

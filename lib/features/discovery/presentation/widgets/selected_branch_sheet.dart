@@ -73,7 +73,7 @@ class SelectedBranchSheet extends StatelessWidget {
         elevation: 12,
         shadowColor: Colors.black.withValues(alpha: 0.4),
         shape: RoundedRectangleBorder(
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadii.extraLarge)),
           side: BorderSide(color: theme.glassBorder),
         ),
         clipBehavior: Clip.antiAlias,

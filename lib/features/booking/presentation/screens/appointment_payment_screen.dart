@@ -437,7 +437,7 @@ class _PaymentPanel extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(bottom: 16),
               child: _Banner(
-                color: AppColors.accent,
+                color: AppColors.warning,
                 text:
                     'Дутуу төлбөр ирсэн: '
                     '${formatAmount((payment.underpaidAmount ?? 0).round())}${payment.currency} / '
@@ -449,7 +449,7 @@ class _PaymentPanel extends StatelessWidget {
             const Padding(
               padding: EdgeInsets.only(bottom: 16),
               child: _Banner(
-                color: AppColors.accent,
+                color: AppColors.warning,
                 text:
                     'Төлбөрийн 15 минутын хугацаа дууссан байж магадгүй. '
                     'Төлсөн бол «Төлбөр шалгах» дарна уу; хожуу ирсэн төлбөр '
@@ -457,7 +457,7 @@ class _PaymentPanel extends StatelessWidget {
               ),
             ),
           if (payment.status == AppointmentFeeStatus.refunded) ...[
-            const _Banner(color: AppColors.accent, text: 'Энэ хураамж буцаагдсан байна.'),
+            const _Banner(color: AppColors.blue, text: 'Энэ хураамж буцаагдсан байна.'),
             const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,

@@ -173,7 +173,7 @@ class DiscoveryQuickFilters extends StatelessWidget {
   }
 }
 
-/// A pill-shaped toggle in [DiscoveryQuickFilters]: cyan when on, the shell
+/// A pill-shaped toggle in [DiscoveryQuickFilters]: accent when on, the shell
 /// surface with a border when off.
 class QuickFilterChip extends StatelessWidget {
   const QuickFilterChip({

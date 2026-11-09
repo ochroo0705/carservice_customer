@@ -1,52 +1,49 @@
 import 'package:flutter/material.dart';
 
-/// Mirrors the web app's `.landing-ops` accent token system
+/// Mirrors the web app's `.landing-ops` `--oc-*` token system
 /// (`carservice.mn/app/globals.css`), which is what the live customer portal
 /// (sidebar + page content alike) actually renders — see COWORK.md D-021.
-/// Accent switched amber -> cyan on 2026-09-10 (web commit `f15b477`,
-/// COWORK.md D-086) — the `accent*`/`onAccent` names below are no longer
-/// amber-specific, only their old names briefly were.
+/// Re-synced 2026-11-09 to the web's "Midnight + Alizarin" palette (navy
+/// base, #e74c3c accent), replacing the earlier cyan accent (D-086).
 abstract final class AppColors {
-  static const darkBackground = Color(0xFF0B0D10); // --oc-carbon
-  static const darkSurface = Color(0xFF0E1116); // --oc-panel
-  static const darkGlass = Color(0x0AFFFFFF);
+  static const darkBackground = Color(0xFF1E2B38); // --oc-carbon
+  static const darkSurface = Color(0xFF2C3E50); // --oc-panel
+  static const darkGlass = Color(0x0AFFFFFF); // --glass-bg
   static const darkGlassStrong = Color(0x12FFFFFF);
-  static const darkBorder = Color(0xFF23272E); // --oc-line
-  static const darkInput = Color(0x0AFFFFFF);
-  static const darkInputBorder = Color(0xFF23272E); // --oc-line
-  static const darkText = Color(0xFFF4F5F7); // --oc-ink
-  static const darkTextMuted = Color(0xFFA7ADB6); // --oc-muted
-  static const lightBackground = Color(0xFFF6F5F2); // --oc-carbon (light)
+  static const darkBorder = Color(0xFF3B5167); // --oc-line
+  static const darkInput = Color(0x0AFFFFFF); // --input-bg
+  static const darkInputBorder = Color(0xFF3B5167); // --oc-line
+  static const darkText = Color(0xFFECF0F1); // --oc-ink
+  static const darkTextMuted = Color(0xFFBDC6C8); // --oc-muted
+  static const lightBackground = Color(0xFFECF0F1); // --oc-carbon (light)
   static const lightSurface = Color(0xFFFFFFFF); // --oc-panel (light)
-  static const lightGlass = Color(0xBFFFFFFF);
+  static const lightGlass = Color(0xBFFFFFFF); // --glass-bg (light)
   static const lightGlassStrong = Color(0xE6FFFFFF);
-  static const lightBorder = Color(0xFFE3E0DA); // --oc-line (light)
+  static const lightBorder = Color(0xFFD5DCDF); // --oc-line (light)
   static const lightInput = Color(0xFFFFFFFF);
-  static const lightInputBorder = Color(0xFFE3E0DA); // --oc-line (light)
-  static const lightText = Color(0xFF16171B); // --oc-ink (light)
-  static const lightTextMuted = Color(0xFF5C6067); // --oc-muted (light)
-  static const accent = Color(0xFF22D3EE); // --oc-accent
-  static const accentHover = Color(0xFF67E8F9); // --oc-accent-hi
-  static const accentLightText = Color(0xFF0E7490); // --oc-accent (light)
-  static const onAccent = Color(0xFF14120C); // --oc-on-accent
-  static const blue = Color(0xFF3B82F6);
-  static const purple = Color(
-    0xFFA855F7,
-  ); // matches web's POSTPONED badge (purple-500)
-  static const green = Color(0xFF3DDC97); // --oc-ok
-  static const red = Color(0xFFEF4444);
+  static const lightInputBorder = Color(0xFFD5DCDF); // --oc-line (light)
+  static const lightText = Color(0xFF2C3E50); // --oc-ink (light)
+  static const lightTextMuted = Color(0xFF5F6B6D); // --oc-muted (light)
+  static const accent = Color(0xFFE74C3C); // --oc-accent
+  static const accentHover = Color(0xFFF1948A); // --oc-accent-hi
+  static const accentLightText = Color(0xFFC0392B); // --oc-accent (light)
+  static const onAccent = Color(0xFFFFFFFF); // --oc-on-accent
+  static const blue = Color(0xFF5DADE2); // --oc-b6
+  static const purple = Color(0xFFBB8FCE); // --oc-b3 (POSTPONED badge)
+  static const green = Color(0xFF58D68D); // --oc-ok
+  static const red = Color(0xFFFF6467); // web status red (red-400)
   // Neutral grey for inactive map pins (closed branches).
-  static const neutral = Color(0xFF9CA3AF);
-  static const warning = Color(0xFFF59E0B); // --oc-warn
+  static const neutral = Color(0xFF95A5A6); // --oc-muted3
+  static const warning = Color(0xFFF7C948); // --oc-warn
 
   // Light-mode text variants. The status colors above are tuned for the dark
   // shell; as text on a white or tinted-white surface they fall to ~1.6–3:1.
   // Use [readable] rather than picking these by hand.
-  static const greenLightText = Color(0xFF047857);
-  static const warningLightText = Color(0xFFB45309);
-  static const blueLightText = Color(0xFF1D4ED8);
-  static const purpleLightText = Color(0xFF7E22CE);
-  static const redLightText = Color(0xFFB91C1C);
+  static const greenLightText = Color(0xFF1E8449); // --oc-ok (light)
+  static const warningLightText = Color(0xFF9A6700); // --oc-warn (light)
+  static const blueLightText = Color(0xFF2471A3); // --oc-b6 (light)
+  static const purpleLightText = Color(0xFF7D3C98); // --oc-b3 (light)
+  static const redLightText = Color(0xFFC10007); // red-700
 
   /// The text/icon color for a status [color] on the current [brightness]:
   /// unchanged in dark mode, a darker readable variant in light mode.
@@ -62,11 +59,14 @@ abstract final class AppColors {
   }
 }
 
+/// Corner radii on the web's scale: `rounded-lg` 8 for compact controls,
+/// `rounded-[10px]` for panels/inputs/buttons, `rounded-xl` 12 for cards,
+/// `rounded-2xl` 16 for sheets and dialogs.
 abstract final class AppRadii {
   static const small = 8.0;
-  static const medium = 12.0;
-  static const large = 16.0;
-  static const extraLarge = 20.0;
+  static const medium = 10.0;
+  static const large = 12.0;
+  static const extraLarge = 16.0;
   static const pill = 999.0;
 }
 
@@ -197,16 +197,15 @@ abstract final class AppTheme {
       surface: background,
     );
     final scheme = base.copyWith(
-      // Light mode: primary is also used for text, icons and selection, where
-      // cyan on white is ~1.7:1. Filled buttons keep the cyan fill via
-      // filledButtonTheme below, matching the spec's "primary action" token.
+      // Light mode: the web's light `--oc-accent` (#c0392b) is used for text,
+      // icons, selection and filled buttons (~5.4:1 on white).
       primary: dark ? AppColors.accent : AppColors.accentLightText,
-      onPrimary: dark ? AppColors.onAccent : Colors.white,
+      onPrimary: AppColors.onAccent,
       primaryContainer: dark
-          ? const Color(0x3322D3EE)
-          : const Color(0xFFCFFAFE),
+          ? const Color(0x33E74C3C) // --filter-active-bg (dark)
+          : const Color(0xFFFADBD8), // accent-100
       onPrimaryContainer: dark
-          ? const Color(0xFF67E8F9)
+          ? AppColors.accentHover
           : AppColors.accentLightText,
       secondary: AppColors.blue,
       onSecondary: Colors.white,
@@ -276,7 +275,7 @@ abstract final class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadii.medium),
-          borderSide: const BorderSide(color: AppColors.accentHover),
+          borderSide: BorderSide(color: scheme.primary),
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadii.medium),
@@ -285,7 +284,7 @@ abstract final class AppTheme {
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           minimumSize: const Size(48, 48),
-          backgroundColor: AppColors.accent,
+          backgroundColor: scheme.primary,
           foregroundColor: AppColors.onAccent,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadii.medium),
@@ -300,8 +299,8 @@ abstract final class AppTheme {
         ),
       ),
       dividerColor: border,
-      progressIndicatorTheme: const ProgressIndicatorThemeData(
-        color: AppColors.accentHover,
+      progressIndicatorTheme: ProgressIndicatorThemeData(
+        color: scheme.primary,
       ),
     );
   }

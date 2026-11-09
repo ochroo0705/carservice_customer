@@ -266,7 +266,7 @@ class _AvatarButton extends StatelessWidget {
           backgroundColor: scheme.primary,
           child: Text(
             label.substring(0, 1).toUpperCase(),
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13),
+            style: TextStyle(color: scheme.onPrimary, fontWeight: FontWeight.w700, fontSize: 13),
           ),
         ),
       ),

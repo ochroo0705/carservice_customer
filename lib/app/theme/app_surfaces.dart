@@ -18,8 +18,9 @@ class AppShellBackground extends StatelessWidget {
           center: const Alignment(-0.75, -1),
           radius: 1.35,
           colors: dark
-              ? const [Color(0x3322D3EE), Color(0x000B0D10)]
-              : const [Color(0x1622D3EE), Color(0x00F6F5F2)],
+              // The web hero glow: rgba(231,76,60,0.18) fading out.
+              ? const [Color(0x2EE74C3C), Color(0x001E2B38)]
+              : const [Color(0x14E74C3C), Color(0x00ECF0F1)],
           stops: const [0, 0.72],
         ),
       ),

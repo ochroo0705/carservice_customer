@@ -7,8 +7,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 final _destructiveStyle = FilledButton.styleFrom(
-  backgroundColor: AppColors.red,
-  foregroundColor: Colors.white,
+  // Deep red so white label text stays readable in both brightnesses.
+  backgroundColor: AppColors.redLightText,
+  foregroundColor: AppColors.onAccent,
 );
 
 /// Set, change or remove the account password used by the login page's

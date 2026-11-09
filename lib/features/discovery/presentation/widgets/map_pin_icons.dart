@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
-/// The branded map pins: a cyan disc carrying the Carservice mark, ringed in
+/// The branded map pins: an accent disc carrying the Carservice mark, ringed in
 /// the map's own background tone so it stands off the tiles, with a small
 /// diamond tail. The selected pin is larger, white-ringed with a soft halo,
 /// and turns grey once its branch's loaded hours say it's closed — marker
@@ -17,9 +17,9 @@ typedef MapPinIcons = ({
   BitmapDescriptor selectedClosed,
 });
 
-const _closedFill = Color(0xFF5B6474);
-const _selectedRing = Color(0xFFF2F4F8);
-const _glyphInk = Color(0xFF0B0F1A);
+const _closedFill = Color(0xFF5D6D7E); // --oc-muted4 (dark)
+const _selectedRing = Color(0xFFECF0F1); // --oc-ink (dark)
+const _glyphInk = Color(0xFF1E2B38); // --oc-carbon (dark)
 
 Future<MapPinIcons> loadMapPinIcons({required Brightness brightness}) async {
   final data = await rootBundle.load('assets/brand/mark.png');
