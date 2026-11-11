@@ -15,12 +15,6 @@ void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
   Future<void> signIn(WidgetTester tester) async {
-    // Discover opens on the map, which hides the shell's own AppBar (and
-    // with it the login button) to give the map the whole screen — switch
-    // to the list to reach it, same as `customer_shell_account_test.dart`.
-    await tester.tap(find.byKey(const ValueKey('discovery-map-list-toggle')));
-    await tester.pumpAndSettle();
-
     await tester.tap(find.byKey(const ValueKey('shell-login')));
     await tester.pumpAndSettle();
     await tester.enterText(find.byKey(const ValueKey('login-phone')), '99112233');

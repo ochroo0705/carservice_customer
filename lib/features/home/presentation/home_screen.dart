@@ -73,6 +73,9 @@ class HomeScreen extends StatelessWidget {
           unread: unread,
           onNotifications: account == null ? null : onNotificationsRequested,
           onProfile: account == null ? onLoginRequested : onProfileRequested,
+          // Guests still reach settings (theme, legal pages) via Профайл,
+          // which shows its signed-out view.
+          onSettings: account == null ? onProfileRequested : null,
         ),
         const SizedBox(height: 18),
         RiseIn(
@@ -182,12 +185,14 @@ class _Header extends StatelessWidget {
     required this.unread,
     required this.onNotifications,
     required this.onProfile,
+    this.onSettings,
   });
 
   final Account? account;
   final int unread;
   final VoidCallback? onNotifications;
   final VoidCallback onProfile;
+  final VoidCallback? onSettings;
 
   @override
   Widget build(BuildContext context) {
@@ -216,6 +221,15 @@ class _Header extends StatelessWidget {
             tooltip: 'Мэдэгдэл',
             badge: unread > 0,
             onPressed: onNotifications,
+          ),
+          const SizedBox(width: 8),
+        ],
+        if (onSettings != null) ...[
+          CsCircleButton(
+            key: const ValueKey('shell-settings'),
+            icon: Icons.settings_outlined,
+            tooltip: 'Тохиргоо',
+            onPressed: onSettings,
           ),
           const SizedBox(width: 8),
         ],

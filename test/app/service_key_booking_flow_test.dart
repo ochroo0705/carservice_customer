@@ -27,7 +27,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Захиалах'));
+      await tester.tap(find.byKey(const ValueKey('home-book')));
       await tester.pumpAndSettle();
 
       // No selection yet — the branch list stays blank with a prompt, not a
@@ -104,7 +104,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Захиалах'));
+      await tester.tap(find.byKey(const ValueKey('home-book')));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const ValueKey('service-key-add')));
       await tester.pumpAndSettle();
@@ -144,7 +144,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Захиалах'));
+      await tester.tap(find.byKey(const ValueKey('home-book')));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const ValueKey('service-key-add')));
       await tester.pumpAndSettle();
@@ -191,7 +191,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Захиалах'));
+    await tester.tap(find.byKey(const ValueKey('home-book')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('service-key-add')));
     await tester.pumpAndSettle();

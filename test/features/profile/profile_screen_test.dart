@@ -38,9 +38,14 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // Signed out there is no way into Профайл — only the login button.
+    // Signed out, Профайл (via the settings button) asks to sign in first.
     expect(find.byKey(const ValueKey('shell-avatar')), findsNothing);
     expect(find.byKey(const ValueKey('shell-login')), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('shell-settings')));
+    await tester.pumpAndSettle();
+    expect(find.text('Профайлаа харахын тулд нэвтэрнэ үү'), findsOneWidget);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
 
     await _login(tester);
 

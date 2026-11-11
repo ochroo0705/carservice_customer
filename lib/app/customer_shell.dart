@@ -129,11 +129,13 @@ class CustomerShellState extends State<CustomerShell> with SingleTickerProviderS
                   indicatorColor: theme.inverse,
                   selectedIconTheme: IconThemeData(color: theme.onInverse),
                   destinations: [
-                    for (final (icon, selected, label) in _items)
+                    for (var i = 0; i < _items.length; i++)
                       NavigationRailDestination(
-                        icon: Icon(icon),
-                        selectedIcon: Icon(selected),
-                        label: Text(label),
+                        // Same keys as the phone nav, so flows find a tab
+                        // regardless of the layout width.
+                        icon: KeyedSubtree(key: ValueKey('shell-tab-$i'), child: Icon(_items[i].$1)),
+                        selectedIcon: KeyedSubtree(key: ValueKey('shell-tab-$i'), child: Icon(_items[i].$2)),
+                        label: Text(_items[i].$3),
                       ),
                   ],
                 ),

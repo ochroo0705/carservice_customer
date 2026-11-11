@@ -68,11 +68,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
           children: [
             Align(
               alignment: Alignment.centerLeft,
-              child: CsCircleButton(
-                icon: Icons.chevron_left_rounded,
-                tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-                onPressed: widget.onBack,
-              ),
+              child: CsCircleButton.back(context, onPressed: widget.onBack),
             ),
             const SizedBox(height: 20),
             Text(
@@ -252,14 +248,19 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                 style: TextStyle(color: Theme.of(context).colorScheme.error),
               ),
             ],
-            const SizedBox(height: 20),
-            FilledButton.icon(
-              key: const ValueKey('vehicle-submit'),
-              onPressed: _submitting ? null : _submit,
-              icon: const Icon(Icons.directions_car_outlined),
-              label: Text(_submitting ? 'Хадгалж байна…' : 'Нэмэх'),
-            ),
           ],
+        ),
+      ),
+      // The CTA stays pinned at the bottom, as on the CustSetup board.
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+          child: FilledButton.icon(
+            key: const ValueKey('vehicle-submit'),
+            onPressed: _submitting ? null : _submit,
+            icon: const Icon(Icons.directions_car_outlined),
+            label: Text(_submitting ? 'Хадгалж байна…' : 'Нэмэх'),
+          ),
         ),
       ),
     );

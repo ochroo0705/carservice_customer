@@ -33,7 +33,7 @@ void main() {
 
   testWidgets('two requestLogin taps push a single login page', (tester) async {
     await pumpApp(tester, auth: FakeAuthRepository());
-    await tester.tap(find.text('Захиалгууд'));
+    await tester.tap(find.byKey(const ValueKey('shell-tab-2')));
     await tester.pumpAndSettle();
     final button = find.byKey(const ValueKey('appointments-login'));
     await tester.tap(button);
@@ -93,7 +93,7 @@ void main() {
 
     await tester.element(find.byType(AppointmentDetailScreen)).read<AuthController>().signOut();
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Захиалгууд'));
+    await tester.tap(find.byKey(const ValueKey('shell-tab-2')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('appointments-login')));
     await tester.pumpAndSettle();

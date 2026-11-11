@@ -30,7 +30,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Захиалгууд'));
+    await tester.tap(find.byKey(const ValueKey('shell-tab-2')));
     await tester.pumpAndSettle();
     expect(find.text('Захиалгаа харахын тулд нэвтэрнэ үү'), findsOneWidget);
 
@@ -69,7 +69,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Захиалгууд'));
+    await tester.tap(find.byKey(const ValueKey('shell-tab-2')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('appointments-login')));
     await tester.pumpAndSettle();

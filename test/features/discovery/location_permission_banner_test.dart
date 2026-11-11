@@ -1,3 +1,4 @@
+import 'package:carservice_customer/app/theme/app_theme.dart';
 import 'package:carservice_customer/features/discovery/presentation/widgets/location_permission_banner.dart';
 import 'package:carservice_customer/features/discovery/services/location_permission_service.dart';
 import 'package:flutter/material.dart';
@@ -8,6 +9,7 @@ void main() {
     var requested = false;
     await tester.pumpWidget(
       MaterialApp(
+        theme: AppTheme.light,
         home: Scaffold(
           body: LocationPermissionBanner(
             state: LocationAccessState.denied,
@@ -27,6 +29,7 @@ void main() {
     var openedSettings = false;
     await tester.pumpWidget(
       MaterialApp(
+        theme: AppTheme.light,
         home: Scaffold(
           body: LocationPermissionBanner(
             state: LocationAccessState.permanentlyDenied,
@@ -47,6 +50,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
+        theme: AppTheme.light,
         home: MediaQuery(
           data: const MediaQueryData(textScaler: TextScaler.linear(2)),
           child: Scaffold(

@@ -21,12 +21,6 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Discover opens on the map, which hides the shell's own AppBar (and
-      // with it the login button/avatar) to give the map the whole screen —
-      // switch to the list to reach them.
-      await tester.tap(find.byKey(const ValueKey('discovery-map-list-toggle')));
-      await tester.pumpAndSettle();
-
       expect(find.byKey(const ValueKey('shell-login')), findsOneWidget);
       expect(find.byKey(const ValueKey('shell-avatar')), findsNothing);
 
@@ -52,6 +46,9 @@ void main() {
       expect(find.text('99112233'), findsOneWidget);
 
       await tester.tap(find.byKey(const ValueKey('profile-sign-out')));
+      await tester.pumpAndSettle();
+      // Профайл is a pushed page now; back to the shell's Нүүр header.
+      await tester.pageBack();
       await tester.pumpAndSettle();
 
       expect(find.byKey(const ValueKey('shell-login')), findsOneWidget);

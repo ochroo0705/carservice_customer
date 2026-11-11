@@ -32,6 +32,11 @@ const _mapChannel = MethodChannel(
 /// own action-stack toggle (the shell's FAB only exists in list mode, to go
 /// back to the map — see CustomerShell).
 Future<void> _switchToList(WidgetTester tester) async {
+  // The app opens on Нүүр; Discover is the Сервис tab.
+  if (find.byKey(const ValueKey('discovery-map-list-toggle')).evaluate().isEmpty) {
+    await tester.tap(find.byKey(const ValueKey('shell-tab-1')));
+    await tester.pumpAndSettle();
+  }
   await tester.tap(find.byKey(const ValueKey('discovery-map-list-toggle')));
   await tester.pumpAndSettle();
 }
@@ -80,6 +85,9 @@ void main() {
     // animates forever until the 12s init timeout fires — pumpAndSettle
     // would hang here, so advance frames explicitly instead.
     await tester.pump();
+    // The app opens on Нүүр; Discover (and its map) is the Сервис tab.
+    await tester.tap(find.byKey(const ValueKey('shell-tab-1')));
+    await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     expect(find.text('Газрын зураг ачаалж байна…'), findsOneWidget);
 
@@ -115,6 +123,9 @@ void main() {
       );
       await tester.pumpAndSettle();
 
+      await tester.tap(find.byKey(const ValueKey('shell-tab-1')));
+      await tester.pumpAndSettle();
+
       // Discover opens on the map by default: the shell's own FAB (which
       // only offers to go BACK to the map) has nothing to do here, so it
       // isn't shown — the map's own action stack offers the list toggle
@@ -130,14 +141,14 @@ void main() {
       );
 
       // Switching to another tab hides the map's own controls too.
-      await tester.tap(find.text('Захиалгууд'));
+      await tester.tap(find.byKey(const ValueKey('shell-tab-2')));
       await tester.pumpAndSettle();
       expect(
         find.byKey(const ValueKey('discovery-map-list-toggle')),
         findsNothing,
       );
 
-      await tester.tap(find.text('Хайх'));
+      await tester.tap(find.byKey(const ValueKey('shell-tab-1')));
       await tester.pumpAndSettle();
 
       await _switchToList(tester);
@@ -177,7 +188,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Баянзүрх салбар'), findsOneWidget);
 
-    await tester.tap(find.byType(BackButton));
+    await tester.pageBack();
     await tester.pumpAndSettle();
     expect(branchCard, findsOneWidget);
   });

@@ -20,15 +20,14 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const ValueKey('discovery-map-list-toggle')));
-    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('shell-avatar')));
     await tester.pumpAndSettle();
   }
 
   Future<void> tapTile(WidgetTester tester, String key) async {
     final tile = find.byKey(ValueKey(key));
-    await tester.scrollUntilVisible(tile, 200, scrollable: find.byType(Scrollable).last);
+    await tester.ensureVisible(tile);
+    await tester.pumpAndSettle();
     await tester.tap(tile);
     await tester.pumpAndSettle();
   }
@@ -56,7 +55,7 @@ void main() {
       CarserviceApp(organizationRepository: FakeOrganizationRepository(delay: Duration.zero)),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Профайл'));
+    await tester.tap(find.byKey(const ValueKey('shell-settings')));
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('profile-login')), findsOneWidget);
 

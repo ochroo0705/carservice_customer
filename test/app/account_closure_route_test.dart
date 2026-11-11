@@ -45,7 +45,7 @@ void main() {
     await openProfile(tester);
     await openClosure(tester);
 
-    await tester.tap(find.byTooltip('Буцах'));
+    await tester.pageBack();
     await tester.pumpAndSettle();
 
     expect(find.byType(AccountClosureScreen), findsNothing);

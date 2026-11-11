@@ -58,7 +58,11 @@ Future<void> pumpApp(
 }
 
 /// Discover opens on the map, which hides the shell AppBar/avatar.
+/// Switches the shell to the Сервис tab (the app opens on Нүүр) and flips
+/// Discovery from its map mode to the list.
 Future<void> openListView(WidgetTester tester) async {
+  await tester.tap(find.byKey(const ValueKey('shell-tab-1')));
+  await tester.pumpAndSettle();
   await tester.tap(find.byKey(const ValueKey('discovery-map-list-toggle')));
   await tester.pumpAndSettle();
 }

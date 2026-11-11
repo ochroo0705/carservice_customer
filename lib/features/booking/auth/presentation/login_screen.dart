@@ -94,11 +94,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        CsCircleButton(
-                          icon: Icons.chevron_left_rounded,
-                          tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-                          onPressed: widget.onBack,
-                        ),
+                        CsCircleButton.back(context, onPressed: widget.onBack),
                         const SizedBox(height: 24),
                         Text(
                           switch (step) {

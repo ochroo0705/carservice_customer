@@ -162,7 +162,9 @@ void main() {
       // currently visible.
       expect(find.byType(BookingRequestScreen, skipOffstage: false), findsOneWidget);
 
-      await tester.pageBack();
+      // The form is scrolled to the submit button, which scrolls the
+      // design's in-page back button away; use the system back instead.
+      await tester.binding.handlePopRoute();
       await tester.pumpAndSettle();
       expect(find.byType(BookingRequestScreen), findsNothing);
       expect(find.byType(LoginScreen), findsNothing);
@@ -203,7 +205,9 @@ void main() {
       // check the whole stack, not just what's on top.
       expect(find.byType(BookingRequestScreen, skipOffstage: false), findsOneWidget);
 
-      await tester.pageBack();
+      // The form is scrolled to the submit button, which scrolls the
+      // design's in-page back button away; use the system back instead.
+      await tester.binding.handlePopRoute();
       await tester.pumpAndSettle();
       expect(find.byType(BookingRequestScreen), findsNothing);
       expect(find.byType(LoginScreen), findsNothing);
@@ -214,7 +218,7 @@ void main() {
   group('Service-key booking', () {
     testWidgets('back from booking skips detail and lands on the shell', (tester) async {
       await pumpApp(tester);
-      await tester.tap(find.text('Захиалах'));
+      await tester.tap(find.byKey(const ValueKey('home-book')));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const ValueKey('service-key-add')));
       await tester.pumpAndSettle();
@@ -320,7 +324,6 @@ void main() {
 
     testWidgets('profile → add vehicle → back; vehicle detail → back', (tester) async {
       await pumpApp(tester);
-      await openListView(tester);
       await tester.tap(find.byKey(const ValueKey('shell-avatar')));
       await tester.pumpAndSettle();
 
@@ -343,7 +346,6 @@ void main() {
 
     testWidgets('bell opens notifications; back closes it', (tester) async {
       await pumpApp(tester);
-      await openListView(tester);
       await tester.tap(find.byKey(const ValueKey('shell-notifications')));
       await tester.pumpAndSettle();
       expect(find.byType(NotificationsScreen), findsOneWidget);
@@ -386,7 +388,6 @@ void main() {
     // that unreachable case.
     testWidgets('signing out while the closure page is open removes it', (tester) async {
       await pumpApp(tester);
-      await openListView(tester);
       await tester.tap(find.byKey(const ValueKey('shell-avatar')));
       await tester.pumpAndSettle();
 
@@ -415,7 +416,6 @@ void main() {
     // widget-level `pageBack()`.
     testWidgets('Android system back from a pushed page returns', (tester) async {
       await pumpApp(tester);
-      await openListView(tester);
       await tester.tap(find.byKey(const ValueKey('shell-notifications')));
       await tester.pumpAndSettle();
       expect(find.byType(NotificationsScreen), findsOneWidget);
