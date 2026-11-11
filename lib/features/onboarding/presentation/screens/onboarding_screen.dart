@@ -4,12 +4,15 @@ import 'package:carservice_customer/app/theme/app_theme.dart';
 import 'package:carservice_customer/core/analytics/analytics_service.dart';
 import 'package:carservice_customer/core/permissions/notification_permission_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
-/// First-run onboarding, three pages: welcome (with an app preview) → how it
-/// works (find / book / track) → ready (notification ask + get-started with a
-/// skippable soft-login). Shown once; [onFinish] fires when the user finishes —
-/// `login: true` means route them to sign-in, `false` means drop them into the
-/// app to browse.
+/// First-run onboarding, three pages: welcome (car illustration with live
+/// status pills) → how it works (find / book / track) → ready (notification
+/// ask). Shown once; [onFinish] fires when the user finishes — `login: true`
+/// means route them to sign-in, `false` means drop them into the app to browse.
+///
+/// The whole flow is drawn on the navy "CustWelcome" board in both light and
+/// dark mode, so its colors are fixed rather than theme tokens.
 ///
 /// Location is deliberately not asked here: iOS shows its prompt only once, so
 /// a cold "no" during onboarding is effectively permanent. The discovery map
@@ -32,6 +35,17 @@ class OnboardingScreen extends StatefulWidget {
 
   @override
   State<OnboardingScreen> createState() => _OnboardingScreenState();
+}
+
+/// Fixed palette of the navy welcome board.
+abstract final class _Navy {
+  static const background = Color(0xFF2C3E50);
+  static const raised = Color(0xFF34495E);
+  static const line = Color(0xFF3B5167);
+  static const ink = Color(0xFFECF0F1);
+  static const muted = Color(0xFFC9D2D4);
+  static const dim = Color(0xFF5F7183);
+  static const primary = AppColors.accentLightText; // #C0392B
 }
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
@@ -82,7 +96,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     final onLast = _index == _lastIndex;
     // System back steps to the previous page instead of leaving the app.
     return PopScope(
@@ -90,76 +103,64 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) _animateTo(_index - 1);
       },
-      child: Scaffold(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        body: SafeArea(
-          child: Column(
-            children: [
-              // Skip (hidden on the last page, which has its own CTAs).
-              SizedBox(
-                height: 48,
-                child: Align(
-                  alignment: Alignment.centerRight,
-                  child: AnimatedOpacity(
-                    opacity: onLast ? 0 : 1,
-                    duration: const Duration(milliseconds: 200),
-                    child: TextButton(
-                      onPressed: onLast ? null : _skip,
-                      child: const Text('Алгасах'),
-                    ),
-                  ),
-                ),
-              ),
-              Expanded(
-                child: PageView(
-                  controller: _controller,
-                  onPageChanged: (i) {
-                    setState(() => _index = i);
-                    _logPageView(i);
-                  },
-                  children: [
-                    _WelcomePage(
-                      active: _index == 0,
-                      onLogin: () => _finish(login: true),
-                    ),
-                    _HowItWorksPage(active: _index == 1),
-                    _ReadyPage(
-                      active: _index == 2,
-                      notificationService: widget.notificationService,
-                      analytics: widget.analytics,
-                      onStart: () => _finish(login: false),
-                      onLogin: () => _finish(login: true),
-                    ),
-                  ],
-                ),
-              ),
-              // Dots + Next (last page hides Next; it has its own buttons).
-              Padding(
-                padding: const EdgeInsets.fromLTRB(24, 8, 24, 20),
-                child: Row(
-                  children: [
-                    _Dots(count: _lastIndex + 1, index: _index),
-                    const Spacer(),
-                    AnimatedOpacity(
-                      opacity: onLast ? 0 : 1,
-                      duration: const Duration(milliseconds: 200),
-                      child: FilledButton(
-                        onPressed: onLast ? null : () => _animateTo(_index + 1),
-                        style: FilledButton.styleFrom(
-                          backgroundColor: scheme.primary,
-                          foregroundColor: scheme.onPrimary,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 28,
-                            vertical: 14,
-                          ),
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: SystemUiOverlayStyle.light,
+        child: Scaffold(
+          backgroundColor: _Navy.background,
+          body: DefaultTextStyle.merge(
+            style: const TextStyle(color: _Navy.ink),
+            child: IconTheme.merge(
+              data: const IconThemeData(color: _Navy.ink),
+              child: Stack(
+                children: [
+                  // Concentric rings behind everything (decorative).
+                  const Positioned(
+                    top: 120,
+                    left: -15,
+                    child: IgnorePointer(
+                      child: ExcludeSemantics(
+                        child: CustomPaint(
+                          size: Size(420, 420),
+                          painter: _RingsPainter(),
                         ),
-                        child: const Text('Цааш'),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                  SafeArea(
+                    child: Column(
+                      children: [
+                        _TopBar(onSkip: onLast ? null : _skip),
+                        Expanded(
+                          child: PageView(
+                            controller: _controller,
+                            onPageChanged: (i) {
+                              setState(() => _index = i);
+                              _logPageView(i);
+                            },
+                            children: [
+                              _WelcomePage(active: _index == 0),
+                              _HowItWorksPage(active: _index == 1),
+                              _ReadyPage(
+                                active: _index == 2,
+                                notificationService: widget.notificationService,
+                                analytics: widget.analytics,
+                              ),
+                            ],
+                          ),
+                        ),
+                        _BottomBar(
+                          index: _index,
+                          count: _lastIndex + 1,
+                          onNext: () => _animateTo(_index + 1),
+                          onStart: () => _finish(login: false),
+                          onLogin: () => _finish(login: true),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
@@ -167,8 +168,168 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 }
 
-/// Centres a page's content while letting it scroll when it doesn't fit —
-/// small phones and large system text sizes would otherwise overflow.
+/// Brand mark + wordmark, and "Алгасах" (hidden on the last page).
+class _TopBar extends StatelessWidget {
+  const _TopBar({required this.onSkip});
+
+  final VoidCallback? onSkip;
+
+  @override
+  Widget build(BuildContext context) => ConstrainedBox(
+    constraints: const BoxConstraints(minHeight: 60),
+    child: Padding(
+      padding: const EdgeInsets.fromLTRB(24, 8, 12, 0),
+      child: Row(
+        children: [
+          ExcludeSemantics(
+            child: Container(
+              width: 36,
+              height: 36,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: AppColors.accent,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Text(
+                'c',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                  height: 1,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          const Flexible(
+            child: Text(
+              'carservice',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            ),
+          ),
+          const Spacer(),
+          AnimatedOpacity(
+            opacity: onSkip == null ? 0 : 1,
+            duration: const Duration(milliseconds: 200),
+            child: TextButton(
+              onPressed: onSkip,
+              style: TextButton.styleFrom(
+                foregroundColor: _Navy.muted,
+                textStyle: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              child: const Text('Алгасах'),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+/// Dots, then the primary CTA and (on the first and last page) an outlined
+/// sign-in — the bottom of the CustWelcome board.
+class _BottomBar extends StatelessWidget {
+  const _BottomBar({
+    required this.index,
+    required this.count,
+    required this.onNext,
+    required this.onStart,
+    required this.onLogin,
+  });
+
+  final int index;
+  final int count;
+  final VoidCallback onNext;
+  final VoidCallback onStart;
+  final VoidCallback onLogin;
+
+  static final _primary = FilledButton.styleFrom(
+    backgroundColor: _Navy.primary,
+    foregroundColor: Colors.white,
+    minimumSize: const Size.fromHeight(54),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(AppRadii.control),
+    ),
+    textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+  );
+
+  static final _secondary = OutlinedButton.styleFrom(
+    foregroundColor: _Navy.ink,
+    backgroundColor: Colors.transparent,
+    side: const BorderSide(color: _Navy.dim),
+    minimumSize: const Size.fromHeight(54),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(AppRadii.control),
+    ),
+    textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    final last = index == count - 1;
+    final Widget? secondary = switch (index) {
+      // Returning users (e.g. after a reinstall) skip the tour to sign-in.
+      0 => OutlinedButton(
+        key: const ValueKey('onboarding-welcome-login'),
+        onPressed: onLogin,
+        style: _secondary,
+        child: const Text('Бүртгэлтэй, нэвтрэх'),
+      ),
+      _ when last => OutlinedButton(
+        key: const ValueKey('onboarding-login'),
+        onPressed: onLogin,
+        style: _secondary,
+        child: const Text('Бүртгэлдээ нэвтрэх'),
+      ),
+      _ => null,
+    };
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _Dots(count: count, index: index),
+          const SizedBox(height: 20),
+          if (last)
+            FilledButton(
+              key: const ValueKey('onboarding-start'),
+              onPressed: onStart,
+              style: _primary,
+              child: const Text('Эхлэх'),
+            )
+          else
+            FilledButton(
+              onPressed: onNext,
+              style: _primary,
+              child: const Text('Цааш'),
+            ),
+          AnimatedSize(
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeOutCubic,
+            alignment: Alignment.topCenter,
+            child: secondary == null
+                ? const SizedBox(width: double.infinity)
+                : Padding(
+                    padding: const EdgeInsets.only(top: 10),
+                    child: secondary,
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Lays a page's content out from the top-left while letting it scroll when
+/// it doesn't fit — small phones and large system text sizes would otherwise
+/// overflow.
 class _ScrollablePage extends StatelessWidget {
   const _ScrollablePage({required this.child});
 
@@ -177,45 +338,53 @@ class _ScrollablePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) => LayoutBuilder(
     builder: (context, constraints) => SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 28),
+      padding: const EdgeInsets.symmetric(horizontal: 24),
       child: ConstrainedBox(
         constraints: BoxConstraints(minHeight: constraints.maxHeight),
-        child: Center(child: child),
+        child: Align(alignment: Alignment.centerLeft, child: child),
       ),
     ),
   );
 }
 
 class _PageHeading extends StatelessWidget {
-  const _PageHeading({required this.title, required this.body});
+  const _PageHeading({
+    required this.title,
+    required this.body,
+    this.large = false,
+  });
 
   final String title;
   final String body;
 
+  /// The welcome headline is the board's 32px hero title.
+  final bool large;
+
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Column(
-      children: [
-        Text(
-          title,
-          textAlign: TextAlign.center,
-          style: theme.textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.w800,
-          ),
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        title,
+        style: TextStyle(
+          fontSize: large ? 32 : 28,
+          height: large ? 38 / 32 : 34 / 28,
+          fontWeight: FontWeight.w700,
+          letterSpacing: (large ? 32 : 28) * -0.02,
+          color: _Navy.ink,
         ),
-        const SizedBox(height: 12),
-        Text(
-          body,
-          textAlign: TextAlign.center,
-          style: theme.textTheme.bodyLarge?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-            height: 1.45,
-          ),
+      ),
+      const SizedBox(height: 12),
+      Text(
+        body,
+        style: const TextStyle(
+          fontSize: 15,
+          height: 23 / 15,
+          color: _Navy.muted,
         ),
-      ],
-    );
-  }
+      ),
+    ],
+  );
 }
 
 /// Plays a one-shot animation each time its page becomes [active] (so swiping
@@ -292,41 +461,255 @@ double _interval(
 ]) => curve.transform(((t - begin) / (end - begin)).clamp(0.0, 1.0));
 
 class _WelcomePage extends StatelessWidget {
-  const _WelcomePage({required this.active, required this.onLogin});
+  const _WelcomePage({required this.active});
 
   final bool active;
-
-  /// Returning users (e.g. after a reinstall) skip the tour straight to sign-in.
-  final VoidCallback onLogin;
 
   @override
   Widget build(BuildContext context) => _ScrollablePage(
     child: Column(
       mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Image.asset('assets/brand/mark.png', height: 56),
-        const SizedBox(height: 24),
-        const _PageHeading(
-          title: 'Carservice-т тавтай морил',
-          body:
-              'Ойролцоох найдвартай засварын газраа олж, цагаа онлайнаар '
-              'захиалаарай.',
-        ),
-        const SizedBox(height: 28),
         _PlayWhenActive(
           active: active,
-          duration: const Duration(milliseconds: 2400),
-          builder: (context, t) => _MapPreview(t: t),
+          duration: const Duration(milliseconds: 1400),
+          builder: (context, t) => _CarIllustration(t: t),
         ),
-        const SizedBox(height: 12),
-        TextButton(
-          key: const ValueKey('onboarding-welcome-login'),
-          onPressed: onLogin,
-          child: const Text('Бүртгэлтэй юу? Нэвтрэх'),
+        const SizedBox(height: 24),
+        const _PageHeading(
+          large: true,
+          title: 'Машиныхаа засварыг утаснаасаа хянаарай',
+          body:
+              'Ойролцоох сервист цаг захиалж, засварын явц, үнийн саналыг '
+              'шууд хараарай.',
         ),
       ],
     ),
   );
+}
+
+/// The line-art car with two floating status pills — a hint of what the app
+/// tells you, without screenshots that would drift from the real UI. Driven by
+/// [t] (0..1): the car rolls in, then the pills pop up one after the other.
+class _CarIllustration extends StatelessWidget {
+  const _CarIllustration({required this.t});
+
+  final double t;
+
+  @override
+  Widget build(BuildContext context) {
+    final car = _interval(t, 0, 0.5, Curves.easeOutCubic);
+    final ready = _interval(t, 0.4, 0.75, Curves.easeOutBack);
+    final booked = _interval(t, 0.6, 1, Curves.easeOutBack);
+    return ExcludeSemantics(
+      child: SizedBox(
+        height: 250,
+        width: double.infinity,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Opacity(
+              opacity: car,
+              child: Transform.translate(
+                offset: Offset((1 - car) * -36, 0),
+                child: const FittedBox(
+                  child: CustomPaint(
+                    size: Size(300, 160),
+                    painter: _CarPainter(),
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              right: 18,
+              top: 22,
+              child: _FloatingPill(
+                progress: ready,
+                leading: Container(
+                  width: 8,
+                  height: 8,
+                  decoration: const BoxDecoration(
+                    color: AppColors.greenLightText,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                label: 'Машин бэлэн боллоо',
+              ),
+            ),
+            Positioned(
+              left: 10,
+              bottom: 26,
+              child: _FloatingPill(
+                progress: booked,
+                leading: const Icon(
+                  Icons.calendar_today_outlined,
+                  size: 14,
+                  color: AppColors.accentLightText,
+                ),
+                label: 'Маргааш · 10:30',
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FloatingPill extends StatelessWidget {
+  const _FloatingPill({
+    required this.progress,
+    required this.leading,
+    required this.label,
+  });
+
+  final double progress;
+  final Widget leading;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => Opacity(
+    opacity: progress.clamp(0.0, 1.0),
+    child: Transform.translate(
+      offset: Offset(0, (1 - progress) * 10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+        decoration: BoxDecoration(
+          color: _Navy.ink,
+          borderRadius: BorderRadius.circular(AppRadii.pill),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x40000000),
+              blurRadius: 20,
+              offset: Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            leading,
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: _Navy.background,
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+/// The CustWelcome car outline (300×160 viewBox).
+class _CarPainter extends CustomPainter {
+  const _CarPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.scale(size.width / 300, size.height / 160);
+    Paint stroke(Color color, double width) => Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = width
+      ..strokeJoin = StrokeJoin.round
+      ..strokeCap = StrokeCap.round;
+    Paint fill(Color color) => Paint()..color = color;
+
+    // Ground line.
+    canvas.drawLine(
+      const Offset(20, 140),
+      const Offset(280, 140),
+      stroke(_Navy.line, 2),
+    );
+
+    final body = Path()
+      ..moveTo(30, 110)
+      ..lineTo(270, 110)
+      ..lineTo(270, 96)
+      ..cubicTo(270, 88, 265, 82, 257, 80)
+      ..lineTo(219, 71)
+      ..lineTo(189, 43)
+      ..cubicTo(183, 37, 175, 34, 167, 34)
+      ..lineTo(97, 34)
+      ..cubicTo(88, 34, 80, 38, 75, 45)
+      ..lineTo(52, 78)
+      ..lineTo(37, 82)
+      ..cubicTo(32, 83, 30, 87, 30, 92)
+      ..close();
+    canvas
+      ..drawPath(body, fill(_Navy.raised))
+      ..drawPath(body, stroke(_Navy.ink, 2.5));
+
+    final windows = Path()
+      ..moveTo(84, 74)
+      ..lineTo(102, 50)
+      ..cubicTo(105, 46, 109, 44, 114, 44)
+      ..lineTo(166, 44)
+      ..cubicTo(171, 44, 175, 46, 178, 49)
+      ..lineTo(203, 74)
+      ..close();
+    canvas
+      ..drawPath(windows, fill(_Navy.background))
+      ..drawPath(windows, stroke(_Navy.ink, 2))
+      ..drawLine(const Offset(146, 44), const Offset(146, 74), stroke(_Navy.ink, 2));
+
+    for (final x in const [88.0, 220.0]) {
+      final c = Offset(x, 112);
+      canvas
+        ..drawCircle(c, 22, fill(_Navy.background))
+        ..drawCircle(c, 22, stroke(_Navy.ink, 2.5))
+        ..drawCircle(c, 8, fill(_Navy.ink));
+    }
+
+    // Tail light.
+    canvas.drawLine(
+      const Offset(256, 88),
+      const Offset(270, 88),
+      stroke(AppColors.accent, 4),
+    );
+  }
+
+  @override
+  bool shouldRepaint(_CarPainter old) => false;
+}
+
+/// Three concentric rings, the inner one dashed in accent.
+class _RingsPainter extends CustomPainter {
+  const _RingsPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = size.center(Offset.zero);
+    final scale = size.width / 420;
+    Paint ring(Color color) => Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+    canvas
+      ..drawCircle(center, 200 * scale, ring(_Navy.raised))
+      ..drawCircle(center, 150 * scale, ring(_Navy.line));
+
+    // Dashed inner ring: 4 on, 8 off along the circumference.
+    final radius = 100 * scale;
+    final circumference = 2 * math.pi * radius;
+    final dashes = (circumference / 12).floor();
+    final step = 2 * math.pi / dashes;
+    final sweep = step * 4 / 12;
+    final rect = Rect.fromCircle(center: center, radius: radius);
+    final paint = ring(AppColors.accent);
+    for (var i = 0; i < dashes; i++) {
+      canvas.drawArc(rect, i * step, sweep, false, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_RingsPainter old) => false;
 }
 
 class _HowItWorksPage extends StatelessWidget {
@@ -349,6 +732,7 @@ class _HowItWorksPage extends StatelessWidget {
       // the sample booking flips from pending to confirmed.
       builder: (context, t) => Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const _PageHeading(
             title: 'Гурван алхамд',
@@ -393,204 +777,76 @@ class _Step extends StatelessWidget {
   final double? connector;
 
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final dimText = theme.brightness == Brightness.light
-        ? AppColors.accentLightText
-        : AppColors.accent;
-    return IntrinsicHeight(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Column(
-            children: [
-              CircleAvatar(
-                radius: 16,
-                backgroundColor: Color.lerp(
-                  AppColors.accent.withValues(alpha: 0.16),
-                  AppColors.accent,
-                  lit,
-                ),
-                child: Text(
-                  '$number',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w800,
-                    color: Color.lerp(dimText, AppColors.onAccent, lit),
-                  ),
-                ),
+  Widget build(BuildContext context) => IntrinsicHeight(
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Column(
+          children: [
+            Container(
+              width: 32,
+              height: 32,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: Color.lerp(_Navy.line, AppColors.accent, lit),
+                borderRadius: BorderRadius.circular(10),
               ),
-              if (connector != null)
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: CustomPaint(
-                      size: const Size(2, 0),
-                      painter: _ConnectorPainter(
-                        fill: connector!,
-                        track: theme.colorScheme.outlineVariant,
-                      ),
-                    ),
-                  ),
+              child: Text(
+                '$number',
+                style: TextStyle(
+                  fontFamily: AppFonts.mono,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 14,
+                  color: Color.lerp(_Navy.muted, Colors.white, lit),
                 ),
-            ],
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(fontWeight: FontWeight.w700),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    body,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
               ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// A stylised, decorative mini-map: a few service pins around the user's dot
-/// and a nearest-service card — a hint of the discovery screen without shipping
-/// screenshots that would drift from the real UI. Driven by [t] (0..1): a
-/// route draws along the roads from the user to a service with a car
-/// following it, the pin bounces on arrival, then the card fades in.
-class _MapPreview extends StatelessWidget {
-  const _MapPreview({required this.t});
-
-  final double t;
-
-  static const _pinSize = 30.0;
-  static const _dotSize = 16.0;
-
-  // A pin's tip sits near the bottom of its icon box; place it on [at].
-  static Widget _pinAt(Offset at, Widget pin) => Positioned(
-    left: at.dx - _pinSize / 2,
-    top: at.dy - _pinSize + 3,
-    child: pin,
-  );
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final route = _interval(t, 0.05, 0.6);
-    final carOpacity = _interval(t, 0, 0.08) * (1 - _interval(t, 0.6, 0.7));
-    final bounce = math.sin(math.pi * _interval(t, 0.6, 0.8, Curves.linear));
-    final card = _interval(t, 0.7, 1, Curves.easeOut);
-    return ExcludeSemantics(
-      child: _PreviewFrame(
-        height: 180,
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final map = _MapGeometry(constraints.biggest);
-            final metric = map.route.computeMetrics().first;
-            final car = metric
-                .getTangentForOffset(metric.length * route)!
-                .position;
-            return Stack(
+            if (connector != null)
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: CustomPaint(
+                    size: const Size(2, 0),
+                    painter: _ConnectorPainter(
+                      fill: connector!,
+                      track: _Navy.line,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Road-like strokes.
-                Positioned.fill(
-                  child: CustomPaint(
-                    painter: _RoadsPainter(map, scheme.outlineVariant),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                    color: _Navy.ink,
                   ),
                 ),
-                Positioned.fill(
-                  child: CustomPaint(
-                    painter: _RoutePainter(
-                      metric.extractPath(0, metric.length * route),
-                    ),
-                  ),
-                ),
-                _pinAt(map.decorPins[0], const _Pin()),
-                _pinAt(map.decorPins[1], const _Pin()),
-                _pinAt(
-                  map.target,
-                  Transform.scale(
-                    scale: 1 + 0.25 * bounce,
-                    alignment: Alignment.bottomCenter,
-                    child: const _Pin(),
-                  ),
-                ),
-                Positioned(
-                  left: map.user.dx - _dotSize / 2,
-                  top: map.user.dy - _dotSize / 2,
-                  child: Container(
-                    width: _dotSize,
-                    height: _dotSize,
-                    decoration: BoxDecoration(
-                      color: AppColors.blue,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 3),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  left: car.dx - 11,
-                  top: car.dy - 11,
-                  child: Opacity(
-                    opacity: carOpacity,
-                    child: Container(
-                      width: 22,
-                      height: 22,
-                      decoration: BoxDecoration(
-                        color: scheme.surface,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.accent, width: 2),
-                      ),
-                      child: const Icon(
-                        Icons.directions_car_rounded,
-                        size: 13,
-                        color: AppColors.accent,
-                      ),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  left: 12,
-                  right: 12,
-                  bottom: 12,
-                  child: Opacity(
-                    opacity: card,
-                    child: Transform.translate(
-                      offset: Offset(0, (1 - card) * 8),
-                      child: _MiniCard(
-                        leading: const Icon(
-                          Icons.build_rounded,
-                          size: 18,
-                          color: AppColors.accent,
-                        ),
-                        title: 'Ойролцоох сервис',
-                        trailing: Text(
-                          '1.2 км',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: scheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ),
-                    ),
+                const SizedBox(height: 2),
+                Text(
+                  body,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    height: 1.4,
+                    color: _Navy.muted,
                   ),
                 ),
               ],
-            );
-          },
+            ),
+          ),
         ),
-      ),
-    );
-  }
+      ],
+    ),
+  );
 }
 
 /// A vertical line between steps, filled top-down to [fill] (0..1). Painted
@@ -616,25 +872,6 @@ class _ConnectorPainter extends CustomPainter {
   @override
   bool shouldRepaint(_ConnectorPainter old) =>
       old.fill != fill || old.track != track;
-}
-
-class _RoutePainter extends CustomPainter {
-  _RoutePainter(this.path);
-
-  final Path path;
-
-  @override
-  void paint(Canvas canvas, Size size) => canvas.drawPath(
-    path,
-    Paint()
-      ..color = AppColors.accent
-      ..strokeWidth = 3.5
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round,
-  );
-
-  @override
-  bool shouldRepaint(_RoutePainter old) => true;
 }
 
 /// A decorative booking card whose status flips from pending to confirmed —
@@ -676,28 +913,6 @@ class _BookingPreview extends StatelessWidget {
   );
 }
 
-class _PreviewFrame extends StatelessWidget {
-  const _PreviewFrame({required this.height, required this.child});
-
-  final double height;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Container(
-      height: height,
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        color: scheme.surfaceContainerHighest.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(AppRadii.extraLarge),
-        border: Border.all(color: scheme.outlineVariant.withValues(alpha: 0.6)),
-      ),
-      child: child,
-    );
-  }
-}
-
 class _MiniCard extends StatelessWidget {
   const _MiniCard({
     required this.leading,
@@ -710,37 +925,39 @@ class _MiniCard extends StatelessWidget {
   final Widget trailing;
 
   @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: scheme.surface,
-        borderRadius: BorderRadius.circular(AppRadii.medium),
-        border: Border.all(color: scheme.outlineVariant.withValues(alpha: 0.6)),
-      ),
-      child: Row(
-        children: [
-          leading,
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+    decoration: BoxDecoration(
+      color: _Navy.raised,
+      borderRadius: BorderRadius.circular(AppRadii.control),
+      border: Border.all(color: _Navy.line),
+    ),
+    child: Row(
+      children: [
+        leading,
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+              color: _Navy.ink,
             ),
           ),
-          const SizedBox(width: 8),
-          Flexible(
-            child: FittedBox(fit: BoxFit.scaleDown, child: trailing),
-          ),
-        ],
-      ),
-    );
-  }
+        ),
+        const SizedBox(width: 8),
+        Flexible(
+          child: FittedBox(fit: BoxFit.scaleDown, child: trailing),
+        ),
+      ],
+    ),
+  );
 }
 
+/// A tinted status pill; the dark-tuned status colors read well on navy.
 class _StatusChip extends StatelessWidget {
   const _StatusChip({
     required this.label,
@@ -755,7 +972,7 @@ class _StatusChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
     decoration: BoxDecoration(
       color: color.withValues(alpha: 0.16),
       borderRadius: BorderRadius.circular(AppRadii.pill),
@@ -770,8 +987,8 @@ class _StatusChip extends StatelessWidget {
         Text(
           label,
           style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
             color: color,
           ),
         ),
@@ -780,115 +997,19 @@ class _StatusChip extends StatelessWidget {
   );
 }
 
-class _Pin extends StatelessWidget {
-  const _Pin();
-
-  @override
-  Widget build(BuildContext context) =>
-      const Icon(Icons.location_on_rounded, size: 30, color: AppColors.accent);
-}
-
-/// The mini-map's layout, shared by the road drawing and the route so the car
-/// drives on the roads. Coordinates are fractions of the frame (x of width,
-/// y of height); the bottom ~30% is under the service card, so the user and
-/// target sit above it.
-class _MapGeometry {
-  _MapGeometry(this.size);
-
-  final Size size;
-
-  Offset _p(double x, double y) => Offset(x * size.width, y * size.height);
-
-  // Road A runs left→right, gently rising; road B runs top→bottom, leaning
-  // right; road C is a curve in the top-right.
-  Offset _onA(double x) => _p(x, 0.35 - 0.1 * x);
-  Offset _onB(double y) => _p(0.3 + 0.15 * y, y);
-
-  // Where A and B cross: solve x = 0.3 + 0.15y, y = 0.35 - 0.1x.
-  static const _junctionX = 0.3525 / 1.015;
-  static const _junctionY = 0.35 - 0.1 * _junctionX;
-
-  Path get roadA => Path()
-    ..moveTo(_onA(0).dx, _onA(0).dy)
-    ..lineTo(_onA(1).dx, _onA(1).dy);
-
-  Path get roadB => Path()
-    ..moveTo(_onB(0).dx, _onB(0).dy)
-    ..lineTo(_onB(1).dx, _onB(1).dy);
-
-  Path get roadC {
-    final from = _p(0.6, 0);
-    final via = _p(0.7, 0.5);
-    final to = _p(1, 0.6);
-    return Path()
-      ..moveTo(from.dx, from.dy)
-      ..quadraticBezierTo(via.dx, via.dy, to.dx, to.dy);
-  }
-
-  Offset get user => _onB(0.6);
-  Offset get target => _onA(0.85);
-
-  /// Non-target pins, also on roads: on B above the junction and midway along C
-  /// (the quadratic's midpoint is ¼·from + ½·via + ¼·to).
-  List<Offset> get decorPins => [_onB(0.22), _p(0.75, 0.4)];
-
-  /// Up road B from the user, a rounded turn at the junction, then along
-  /// road A to the target.
-  Path get route {
-    final start = user;
-    final beforeTurn = _onB(_junctionY + 0.1);
-    final corner = _onB(_junctionY);
-    final afterTurn = _onA(_junctionX + 0.07);
-    final end = target;
-    return Path()
-      ..moveTo(start.dx, start.dy)
-      ..lineTo(beforeTurn.dx, beforeTurn.dy)
-      ..quadraticBezierTo(corner.dx, corner.dy, afterTurn.dx, afterTurn.dy)
-      ..lineTo(end.dx, end.dy);
-  }
-}
-
-class _RoadsPainter extends CustomPainter {
-  _RoadsPainter(this.map, this.color);
-
-  final _MapGeometry map;
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color.withValues(alpha: 0.7)
-      ..strokeWidth = 6
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-    canvas
-      ..drawPath(map.roadA, paint)
-      ..drawPath(map.roadB, paint)
-      ..drawPath(map.roadC, paint);
-  }
-
-  @override
-  bool shouldRepaint(_RoadsPainter old) =>
-      old.color != color || old.map.size != map.size;
-}
-
-/// The last page: the notification ask (primed by what it's for — booking
-/// confirmations) and the get-started / sign-in CTAs. Nothing here blocks
-/// moving on.
+/// The last page: the notification ask, primed by what it's for — booking
+/// confirmations. The get-started / sign-in CTAs live in the bottom bar.
+/// Nothing here blocks moving on.
 class _ReadyPage extends StatefulWidget {
   const _ReadyPage({
     required this.active,
     required this.notificationService,
     required this.analytics,
-    required this.onStart,
-    required this.onLogin,
   });
 
   final bool active;
   final NotificationPermissionService notificationService;
   final AnalyticsService analytics;
-  final VoidCallback onStart;
-  final VoidCallback onLogin;
 
   @override
   State<_ReadyPage> createState() => _ReadyPageState();
@@ -947,57 +1068,35 @@ class _ReadyPageState extends State<_ReadyPage> with WidgetsBindingObserver {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return _ScrollablePage(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const _PageHeading(
-            title: 'Бэлэн боллоо!',
-            body:
-                'Одоо сервисээ сонгож эхлээрэй. Захиалга хийхэд бүртгэл '
-                'шаардлагатай.',
+  Widget build(BuildContext context) => _ScrollablePage(
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _PageHeading(
+          title: 'Бэлэн боллоо!',
+          body:
+              'Одоо сервисээ сонгож эхлээрэй. Захиалга хийхэд бүртгэл '
+              'шаардлагатай.',
+        ),
+        const SizedBox(height: 28),
+        _PlayWhenActive(
+          active: widget.active,
+          duration: const Duration(milliseconds: 900),
+          builder: (context, t) => _PermissionRow(
+            icon: Icons.notifications_active_rounded,
+            // One small ring of the bell as the page comes into view.
+            iconAngle: math.sin(t * math.pi * 6) * (1 - t) * 0.3,
+            title: 'Мэдэгдэл авах',
+            subtitle: 'Захиалга баталгаажих, цаг ойртоход танд мэдэгдэнэ',
+            state: _notif,
+            keyPrefix: 'notif',
+            onTap: _askNotifications,
           ),
-          const SizedBox(height: 28),
-          _PlayWhenActive(
-            active: widget.active,
-            duration: const Duration(milliseconds: 900),
-            builder: (context, t) => _PermissionRow(
-              icon: Icons.notifications_active_rounded,
-              // One small ring of the bell as the page comes into view.
-              iconAngle: math.sin(t * math.pi * 6) * (1 - t) * 0.3,
-              title: 'Мэдэгдэл авах',
-              subtitle: 'Захиалга баталгаажих, цаг ойртоход танд мэдэгдэнэ',
-              state: _notif,
-              keyPrefix: 'notif',
-              onTap: _askNotifications,
-            ),
-          ),
-          const SizedBox(height: 28),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton(
-              key: const ValueKey('onboarding-start'),
-              onPressed: widget.onStart,
-              style: FilledButton.styleFrom(
-                backgroundColor: scheme.primary,
-                foregroundColor: scheme.onPrimary,
-                padding: const EdgeInsets.symmetric(vertical: 15),
-              ),
-              child: const Text('Эхлэх'),
-            ),
-          ),
-          const SizedBox(height: 8),
-          TextButton(
-            key: const ValueKey('onboarding-login'),
-            onPressed: widget.onLogin,
-            child: const Text('Бүртгэлдээ нэвтрэх'),
-          ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
 }
 
 class _PermissionRow extends StatelessWidget {
@@ -1021,7 +1120,6 @@ class _PermissionRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     final granted = state == PermissionState.granted;
     // Permanently denied → the only way back is the system Settings.
     final settings = state == PermissionState.permanentlyDenied;
@@ -1030,16 +1128,24 @@ class _PermissionRow extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: scheme.surfaceContainerHighest.withValues(alpha: 0.4),
-        borderRadius: BorderRadius.circular(AppRadii.large),
-        border: Border.all(color: scheme.outlineVariant.withValues(alpha: 0.5)),
+        color: _Navy.raised,
+        borderRadius: BorderRadius.circular(AppRadii.card),
+        border: Border.all(color: _Navy.line),
       ),
       child: Row(
         children: [
-          Transform.rotate(
-            angle: iconAngle,
-            alignment: Alignment.topCenter,
-            child: Icon(icon, color: AppColors.accent),
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: AppColors.accent.withValues(alpha: 0.18),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Transform.rotate(
+              angle: iconAngle,
+              alignment: Alignment.topCenter,
+              child: Icon(icon, size: 22, color: AppColors.accentHover),
+            ),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -1048,13 +1154,20 @@ class _PermissionRow extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(fontWeight: FontWeight.w700),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                    color: _Navy.ink,
+                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   settings ? 'Тохиргооноос зөвшөөрнө үү' : subtitle,
-                  style: Theme.of(context).textTheme.bodySmall
-                      ?.copyWith(color: scheme.onSurfaceVariant),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    height: 1.35,
+                    color: _Navy.muted,
+                  ),
                 ),
               ],
             ),
@@ -1089,6 +1202,20 @@ class _PermissionRow extends StatelessWidget {
                               : '$keyPrefix-grant',
                         ),
                         onPressed: onTap,
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: _Navy.ink,
+                          backgroundColor: Colors.transparent,
+                          side: const BorderSide(color: _Navy.dim),
+                          minimumSize: const Size(0, 40),
+                          padding: const EdgeInsets.symmetric(horizontal: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          textStyle: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                         child: Text(settings ? 'Тохиргоо' : 'Зөвшөөрөх'),
                       ),
               ),
@@ -1110,18 +1237,17 @@ class _Dots extends StatelessWidget {
   Widget build(BuildContext context) => Semantics(
     label: 'Хуудас ${index + 1} / $count',
     child: Row(
+      mainAxisSize: MainAxisSize.min,
       children: List.generate(count, (i) {
         final active = i == index;
         return AnimatedContainer(
           duration: const Duration(milliseconds: 250),
           margin: const EdgeInsets.only(right: 6),
-          width: active ? 22 : 8,
-          height: 8,
+          width: active ? 22 : 6,
+          height: 6,
           decoration: BoxDecoration(
-            color: active
-                ? AppColors.accent
-                : AppColors.accent.withValues(alpha: 0.3),
-            borderRadius: BorderRadius.circular(4),
+            color: active ? AppColors.accent : _Navy.dim,
+            borderRadius: BorderRadius.circular(AppRadii.pill),
           ),
         );
       }),

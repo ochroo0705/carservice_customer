@@ -23,9 +23,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    // Discover opens on the map, which hides the shell AppBar/avatar.
-    await tester.tap(find.byKey(const ValueKey('discovery-map-list-toggle')));
-    await tester.pumpAndSettle();
+    // The app opens on Нүүр, whose header carries the account avatar.
     await tester.tap(find.byKey(const ValueKey('shell-avatar')));
     await tester.pumpAndSettle();
     return auth;
@@ -47,7 +45,7 @@ void main() {
     await openProfile(tester);
     await openClosure(tester);
 
-    await tester.pageBack();
+    await tester.tap(find.byTooltip('Буцах'));
     await tester.pumpAndSettle();
 
     expect(find.byType(AccountClosureScreen), findsNothing);

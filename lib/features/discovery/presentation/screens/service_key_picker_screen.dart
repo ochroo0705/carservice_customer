@@ -1,5 +1,4 @@
 import 'package:carservice_customer/app/app_messages.dart';
-import 'package:carservice_customer/app/theme/app_surfaces.dart';
 import 'package:carservice_customer/app/theme/app_theme.dart';
 import 'package:carservice_customer/core/errors/app_failure.dart';
 import 'package:carservice_customer/features/discovery/domain/branch.dart';
@@ -8,6 +7,7 @@ import 'package:carservice_customer/features/discovery/domain/organization_repos
 import 'package:carservice_customer/core/widgets/skeletons.dart';
 import 'package:carservice_customer/core/widgets/skeleton.dart';
 import 'package:carservice_customer/core/widgets/state_views.dart';
+import 'package:carservice_customer/core/widgets/cs_ui.dart';
 import 'package:carservice_customer/features/discovery/presentation/widgets/branch_card.dart';
 import 'package:carservice_customer/features/discovery/presentation/widgets/branch_filter_panel.dart';
 import 'package:carservice_customer/features/discovery/services/device_location_service.dart';
@@ -415,8 +415,11 @@ class _ServiceKeyPickerScreenState extends State<ServiceKeyPickerScreen> {
                   Expanded(
                     child: Text(
                       'Шүүлтүүр',
-                      style: Theme.of(context).textTheme.titleLarge
-                          ?.copyWith(fontWeight: FontWeight.w800),
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.4,
+                      ),
                     ),
                   ),
                   if (_activeFilterCount > 0)
@@ -446,57 +449,57 @@ class _ServiceKeyPickerScreenState extends State<ServiceKeyPickerScreen> {
     ),
   );
 
+  // Pushed under the router's "Цаг захиалах" header (_TitledPage), which
+  // already owns the top inset; only the bottom is padded here.
   @override
-  Widget build(BuildContext context) => AppShellBackground(
-    child: SafeArea(
-      child: RefreshIndicator(
-        onRefresh: () => Future.wait([_loadKeys(), _loadResults()]),
-        child: CustomScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          slivers: [
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(20, 18, 20, 8),
-              sliver: SliverToBoxAdapter(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            'Ямар ажил хийлгэх гэж байна?',
-                            style: Theme.of(context).textTheme.headlineSmall
-                                ?.copyWith(fontWeight: FontWeight.w800),
+  Widget build(BuildContext context) => SafeArea(
+    top: false,
+    child: RefreshIndicator(
+      onRefresh: () => Future.wait([_loadKeys(), _loadResults()]),
+      child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+            sliver: SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          'Ямар ажил хийлгэх гэж байна?',
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: -0.44,
                           ),
                         ),
-                        // Filters only narrow results, so they appear once
-                        // there is a selection to narrow.
-                        if (_selectedIds.isNotEmpty)
-                          IconButton(
-                            key: const ValueKey('service-key-filters'),
-                            tooltip: 'Шүүлтүүр',
-                            onPressed: _openFilters,
-                            icon: Badge(
-                              isLabelVisible: _activeFilterCount > 0,
-                              label: Text('$_activeFilterCount'),
-                              child: const Icon(Icons.tune_rounded),
-                            ),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 14),
-                    _TagsBar(
-                      keys: _selectedKeys,
-                      onRemove: _removeKey,
-                      onAdd: _openPicker,
-                    ),
-                  ],
-                ),
+                      ),
+                      // Filters only narrow results, so they appear once
+                      // there is a selection to narrow.
+                      if (_selectedIds.isNotEmpty)
+                        _FiltersButton(
+                          count: _activeFilterCount,
+                          onPressed: _openFilters,
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  const CsSectionLabel('Үйлчилгээ'),
+                  const SizedBox(height: 8),
+                  _TagsBar(
+                    keys: _selectedKeys,
+                    onRemove: _removeKey,
+                    onAdd: _openPicker,
+                  ),
+                ],
               ),
             ),
-            ..._resultsSlivers(),
-          ],
-        ),
+          ),
+          ..._resultsSlivers(),
+        ],
       ),
     ),
   );
@@ -569,8 +572,10 @@ class _ServiceKeyPickerScreenState extends State<ServiceKeyPickerScreen> {
               child: Text(
                 '${_results.length} салбар олдлоо',
                 key: const ValueKey('service-key-result-count'),
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                style: csMono(
+                  fontSize: 12,
+                  letterSpacing: 0.4,
+                  color: CarserviceTheme.of(context).mutedText,
                 ),
               ),
             ),
@@ -579,7 +584,7 @@ class _ServiceKeyPickerScreenState extends State<ServiceKeyPickerScreen> {
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
             sliver: SliverList.separated(
               itemCount: _results.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 12),
+              separatorBuilder: (_, _) => const SizedBox(height: 10),
               itemBuilder: (context, index) {
                 final (org, branch) = _results[index];
                 // Same card as Discovery so a branch looks identical in both
@@ -614,10 +619,10 @@ class _TagsBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     // Nothing picked yet: choosing is the only next step, so it gets the
-    // page's primary button. Once tags exist it steps down to a tonal button
-    // pinned under the tags, so it never moves as the selection changes.
+    // page's primary button. Once tags exist it steps down to a quieter
+    // button pinned under the tags, so it never moves as the selection
+    // changes.
     if (keys.isEmpty) {
       return SizedBox(
         width: double.infinity,
@@ -629,25 +634,19 @@ class _TagsBar extends StatelessWidget {
         ),
       );
     }
+    final theme = CarserviceTheme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Wrap(
-          spacing: 8,
+          spacing: 6,
           runSpacing: 8,
           children: [
             for (final key in keys)
-              Chip(
+              _SelectedKeyPill(
                 key: ValueKey('service-key-tag-${key.id}'),
-                label: Text(key.name),
-                onDeleted: () => onRemove(key.id),
-                deleteIcon: const Icon(Icons.close, size: 16),
-                deleteIconColor: scheme.onSurfaceVariant,
-                deleteButtonTooltipMessage: 'Хасах',
-                materialTapTargetSize: MaterialTapTargetSize.padded,
-                visualDensity: VisualDensity.compact,
-                backgroundColor: scheme.primary.withValues(alpha: 0.1),
-                side: BorderSide(color: scheme.primary.withValues(alpha: 0.3)),
+                label: key.name,
+                onRemove: () => onRemove(key.id),
               ),
           ],
         ),
@@ -655,10 +654,103 @@ class _TagsBar extends StatelessWidget {
         FilledButton.tonalIcon(
           key: const ValueKey('service-key-add'),
           onPressed: onAdd,
+          style: FilledButton.styleFrom(
+            backgroundColor: theme.card,
+            foregroundColor: theme.ink,
+            side: BorderSide(color: theme.cardBorder),
+          ),
           icon: const Icon(Icons.add_rounded),
           label: const Text('Нэмэх'),
         ),
       ],
+    );
+  }
+}
+
+/// A picked service key: the design's selected (navy) pill with a remove
+/// button, like Discovery's hand-off service-key chip.
+class _SelectedKeyPill extends StatelessWidget {
+  const _SelectedKeyPill({
+    required this.label,
+    required this.onRemove,
+    super.key,
+  });
+
+  final String label;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = CarserviceTheme.of(context);
+    return Container(
+      constraints: const BoxConstraints(minHeight: 36),
+      padding: const EdgeInsets.only(left: 14),
+      decoration: ShapeDecoration(
+        color: theme.inverse,
+        shape: const StadiumBorder(),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: theme.onInverse,
+              ),
+            ),
+          ),
+          IconButton(
+            tooltip: 'Хасах',
+            onPressed: onRemove,
+            visualDensity: VisualDensity.compact,
+            constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+            padding: EdgeInsets.zero,
+            icon: Icon(Icons.close, size: 16, color: theme.onInverse),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The round outlined filter button with an active-filter count.
+class _FiltersButton extends StatelessWidget {
+  const _FiltersButton({required this.count, required this.onPressed});
+
+  final int count;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = CarserviceTheme.of(context);
+    return Tooltip(
+      message: 'Шүүлтүүр',
+      child: Material(
+        color: theme.card,
+        shape: CircleBorder(side: BorderSide(color: theme.cardBorder)),
+        child: InkWell(
+          key: const ValueKey('service-key-filters'),
+          customBorder: const CircleBorder(),
+          onTap: onPressed,
+          child: SizedBox.square(
+            dimension: 44,
+            child: Center(
+              child: Badge(
+                isLabelVisible: count > 0,
+                backgroundColor: AppColors.accent,
+                textColor: AppColors.onAccent,
+                label: Text('$count'),
+                child: Icon(Icons.tune_rounded, size: 20, color: theme.ink),
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -725,16 +817,19 @@ class _CategoryPickerSheetState extends State<_CategoryPickerSheet> {
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
               child: Row(
                 children: [
-                  Expanded(
+                  const Expanded(
                     child: Text(
                       'Ажлын төрөл сонгох',
-                      style: Theme.of(context).textTheme.titleLarge
-                          ?.copyWith(fontWeight: FontWeight.w800),
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.4,
+                      ),
                     ),
                   ),
-                  IconButton(
+                  CsCircleButton(
+                    icon: Icons.close_rounded,
                     tooltip: 'Хаах',
-                    icon: const Icon(Icons.close_rounded),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                 ],
@@ -809,7 +904,7 @@ class _CategoryPickerSheetState extends State<_CategoryPickerSheet> {
           controller: scrollController,
           padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
           itemCount: filtered.length,
-          separatorBuilder: (_, _) => const SizedBox(height: 10),
+          separatorBuilder: (_, _) => const SizedBox(height: 8),
           itemBuilder: (context, index) {
             final key = filtered[index];
             return _ServiceKeyCard(
@@ -833,9 +928,9 @@ class _ApplyBar extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
     decoration: BoxDecoration(
-      color: Theme.of(context).scaffoldBackgroundColor,
+      color: CarserviceTheme.of(context).card,
       border: Border(
-        top: BorderSide(color: CarserviceTheme.of(context).glassBorder),
+        top: BorderSide(color: CarserviceTheme.of(context).cardBorder),
       ),
     ),
     child: SizedBox(
@@ -862,46 +957,49 @@ class _ServiceKeyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final radius = BorderRadius.circular(AppRadii.large);
-    // Selected rows get a tinted surface and accent border so picks stand
-    // out when scanning a long list; the checkbox alone was too faint.
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 150),
-      decoration: BoxDecoration(
-        borderRadius: radius,
-        color: selected ? scheme.primary.withValues(alpha: 0.1) : null,
-        border: Border.all(
-          color: selected
-              ? scheme.primary.withValues(alpha: 0.6)
-              : Colors.transparent,
-        ),
-      ),
-      child: GlassSurface(
-        padding: EdgeInsets.zero,
-        child: InkWell(
-          key: ValueKey('service-key-${serviceKey.id}'),
-          borderRadius: radius,
-          onTap: () => onChanged(!selected),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 6, 8, 6),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    serviceKey.name,
-                    style: TextStyle(
-                      fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
-                    ),
-                  ),
-                ),
-                Checkbox(
-                  value: selected,
-                  onChanged: (value) => onChanged(value ?? false),
-                ),
-              ],
+    final theme = CarserviceTheme.of(context);
+    // The design's checklist row: a rounded check square (navy when picked)
+    // and the name; a picked row also gets the card's 2px ink outline so
+    // picks stand out when scanning a long list.
+    return Semantics(
+      checked: selected,
+      child: CsCard(
+        key: ValueKey('service-key-${serviceKey.id}'),
+        highlighted: selected,
+        // 1px less inside the 2px outline keeps the text from shifting.
+        padding: EdgeInsets.all(selected ? 13 : 14),
+        onTap: () => onChanged(!selected),
+        child: Row(
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              width: 22,
+              height: 22,
+              decoration: BoxDecoration(
+                color: selected ? theme.inverse : Colors.transparent,
+                borderRadius: BorderRadius.circular(6),
+                border: selected
+                    ? null
+                    : Border.all(
+                        color: theme.mutedText.withValues(alpha: 0.6),
+                        width: 2,
+                      ),
+              ),
+              child: selected
+                  ? Icon(Icons.check_rounded, size: 16, color: theme.onInverse)
+                  : null,
             ),
-          ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                serviceKey.name,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

@@ -1,4 +1,6 @@
-import 'package:carservice_customer/app/theme/app_surfaces.dart';
+import 'package:carservice_customer/app/theme/app_theme.dart';
+import 'package:carservice_customer/core/widgets/cs_ui.dart';
+import 'package:carservice_customer/features/history/domain/service_order_status.dart';
 import 'package:carservice_customer/core/widgets/skeletons.dart';
 import 'package:carservice_customer/core/errors/app_failure.dart';
 import 'package:carservice_customer/features/history/domain/service_history_repository.dart';
@@ -8,7 +10,6 @@ import 'package:carservice_customer/features/history/presentation/controllers/hi
 import 'package:carservice_customer/features/history/presentation/format_amount.dart';
 import 'package:carservice_customer/features/history/presentation/widgets/diagnostic_report_row.dart';
 import 'package:carservice_customer/features/history/presentation/widgets/order_intake_tile.dart';
-import 'package:carservice_customer/features/history/presentation/widgets/service_order_status_chip.dart';
 import 'package:flutter/material.dart';
 
 enum _DetailStatus { loading, data, error }
@@ -38,8 +39,7 @@ class ServiceOrderDetailScreen extends StatefulWidget {
   final ValueChanged<String>? onReportSelected;
 
   @override
-  State<ServiceOrderDetailScreen> createState() =>
-      _ServiceOrderDetailScreenState();
+  State<ServiceOrderDetailScreen> createState() => _ServiceOrderDetailScreenState();
 }
 
 class _ServiceOrderDetailScreenState extends State<ServiceOrderDetailScreen> {
@@ -71,9 +71,7 @@ class _ServiceOrderDetailScreenState extends State<ServiceOrderDetailScreen> {
   Future<void> _load() async {
     setState(() => _status = _DetailStatus.loading);
     try {
-      final detail = await widget.repository.getServiceOrderDetail(
-        widget.orderId,
-      );
+      final detail = await widget.repository.getServiceOrderDetail(widget.orderId);
       if (!mounted) return;
       setState(() {
         _detail = detail;
@@ -96,9 +94,7 @@ class _ServiceOrderDetailScreenState extends State<ServiceOrderDetailScreen> {
 
   Future<void> _refreshSilently() async {
     try {
-      final detail = await widget.repository.getServiceOrderDetail(
-        widget.orderId,
-      );
+      final detail = await widget.repository.getServiceOrderDetail(widget.orderId);
       if (!mounted) return;
       setState(() {
         _detail = detail;
@@ -111,13 +107,35 @@ class _ServiceOrderDetailScreenState extends State<ServiceOrderDetailScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      leading: BackButton(onPressed: widget.onBack),
-      title: const Text('Захиалгын дэлгэрэнгүй'),
-    ),
-    body: AppShellBackground(child: SafeArea(top: false, child: _body())),
-  );
+  Widget build(BuildContext context) {
+    final theme = CarserviceTheme.of(context);
+    return Scaffold(
+      backgroundColor: theme.shellBackground,
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+              child: Row(
+                children: [
+                  CsCircleButton.back(context, onPressed: widget.onBack),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Захиалгын дэлгэрэнгүй',
+                      style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: theme.ink),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(child: _body()),
+          ],
+        ),
+      ),
+    );
+  }
 
   Widget _body() => switch (_status) {
     _DetailStatus.loading => const SkeletonDetail(),
@@ -127,29 +145,20 @@ class _ServiceOrderDetailScreenState extends State<ServiceOrderDetailScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.error_outline_rounded,
-              size: 52,
-              color: Theme.of(context).colorScheme.error,
-            ),
+            Icon(Icons.error_outline_rounded, size: 52, color: Theme.of(context).colorScheme.error),
             const SizedBox(height: 16),
             Text(
               _message ?? 'Тодорхойгүй алдаа гарлаа.',
               textAlign: TextAlign.center,
+              style: TextStyle(color: CarserviceTheme.of(context).ink),
             ),
             const SizedBox(height: 16),
-            OutlinedButton(
-              onPressed: _load,
-              child: const Text('Дахин оролдох'),
-            ),
+            OutlinedButton(onPressed: _load, child: const Text('Дахин оролдох')),
           ],
         ),
       ),
     ),
-    _DetailStatus.data => _DetailBody(
-      detail: _detail!,
-      onReportSelected: widget.onReportSelected,
-    ),
+    _DetailStatus.data => _DetailBody(detail: _detail!, onReportSelected: widget.onReportSelected),
   };
 }
 
@@ -161,11 +170,14 @@ class _DetailBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = CarserviceTheme.of(context);
     final order = detail.order;
+    final date = order.completedAt;
     return ListView(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
       children: [
-        GlassSurface(
+        CsCard(
+          padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -175,39 +187,50 @@ class _DetailBody extends StatelessWidget {
                   Expanded(
                     child: Text(
                       order.tenantName,
-                      style: Theme.of(context).textTheme.titleLarge
-                          ?.copyWith(fontWeight: FontWeight.w900),
+                      style: TextStyle(
+                        fontSize: 19,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: -0.2,
+                        color: theme.ink,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 8),
-                  ServiceOrderStatusChip(status: order.status),
+                  order.isCancelled
+                      ? const CsBadge('Цуцлагдсан', tone: CsTone.accent)
+                      : CsBadge(
+                          order.status.localizedLabel,
+                          tone: switch (order.status) {
+                            ServiceOrderStatus.paid => CsTone.success,
+                            ServiceOrderStatus.partiallyPaid => CsTone.info,
+                            ServiceOrderStatus.unpaid => CsTone.accent,
+                          },
+                        ),
                 ],
               ),
               const SizedBox(height: 4),
-              Text(
-                order.branchName,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+              Text(order.branchName, style: TextStyle(fontSize: 13, color: theme.mutedText)),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 6,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  Text(
+                    '${date.year}.${date.month.toString().padLeft(2, '0')}.${date.day.toString().padLeft(2, '0')}',
+                    style: csMono(fontSize: 13, color: theme.mutedText),
+                  ),
+                  if (order.vehiclePlate != null)
+                    Semantics(
+                      label: 'Тээврийн хэрэгсэл: ${order.vehiclePlate}',
+                      excludeSemantics: true,
+                      child: CsPlate(order.vehiclePlate!, fontSize: 12),
+                    ),
+                ],
               ),
-              const SizedBox(height: 4),
-              Text(
-                '${order.completedAt.year}.${order.completedAt.month.toString().padLeft(2, '0')}.${order.completedAt.day.toString().padLeft(2, '0')}',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              if (order.vehiclePlate != null) ...[
-                const SizedBox(height: 4),
-                Text(
-                  'Тээврийн хэрэгсэл: ${order.vehiclePlate}',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ],
               if (detail.note != null && detail.note!.trim().isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Text(
-                  detail.note!,
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
+                const SizedBox(height: 12),
+                Text(detail.note!, style: TextStyle(fontSize: 13, color: theme.ink, height: 1.4)),
               ],
             ],
           ),
@@ -216,41 +239,45 @@ class _DetailBody extends StatelessWidget {
           const SizedBox(height: 16),
           OrderIntakeTile(orderId: order.id, intake: detail.intake!),
         ],
-        const SizedBox(height: 16),
-        Text(
-          'Дэлгэрэнгүй',
-          style: Theme.of(context).textTheme.titleMedium
-              ?.copyWith(fontWeight: FontWeight.w800),
-        ),
+        const SizedBox(height: 22),
+        const CsSectionHeader('Дэлгэрэнгүй'),
         const SizedBox(height: 8),
-        GlassSurface(
+        CsCard(
+          padding: EdgeInsets.zero,
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              for (final item in detail.items) _ItemRow(item: item),
-              if (detail.items.isNotEmpty) const Divider(height: 24),
-              _TotalsRow(label: 'Нийт дүн', value: order.totalAmount),
-              const SizedBox(height: 4),
-              _TotalsRow(label: 'Төлсөн', value: order.paidAmount),
+              for (var i = 0; i < detail.items.length; i++) ...[
+                if (i > 0) Divider(height: 1, thickness: 1, color: theme.shellBackground),
+                _ItemRow(item: detail.items[i]),
+              ],
+              if (detail.items.isNotEmpty)
+                Divider(height: 1, thickness: 1, color: theme.cardBorder),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+                child: Column(
+                  children: [
+                    _TotalsRow(label: 'Нийт дүн', value: order.totalAmount, emphasized: true),
+                    const SizedBox(height: 6),
+                    _TotalsRow(label: 'Төлсөн', value: order.paidAmount),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
         if (detail.reports.isNotEmpty) ...[
-          const SizedBox(height: 16),
-          Text(
-            'Оношилгооны тайлан',
-            style: Theme.of(context).textTheme.titleMedium
-                ?.copyWith(fontWeight: FontWeight.w800),
-          ),
+          const SizedBox(height: 22),
+          const CsSectionHeader('Оношилгооны тайлан'),
           const SizedBox(height: 8),
-          GlassSurface(
+          CsCard(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             child: Column(
               children: [
                 for (final report in detail.reports)
                   DiagnosticReportRow(
                     report: report,
-                    onTap: onReportSelected == null
-                        ? null
-                        : () => onReportSelected!(report.id),
+                    onTap: onReportSelected == null ? null : () => onReportSelected!(report.id),
                   ),
               ],
             ),
@@ -267,51 +294,67 @@ class _ItemRow extends StatelessWidget {
   final ServiceOrderItem item;
 
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 6),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                item.name,
-                style: Theme.of(context).textTheme.bodyMedium
-                    ?.copyWith(fontWeight: FontWeight.w700),
-              ),
-              Text(
-                '${item.kind.localizedLabel} · ${item.quantity} ширхэг',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+  Widget build(BuildContext context) {
+    final theme = CarserviceTheme.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.name,
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: theme.ink),
                 ),
-              ),
-            ],
+                const SizedBox(height: 2),
+                Text(
+                  '${item.kind.localizedLabel} · ${item.quantity} ширхэг',
+                  style: TextStyle(fontSize: 12, color: theme.mutedText),
+                ),
+              ],
+            ),
           ),
-        ),
-        Text('${formatAmount(item.totalPrice)}₮'),
-      ],
-    ),
-  );
+          const SizedBox(width: 12),
+          Text('${formatAmount(item.totalPrice)}₮', style: csMono(fontSize: 13, color: theme.ink)),
+        ],
+      ),
+    );
+  }
 }
 
 class _TotalsRow extends StatelessWidget {
-  const _TotalsRow({required this.label, required this.value});
+  const _TotalsRow({required this.label, required this.value, this.emphasized = false});
 
   final String label;
   final int value;
+  final bool emphasized;
 
   @override
-  Widget build(BuildContext context) => Row(
-    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-    children: [
-      Text(label, style: Theme.of(context).textTheme.bodyMedium),
-      Text(
-        '${formatAmount(value)}₮',
-        style: Theme.of(context).textTheme.bodyMedium
-            ?.copyWith(fontWeight: FontWeight.w800),
-      ),
-    ],
-  );
+  Widget build(BuildContext context) {
+    final theme = CarserviceTheme.of(context);
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 14,
+            color: emphasized ? theme.ink : theme.mutedText,
+            fontWeight: emphasized ? FontWeight.w600 : FontWeight.w400,
+          ),
+        ),
+        Text(
+          '${formatAmount(value)}₮',
+          style: csMono(
+            fontSize: emphasized ? 16 : 13,
+            fontWeight: FontWeight.w500,
+            color: theme.ink,
+          ),
+        ),
+      ],
+    );
+  }
 }

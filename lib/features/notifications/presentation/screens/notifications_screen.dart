@@ -1,5 +1,5 @@
 import 'package:carservice_customer/app/theme/app_theme.dart';
-import 'package:carservice_customer/app/theme/app_surfaces.dart';
+import 'package:carservice_customer/core/widgets/cs_ui.dart';
 import 'package:carservice_customer/core/widgets/animations.dart';
 import 'package:carservice_customer/core/widgets/coming_soon_view.dart';
 import 'package:carservice_customer/core/widgets/skeletons.dart';
@@ -11,11 +11,7 @@ import 'package:provider/provider.dart';
 import 'package:carservice_customer/core/widgets/state_views.dart';
 
 class NotificationsScreen extends StatelessWidget {
-  const NotificationsScreen({
-    required this.onBack,
-    required this.onOpen,
-    super.key,
-  });
+  const NotificationsScreen({required this.onBack, required this.onOpen, super.key});
 
   final VoidCallback onBack;
 
@@ -27,25 +23,42 @@ class NotificationsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = context.watch<NotificationsController>();
+    final theme = CarserviceTheme.of(context);
     return Scaffold(
-      appBar: AppBar(
-        leading: BackButton(onPressed: onBack),
-        title: const Text('Мэдэгдэл'),
-        actions: [
-          // The server's unread total, not the loaded page's: with more than
-          // one page of notifications the unread ones can all sit below the
-          // first page, which would show a bell badge with no way to clear it.
-          if (controller.unreadCount > 0)
-            TextButton(
-              onPressed: controller.markAllRead,
-              child: const Text('Бүгдийг уншсан'),
+      backgroundColor: theme.shellBackground,
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 12, 8),
+              child: Row(
+                children: [
+                  CsCircleButton.back(context, onPressed: onBack),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Мэдэгдэл',
+                      style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: theme.ink),
+                    ),
+                  ),
+                  // The server's unread total, not the loaded page's: with more
+                  // than one page of notifications the unread ones can all sit
+                  // below the first page, which would show a bell badge with no
+                  // way to clear it.
+                  if (controller.unreadCount > 0)
+                    TextButton(
+                      onPressed: controller.markAllRead,
+                      style: TextButton.styleFrom(foregroundColor: theme.link),
+                      child: const Text('Бүгдийг уншсан'),
+                    ),
+                ],
+              ),
             ),
-        ],
-      ),
-      body: AppShellBackground(
-        child: SafeArea(
-          top: false,
-          child: _Body(controller: controller, onOpen: onOpen),
+            Expanded(
+              child: _Body(controller: controller, onOpen: onOpen),
+            ),
+          ],
         ),
       ),
     );
@@ -77,10 +90,7 @@ class _Body extends StatelessWidget {
         title: 'Тун удахгүй',
         message: 'Мэдэгдлийн жагсаалт удахгүй нэмэгдэнэ.',
       ),
-      NotificationsStatus.data => _NotificationsList(
-        controller: controller,
-        onOpen: onOpen,
-      ),
+      NotificationsStatus.data => _NotificationsList(controller: controller, onOpen: onOpen),
     };
   }
 }
@@ -97,7 +107,7 @@ class _NotificationsList extends StatelessWidget {
     return RefreshIndicator(
       onRefresh: controller.load,
       child: ListView.separated(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 96),
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
         itemCount: notifications.length,
         separatorBuilder: (_, _) => const SizedBox(height: 10),
         itemBuilder: (context, index) {
@@ -128,54 +138,66 @@ class _NotificationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return InkWell(
+    final theme = CarserviceTheme.of(context);
+    final unread = !notification.isRead;
+    return CsCard(
       key: ValueKey('notification-${notification.id}'),
       onTap: onTap,
-      borderRadius: BorderRadius.circular(AppRadii.extraLarge),
-      child: GlassSurface(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (!notification.isRead)
-              Container(
-                margin: const EdgeInsets.only(top: 6, right: 10),
-                width: 8,
-                height: 8,
-                decoration: BoxDecoration(
-                  color: scheme.primary,
-                  shape: BoxShape.circle,
-                ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              CsIconTile(
+                icon: Icons.notifications_none_rounded,
+                size: 40,
+                color: unread ? theme.link : theme.mutedText,
+                background: unread ? theme.accentSoft : theme.shellBackground,
               ),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    notification.title,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: notification.isRead
-                          ? FontWeight.w600
-                          : FontWeight.w800,
+              if (unread)
+                Positioned(
+                  top: -2,
+                  right: -2,
+                  child: Container(
+                    width: 10,
+                    height: 10,
+                    decoration: BoxDecoration(
+                      color: AppColors.accent,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: theme.card, width: 2),
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    notification.message,
-                    style: Theme.of(context).textTheme.bodyMedium
-                        ?.copyWith(color: scheme.onSurfaceVariant),
+                ),
+            ],
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  notification.title,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: unread ? FontWeight.w700 : FontWeight.w500,
+                    color: theme.ink,
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    _formatRelative(notification.createdAt),
-                    style: Theme.of(context).textTheme.bodySmall
-                        ?.copyWith(color: scheme.onSurfaceVariant),
-                  ),
-                ],
-              ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  notification.message,
+                  style: TextStyle(fontSize: 13, color: theme.mutedText, height: 1.35),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  _formatRelative(notification.createdAt),
+                  style: csMono(fontSize: 11, color: theme.mutedText),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

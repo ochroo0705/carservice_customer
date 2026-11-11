@@ -1,4 +1,5 @@
 import 'package:carservice_customer/app/theme/app_theme.dart';
+import 'package:carservice_customer/core/widgets/cs_ui.dart';
 import 'package:carservice_customer/features/discovery/presentation/controllers/discovery_state.dart';
 import 'package:flutter/material.dart';
 
@@ -35,8 +36,9 @@ class LoadMoreFooter extends StatelessWidget {
   }
 }
 
-/// A small read-only label pill — a branch's business types on its list
-/// card, its service categories on the map sheet.
+/// A small read-only label tag — a branch's business types on its list
+/// card, its service categories on the map sheet. The design's [CsTag]
+/// (6px corners, page-tone fill), with a muted variant for a "+N" count.
 class DiscoveryPill extends StatelessWidget {
   const DiscoveryPill({required this.label, this.muted = false, super.key});
 
@@ -47,27 +49,21 @@ class DiscoveryPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    final theme = CarserviceTheme.of(context);
     return Container(
-      height: 30,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: scheme.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(AppRadii.pill),
+        color: theme.shellBackground,
+        borderRadius: BorderRadius.circular(6),
       ),
-      // widthFactor keeps the pill hugging its label inside a Wrap, where
-      // a plain alignment would stretch it to the full row.
-      child: Align(
-        widthFactor: 1,
-        child: Text(
-          label,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            color: muted ? scheme.onSurfaceVariant : scheme.onSurface,
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-          ),
+      child: Text(
+        label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w500,
+          color: muted ? theme.mutedText : theme.ink,
         ),
       ),
     );
@@ -90,21 +86,36 @@ class DiscoveryMessageState extends StatelessWidget {
   final VoidCallback? onAction;
 
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.all(32),
-    child: Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(icon, size: 48, color: Theme.of(context).colorScheme.primary),
-        const SizedBox(height: 16),
-        Text(title, style: Theme.of(context).textTheme.titleLarge),
-        const SizedBox(height: 8),
-        Text(message, textAlign: TextAlign.center),
-        if (actionLabel != null && onAction != null) ...[
-          const SizedBox(height: 18),
-          FilledButton(onPressed: onAction, child: Text(actionLabel!)),
+  Widget build(BuildContext context) {
+    final theme = CarserviceTheme.of(context);
+    return Padding(
+      padding: const EdgeInsets.all(32),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          CsIconTile(icon: icon, size: 56),
+          const SizedBox(height: 16),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+              letterSpacing: -0.2,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 14, color: theme.mutedText),
+          ),
+          if (actionLabel != null && onAction != null) ...[
+            const SizedBox(height: 18),
+            FilledButton(onPressed: onAction, child: Text(actionLabel!)),
+          ],
         ],
-      ],
-    ),
-  );
+      ),
+    );
+  }
 }

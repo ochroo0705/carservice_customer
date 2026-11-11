@@ -1,6 +1,8 @@
 import 'package:carservice_customer/features/history/presentation/widgets/order_intake_tile.dart';
 import 'package:carservice_customer/features/history/domain/service_history_repository.dart';
 import 'package:carservice_customer/app/theme/app_surfaces.dart';
+import 'package:carservice_customer/app/theme/app_theme.dart';
+import 'package:carservice_customer/core/widgets/cs_ui.dart';
 import 'package:carservice_customer/core/widgets/skeletons.dart';
 import 'package:carservice_customer/features/booking/domain/walk_in_order.dart';
 import 'package:carservice_customer/features/booking/presentation/controllers/appointments_controller.dart';
@@ -46,24 +48,91 @@ class WalkInOrderDetailScreen extends StatelessWidget {
         controller.state.status == AppointmentsStatus.initial;
 
     return Scaffold(
-      appBar: AppBar(
-        leading: BackButton(onPressed: onBack),
-        title: const Text('Захиалгын дэлгэрэнгүй'),
-      ),
       body: AppShellBackground(
         child: SafeArea(
-          top: false,
-          child: switch ((order, isLoading)) {
-            (final WalkInOrder order, _) => _WalkInOrderDetailBody(
-              order: order,
-              onRefresh: controller.load,
-              onReportSelected: onReportSelected,
-              historyRepository: historyRepository,
-            ),
-            (null, true) => const SkeletonDetail(),
-            (null, false) => _NotFound(onBack: onBack),
-          },
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _Header(
+                subtitle: order == null ? null : _vehicleCaption(order),
+                onBack: onBack,
+              ),
+              Expanded(
+                child: switch ((order, isLoading)) {
+                  (final WalkInOrder order, _) => _WalkInOrderDetailBody(
+                    order: order,
+                    onRefresh: controller.load,
+                    onReportSelected: onReportSelected,
+                    historyRepository: historyRepository,
+                  ),
+                  (null, true) => const SkeletonDetail(),
+                  (null, false) => _NotFound(onBack: onBack),
+                },
+              ),
+            ],
+          ),
         ),
+      ),
+    );
+  }
+}
+
+/// "Prius 30 · 1234 УБА" under the page title.
+String? _vehicleCaption(WalkInOrder order) {
+  final p = order.progress;
+  final model = [
+    p.vehicleMake,
+    p.vehicleModel,
+  ].whereType<String>().where((s) => s.trim().isNotEmpty).join(' ');
+  final parts = [
+    model,
+    p.vehiclePlate,
+  ].whereType<String>().where((s) => s.trim().isNotEmpty).toList();
+  return parts.isEmpty ? null : parts.join(' · ');
+}
+
+/// Design header: round back button + title + mono vehicle caption.
+class _Header extends StatelessWidget {
+  const _Header({required this.onBack, this.subtitle});
+
+  final String? subtitle;
+  final VoidCallback onBack;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = CarserviceTheme.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
+      child: Row(
+        children: [
+          CsCircleButton.back(context, onPressed: onBack),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Semantics(
+                  header: true,
+                  child: Text(
+                    'Захиалгын дэлгэрэнгүй',
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w600,
+                      color: theme.ink,
+                    ),
+                  ),
+                ),
+                if (subtitle != null)
+                  Text(
+                    subtitle!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: csMono(fontSize: 12, color: theme.mutedText),
+                  ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -84,38 +153,52 @@ class _WalkInOrderDetailBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
+    final theme = CarserviceTheme.of(context);
     return RefreshIndicator(
       onRefresh: onRefresh,
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
         children: [
-          GlassSurface(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          ServiceProgressHero(
+            progress: order.progress,
+            label: order.branchName,
+          ),
+          const SizedBox(height: 12),
+          CsCard(
+            child: Row(
               children: [
-                Text(
-                  order.tenantName,
-                  style: textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w900,
+                CsMonogram(name: order.tenantName, size: 44),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        order.tenantName,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: theme.ink,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        order.branchName,
+                        style: TextStyle(fontSize: 13, color: theme.mutedText),
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  order.branchName,
-                  style: textTheme.bodyMedium?.copyWith(color: muted),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 20),
           ServiceProgressSection(
             progress: order.progress,
             onReportSelected: onReportSelected,
           ),
           if (order.progress.hasIntake && historyRepository != null) ...[
-            const SizedBox(height: 14),
+            const SizedBox(height: 12),
             OrderIntakeTile(
               orderId: order.progress.id,
               repository: historyRepository,
@@ -139,16 +222,21 @@ class _NotFound extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.event_busy_outlined,
-            size: 52,
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          CsIconTile(
+            icon: Icons.event_busy_outlined,
+            size: 56,
+            color: CarserviceTheme.of(context).mutedText,
+            background: CarserviceTheme.of(context).card,
           ),
           const SizedBox(height: 16),
           Text(
             'Захиалга олдсонгүй',
-            style: Theme.of(context).textTheme.titleMedium
-                ?.copyWith(fontWeight: FontWeight.w800),
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.4,
+              color: CarserviceTheme.of(context).ink,
+            ),
           ),
           const SizedBox(height: 16),
           OutlinedButton(onPressed: onBack, child: const Text('Буцах')),

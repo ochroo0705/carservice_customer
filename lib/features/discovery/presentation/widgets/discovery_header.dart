@@ -25,19 +25,21 @@ class DiscoverySearchBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = CarserviceTheme.of(context);
-    final scheme = Theme.of(context).colorScheme;
     final sheetOnlyFilters =
         controller.city.isNotEmpty ||
         controller.district.isNotEmpty ||
         controller.nearMe ||
         controller.weekend;
+    // The design's floating search field: a white 52px card with a 16px
+    // radius, search icon, the field, then a hairline divider before the
+    // filter button.
     return Container(
       height: 52,
-      padding: const EdgeInsets.only(left: 16, right: 6),
+      padding: const EdgeInsets.only(left: 16, right: 4),
       decoration: BoxDecoration(
-        color: theme.shellSurface,
-        borderRadius: BorderRadius.circular(AppRadii.pill),
-        border: Border.all(color: theme.glassBorder),
+        color: theme.card,
+        borderRadius: BorderRadius.circular(AppRadii.card),
+        border: Border.all(color: theme.cardBorder.withValues(alpha: 0.6)),
         boxShadow: floatingControlShadow(context),
       ),
       child: Row(
@@ -51,11 +53,11 @@ class DiscoverySearchBar extends StatelessWidget {
               textInputAction: TextInputAction.search,
               onSubmitted: (_) => FocusScope.of(context).unfocus(),
               style: TextStyle(
-                color: scheme.onSurface,
+                color: theme.ink,
                 fontSize: 15,
                 fontWeight: FontWeight.w500,
               ),
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 isDense: true,
                 filled: false,
                 border: InputBorder.none,
@@ -63,6 +65,7 @@ class DiscoverySearchBar extends StatelessWidget {
                 focusedBorder: InputBorder.none,
                 contentPadding: EdgeInsets.zero,
                 hintText: 'Сервис, дүүрэг хайх',
+                hintStyle: TextStyle(color: theme.mutedText, fontSize: 15),
               ),
             ),
           ),
@@ -77,20 +80,25 @@ class DiscoverySearchBar extends StatelessWidget {
                       controller.setQuery('');
                     },
                     tooltip: 'Арилгах',
-                    icon: const Icon(Icons.close_rounded, size: 20),
+                    icon: Icon(
+                      Icons.close_rounded,
+                      size: 20,
+                      color: theme.mutedText,
+                    ),
                   ),
           ),
+          Container(width: 1, height: 22, color: theme.cardBorder),
           Tooltip(
             message: 'Шүүлтүүрүүд',
             child: Material(
-              color: scheme.surfaceContainerHigh,
+              color: Colors.transparent,
               shape: const CircleBorder(),
               clipBehavior: Clip.antiAlias,
               child: InkWell(
                 key: const ValueKey('discovery-filters-button'),
                 onTap: onOpenFilters,
                 child: SizedBox.square(
-                  dimension: 40,
+                  dimension: 44,
                   child: Center(
                     child: Badge(
                       isLabelVisible: sheetOnlyFilters,
@@ -99,7 +107,7 @@ class DiscoverySearchBar extends StatelessWidget {
                       child: Icon(
                         Icons.tune_rounded,
                         size: 20,
-                        color: scheme.onSurface,
+                        color: theme.ink,
                       ),
                     ),
                   ),
@@ -166,15 +174,15 @@ class DiscoveryQuickFilters extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         padding: padding,
         itemCount: chips.length,
-        separatorBuilder: (_, _) => const SizedBox(width: 8),
+        separatorBuilder: (_, _) => const SizedBox(width: 6),
         itemBuilder: (_, index) => chips[index],
       ),
     );
   }
 }
 
-/// A pill-shaped toggle in [DiscoveryQuickFilters]: accent when on, the shell
-/// surface with a border when off.
+/// A pill-shaped toggle in [DiscoveryQuickFilters]: the design's navy
+/// (inverse) fill when on, a bordered card pill when off.
 class QuickFilterChip extends StatelessWidget {
   const QuickFilterChip({
     required this.label,
@@ -196,25 +204,21 @@ class QuickFilterChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = CarserviceTheme.of(context);
-    final foreground = selected
-        ? AppColors.onAccent
-        : Theme.of(context).colorScheme.onSurface;
+    final foreground = selected ? theme.onInverse : theme.ink;
     return Semantics(
       button: true,
       selected: selected,
       hint: semanticsHint,
       child: Material(
-        color: selected ? AppColors.accent : theme.shellSurface,
+        color: selected ? theme.inverse : theme.card,
         shape: StadiumBorder(
-          side: selected
-              ? BorderSide.none
-              : BorderSide(color: theme.glassBorder),
+          side: BorderSide(color: selected ? theme.inverse : theme.cardBorder),
         ),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -233,7 +237,7 @@ class QuickFilterChip extends StatelessWidget {
                   style: TextStyle(
                     color: foreground,
                     fontSize: 13,
-                    fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
                 if (trailingIcon != null) ...[

@@ -1,4 +1,5 @@
-import 'package:carservice_customer/app/theme/app_surfaces.dart';
+import 'package:carservice_customer/app/theme/app_theme.dart';
+import 'package:carservice_customer/core/widgets/cs_ui.dart';
 import 'package:flutter/material.dart';
 
 /// `lockCategories` урсгал үргэлжлэх боломжгүй үеийн бүтэн дэлгэцийн мэдэгдэл
@@ -15,31 +16,42 @@ class LockedFlowUnavailable extends StatelessWidget {
   final VoidCallback onBack;
 
   @override
-  Widget build(BuildContext context) => Center(
-    child: Padding(
-      padding: const EdgeInsets.all(32),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.info_outline,
-            size: 40,
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            branchMissing
-                ? 'Сонгосон салбар олдсонгүй. Дахин сонгоно уу.'
-                : 'Сонгосон бүх үйлчилгээг энэ салбар цаашид санал болгохгүй '
-                      'боллоо. Дахин сонгоно уу.',
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 16),
-          OutlinedButton(onPressed: onBack, child: const Text('Буцах')),
-        ],
+  Widget build(BuildContext context) {
+    final theme = CarserviceTheme.of(context);
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CsIconTile(
+              icon: Icons.info_outline_rounded,
+              size: 56,
+              background: theme.card,
+              color: theme.mutedText,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              branchMissing
+                  ? 'Сонгосон салбар олдсонгүй. Дахин сонгоно уу.'
+                  : 'Сонгосон бүх үйлчилгээг энэ салбар цаашид санал болгохгүй '
+                        'боллоо. Дахин сонгоно уу.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 15, color: theme.ink, height: 1.4),
+            ),
+            const SizedBox(height: 20),
+            OutlinedButton(
+              onPressed: onBack,
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 28),
+              ),
+              child: const Text('Буцах'),
+            ),
+          ],
+        ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 /// Хэсэгчлэн боломжгүй болсон ангиллуудыг сануулах — блокдоггүй, зөвхөн
@@ -51,19 +63,27 @@ class LockedCategoriesWarning extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return GlassSurface(
+    final theme = CarserviceTheme.of(context);
+    final color = AppColors.readable(
+      AppColors.warning,
+      Theme.of(context).brightness,
+    );
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: theme.warningSoft,
+        borderRadius: BorderRadius.circular(AppRadii.card),
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.warning_amber_rounded, size: 20, color: scheme.error),
+          Icon(Icons.warning_amber_rounded, size: 20, color: color),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               'Энэ салбар цаашид дараах үйлчилгээг санал болгохгүй тул '
               'захиалгаас хасагдлаа: ${unavailableNames.join(', ')}.',
-              style: Theme.of(context).textTheme.bodySmall
-                  ?.copyWith(color: scheme.error),
+              style: TextStyle(fontSize: 13, color: color, height: 1.4),
             ),
           ),
         ],

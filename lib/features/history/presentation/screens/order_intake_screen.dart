@@ -1,4 +1,4 @@
-import 'package:carservice_customer/app/theme/app_surfaces.dart';
+import 'package:carservice_customer/core/widgets/cs_ui.dart';
 import 'package:carservice_customer/features/history/domain/order_intake.dart';
 import 'package:carservice_customer/features/history/domain/upload_url.dart';
 import 'package:flutter/material.dart';
@@ -8,18 +8,11 @@ String _formatRecordedAt(DateTime t) =>
     '${t.year}.${t.month.toString().padLeft(2, '0')}.${t.day.toString().padLeft(2, '0')} '
     '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
 
-Widget _networkImage(
-  String url, {
-  BoxFit fit = BoxFit.cover,
-  String? baseUrl,
-}) => Image.network(
+Widget _networkImage(String url, {BoxFit fit = BoxFit.cover, String? baseUrl}) => Image.network(
   resolveUploadUrl(url, baseUrl: baseUrl),
   fit: fit,
   errorBuilder: (context, _, _) => Center(
-    child: Icon(
-      Icons.broken_image_outlined,
-      color: Theme.of(context).colorScheme.onSurfaceVariant,
-    ),
+    child: Icon(Icons.broken_image_outlined, color: Theme.of(context).colorScheme.onSurfaceVariant),
   ),
 );
 
@@ -38,99 +31,118 @@ class OrderIntakeScreen extends StatelessWidget {
       context: context,
       useSafeArea: false,
       builder: (_) => Dialog.fullscreen(
-        child: _IntakePhotoPager(
-          photos: intake.photos,
-          initialIndex: index,
-          baseUrl: baseUrl,
-        ),
+        child: _IntakePhotoPager(photos: intake.photos, initialIndex: index, baseUrl: baseUrl),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+    final theme = CarserviceTheme.of(context);
     final signature = intake.signatureUrl;
     return Scaffold(
-      appBar: AppBar(title: const Text('Хүлээн авах')),
-      body: AppShellBackground(
-        child: SafeArea(
-          top: false,
-          child: ListView(
-            padding: const EdgeInsets.all(20),
-            children: [
-              Text(
-                'Бүртгэсэн: ${_formatRecordedAt(intake.recordedAt)}',
-                style: textTheme.bodySmall,
-              ),
-              if (intake.mileageLabel != null) ...[
-                const SizedBox(height: 8),
-                Text(
-                  'Гүйлт: ${intake.mileageLabel}',
-                  key: const ValueKey('intake-mileage'),
-                  style: textTheme.bodyMedium,
-                ),
-              ],
-              if (intake.hasNotes) ...[
-                const SizedBox(height: 12),
-                GlassSurface(child: Text(intake.notes!)),
-              ],
-              if (intake.photos.isNotEmpty) ...[
-                const SizedBox(height: 16),
-                Text(
-                  'Зураг',
-                  style: textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    mainAxisSpacing: 8,
-                    crossAxisSpacing: 8,
-                  ),
-                  itemCount: intake.photos.length,
-                  itemBuilder: (context, i) => GestureDetector(
-                    key: ValueKey('intake-photo-$i'),
-                    onTap: () => _openPhoto(context, i),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(AppRadii.small),
-                      child: _networkImage(
-                        intake.photos[i].url,
-                        baseUrl: baseUrl,
-                      ),
+      backgroundColor: theme.shellBackground,
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+              child: Row(
+                children: [
+                  CsCircleButton.back(context),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Хүлээн авах',
+                      style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: theme.ink),
                     ),
                   ),
-                ),
-              ],
-              if (signature != null) ...[
-                const SizedBox(height: 16),
-                Text(
-                  'Гарын үсэг',
-                  style: textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
+                ],
+              ),
+            ),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+                children: [
+                  CsCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Бүртгэсэн: ${_formatRecordedAt(intake.recordedAt)}',
+                          style: TextStyle(fontSize: 13, color: theme.mutedText),
+                        ),
+                        if (intake.mileageLabel != null) ...[
+                          const SizedBox(height: 6),
+                          Text(
+                            'Гүйлт: ${intake.mileageLabel}',
+                            key: const ValueKey('intake-mileage'),
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: theme.ink,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  height: 140,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(AppRadii.medium),
-                  ),
-                  padding: const EdgeInsets.all(8),
-                  child: _networkImage(
-                    signature,
-                    fit: BoxFit.contain,
-                    baseUrl: baseUrl,
-                  ),
-                ),
-              ],
-            ],
-          ),
+                  if (intake.hasNotes) ...[
+                    const SizedBox(height: 10),
+                    CsCard(
+                      child: Text(
+                        intake.notes!,
+                        style: TextStyle(fontSize: 14, color: theme.ink, height: 1.4),
+                      ),
+                    ),
+                  ],
+                  if (intake.photos.isNotEmpty) ...[
+                    const SizedBox(height: 22),
+                    const CsSectionHeader('Зураг'),
+                    const SizedBox(height: 8),
+                    GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 3,
+                        mainAxisSpacing: 8,
+                        crossAxisSpacing: 8,
+                      ),
+                      itemCount: intake.photos.length,
+                      itemBuilder: (context, i) => GestureDetector(
+                        key: ValueKey('intake-photo-$i'),
+                        onTap: () => _openPhoto(context, i),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(AppRadii.large),
+                          child: ColoredBox(
+                            color: theme.card,
+                            child: _networkImage(intake.photos[i].url, baseUrl: baseUrl),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                  if (signature != null) ...[
+                    const SizedBox(height: 22),
+                    const CsSectionHeader('Гарын үсэг'),
+                    const SizedBox(height: 8),
+                    // Always white: the signature is dark ink on transparency.
+                    Container(
+                      height: 140,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(AppRadii.card),
+                        border: Border.all(color: theme.cardBorder),
+                      ),
+                      padding: const EdgeInsets.all(8),
+                      child: _networkImage(signature, fit: BoxFit.contain, baseUrl: baseUrl),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -138,11 +150,7 @@ class OrderIntakeScreen extends StatelessWidget {
 }
 
 class _IntakePhotoPager extends StatefulWidget {
-  const _IntakePhotoPager({
-    required this.photos,
-    required this.initialIndex,
-    this.baseUrl,
-  });
+  const _IntakePhotoPager({required this.photos, required this.initialIndex, this.baseUrl});
 
   final List<OrderIntakePhoto> photos;
   final int initialIndex;
@@ -153,9 +161,7 @@ class _IntakePhotoPager extends StatefulWidget {
 }
 
 class _IntakePhotoPagerState extends State<_IntakePhotoPager> {
-  late final PageController _controller = PageController(
-    initialPage: widget.initialIndex,
-  );
+  late final PageController _controller = PageController(initialPage: widget.initialIndex);
   late int _index = widget.initialIndex;
 
   @override
@@ -178,11 +184,7 @@ class _IntakePhotoPagerState extends State<_IntakePhotoPager> {
       onPageChanged: (i) => setState(() => _index = i),
       itemBuilder: (context, i) => InteractiveViewer(
         child: Center(
-          child: _networkImage(
-            widget.photos[i].url,
-            fit: BoxFit.contain,
-            baseUrl: widget.baseUrl,
-          ),
+          child: _networkImage(widget.photos[i].url, fit: BoxFit.contain, baseUrl: widget.baseUrl),
         ),
       ),
     ),

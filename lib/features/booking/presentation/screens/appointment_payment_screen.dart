@@ -6,6 +6,7 @@ import 'dart:convert';
 import 'package:carservice_customer/app/theme/app_surfaces.dart';
 import 'package:carservice_customer/core/widgets/skeletons.dart';
 import 'package:carservice_customer/app/theme/app_theme.dart';
+import 'package:carservice_customer/core/widgets/cs_ui.dart';
 import 'package:carservice_customer/core/errors/app_failure.dart';
 import 'package:carservice_customer/features/booking/domain/appointment_payment.dart';
 import 'package:carservice_customer/features/booking/domain/appointment_repository.dart';
@@ -42,7 +43,8 @@ class AppointmentPaymentScreen extends StatefulWidget {
   final VoidCallback? onPaymentUpdated;
 
   @override
-  State<AppointmentPaymentScreen> createState() => _AppointmentPaymentScreenState();
+  State<AppointmentPaymentScreen> createState() =>
+      _AppointmentPaymentScreenState();
 }
 
 enum _LoadStatus { loading, data, error }
@@ -137,7 +139,8 @@ class _AppointmentPaymentScreenState extends State<AppointmentPaymentScreen>
   }
 
   Future<void> _autoPoll() async {
-    if (!_isPollable || (_pollDeadline != null && DateTime.now().isAfter(_pollDeadline!))) {
+    if (!_isPollable ||
+        (_pollDeadline != null && DateTime.now().isAfter(_pollDeadline!))) {
       _stopPolling();
       return;
     }
@@ -222,12 +225,14 @@ class _AppointmentPaymentScreenState extends State<AppointmentPaymentScreen>
           });
         }
         if (!silent) {
-          AppMessages.show(result.message ?? 'Дутуу төлбөр ирсэн байна.', isError: true);
+          AppMessages.show(
+            result.message ?? 'Дутуу төлбөр ирсэн байна.',
+            isError: true,
+          );
         }
       } else if (!silent) {
         AppMessages.show(
-          result.message ??
-              'Төлбөр төлөгдөөгүй байна. Банкны аппаар QR-аа уншуулсны дараа дахин шалгана уу.',
+          result.message ?? 'Төлбөр төлөгдөөгүй байна. Банкны аппаар QR-аа уншуулсны дараа дахин шалгана уу.',
         );
       }
     } on AppFailure catch (failure) {
@@ -250,7 +255,9 @@ class _AppointmentPaymentScreenState extends State<AppointmentPaymentScreen>
     if (_retrying) return;
     setState(() => _retrying = true);
     try {
-      final payment = await widget.repository.retryPayment(widget.appointmentId);
+      final payment = await widget.repository.retryPayment(
+        widget.appointmentId,
+      );
       if (!mounted) return;
       setState(() => _payment = payment);
       _maybeStartPolling(); // a fresh pending invoice — resume auto-confirm
@@ -269,11 +276,16 @@ class _AppointmentPaymentScreenState extends State<AppointmentPaymentScreen>
   Future<void> _openBankLink(String link) async {
     final uri = Uri.tryParse(link);
     if (uri == null) {
-      if (mounted) AppMessages.show('Банкны холбоос буруу байна.', isError: true);
+      if (mounted) {
+        AppMessages.show('Банкны холбоос буруу байна.', isError: true);
+      }
       return;
     }
     try {
-      final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      final launched = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
       if (!launched && mounted) {
         // Апп суулгаагүй, эсвэл scheme-ийг Android <queries>/iOS
         // LSApplicationQueriesSchemes-д зарлаагүй үед false буцаана.
@@ -304,11 +316,37 @@ class _AppointmentPaymentScreenState extends State<AppointmentPaymentScreen>
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      leading: BackButton(onPressed: widget.onBack),
-      title: const Text('Цаг захиалгын хураамж'),
+    body: AppShellBackground(
+      child: SafeArea(
+        bottom: false,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
+              child: Row(
+                children: [
+                  CsCircleButton.back(context, onPressed: widget.onBack),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Text(
+                      'Цаг захиалгын хураамж',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(child: _body()),
+          ],
+        ),
+      ),
     ),
-    body: AppShellBackground(child: SafeArea(top: false, child: _body())),
   );
 
   Widget _body() => switch (_status) {
@@ -319,11 +357,21 @@ class _AppointmentPaymentScreenState extends State<AppointmentPaymentScreen>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.error_outline_rounded, size: 52, color: Theme.of(context).colorScheme.error),
+            Icon(
+              Icons.error_outline_rounded,
+              size: 52,
+              color: Theme.of(context).colorScheme.error,
+            ),
             const SizedBox(height: 16),
-            Text(_message ?? 'Тодорхойгүй алдаа гарлаа.', textAlign: TextAlign.center),
+            Text(
+              _message ?? 'Тодорхойгүй алдаа гарлаа.',
+              textAlign: TextAlign.center,
+            ),
             const SizedBox(height: 16),
-            OutlinedButton(onPressed: _load, child: const Text('Дахин оролдох')),
+            OutlinedButton(
+              onPressed: _load,
+              child: const Text('Дахин оролдох'),
+            ),
           ],
         ),
       ),
@@ -332,7 +380,12 @@ class _AppointmentPaymentScreenState extends State<AppointmentPaymentScreen>
       _payment == null
           ? _NoFeeRequired(onDone: widget.onBack)
           : ListView(
-              padding: const EdgeInsets.all(20),
+              padding: EdgeInsets.fromLTRB(
+                20,
+                12,
+                20,
+                20 + MediaQuery.paddingOf(context).bottom,
+              ),
               children: [
                 _PaymentPanel(
                   payment: _payment!,
@@ -364,10 +417,16 @@ class _NoFeeRequired extends StatelessWidget {
           Icon(
             Icons.check_circle_outline_rounded,
             size: 52,
-            color: AppColors.readable(AppColors.green, Theme.of(context).brightness),
+            color: AppColors.readable(
+              AppColors.green,
+              Theme.of(context).brightness,
+            ),
           ),
           const SizedBox(height: 16),
-          const Text('Энэ цаг захиалгад хураамж шаардлагагүй.', textAlign: TextAlign.center),
+          const Text(
+            'Энэ цаг захиалгад хураамж шаардлагагүй.',
+            textAlign: TextAlign.center,
+          ),
           const SizedBox(height: 16),
           FilledButton(onPressed: onDone, child: const Text('Дуусгах')),
         ],
@@ -399,40 +458,41 @@ class _PaymentPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    final theme = CarserviceTheme.of(context);
     // Any non-terminal fee without a QR offers retry (unchanged behaviour);
     // refunded is terminal and handled before this branch.
     final failed =
         payment.status != AppointmentFeeStatus.paid &&
         payment.status != AppointmentFeeStatus.refunded &&
         payment.qrImageBase64 == null;
-    return GlassSurface(
+    return CsCard(
+      padding: const EdgeInsets.fromLTRB(18, 20, 18, 18),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            'ЦАГ ЗАХИАЛГЫН ХУРААМЖ',
-            style: Theme.of(context).textTheme.labelSmall
-                ?.copyWith(color: scheme.onSurfaceVariant, letterSpacing: 1),
-          ),
+          const Center(child: CsSectionLabel('Цаг захиалгын хураамж')),
           const SizedBox(height: 8),
           Text.rich(
             TextSpan(
               children: [
                 TextSpan(
                   text: formatAmount(payment.amount.round()),
-                  style: Theme.of(context).textTheme.headlineMedium
-                      ?.copyWith(fontWeight: FontWeight.w900, color: scheme.primary),
+                  style: csMono(
+                    fontSize: 34,
+                    fontWeight: FontWeight.w500,
+                    color: theme.ink,
+                    letterSpacing: -0.5,
+                  ),
                 ),
                 TextSpan(
                   text: ' ${payment.currency}',
-                  style: Theme.of(context).textTheme.bodySmall
-                      ?.copyWith(color: scheme.onSurfaceVariant),
+                  style: csMono(fontSize: 13, color: theme.mutedText),
                 ),
               ],
             ),
+            textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
           if (payment.status == AppointmentFeeStatus.underpaid)
             Padding(
               padding: const EdgeInsets.only(bottom: 16),
@@ -457,57 +517,73 @@ class _PaymentPanel extends StatelessWidget {
               ),
             ),
           if (payment.status == AppointmentFeeStatus.refunded) ...[
-            const _Banner(color: AppColors.blue, text: 'Энэ хураамж буцаагдсан байна.'),
+            const _Banner(
+              color: AppColors.blue,
+              text: 'Энэ хураамж буцаагдсан байна.',
+            ),
             const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
-              child: FilledButton(onPressed: onDone, child: const Text('Дуусгах')),
+              child: FilledButton(
+                onPressed: onDone,
+                child: const Text('Дуусгах'),
+              ),
             ),
           ] else if (payment.status == AppointmentFeeStatus.paid) ...[
-            const _Banner(color: AppColors.green, text: 'Төлбөр амжилттай төлөгдсөн.'),
+            const _Banner(
+              color: AppColors.green,
+              text: 'Төлбөр амжилттай төлөгдсөн.',
+            ),
             const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
-              child: FilledButton(onPressed: onDone, child: const Text('Дуусгах')),
+              child: FilledButton(
+                onPressed: onDone,
+                child: const Text('Дуусгах'),
+              ),
             ),
           ] else if (failed) ...[
-            const _Banner(color: AppColors.red, text: 'Invoice үүсгэхэд алдаа гарсан байна.'),
+            const _Banner(
+              color: AppColors.red,
+              text: 'Invoice үүсгэхэд алдаа гарсан байна.',
+            ),
             const SizedBox(height: 16),
             FilledButton(
               onPressed: retrying ? null : onRetry,
               child: Text(retrying ? 'Оролдож...' : 'Дахин оролдох'),
             ),
           ] else if (payment.qrImageBase64 != null) ...[
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(AppRadii.medium),
-              ),
-              child: Image.memory(
-                base64Decode(payment.qrImageBase64!),
-                width: 220,
-                height: 220,
-                fit: BoxFit.contain,
+            Center(
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  // QR codes need a white backing in dark mode too.
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(AppRadii.card),
+                  border: Border.all(color: theme.cardBorder),
+                ),
+                child: Image.memory(
+                  base64Decode(payment.qrImageBase64!),
+                  width: 220,
+                  height: 220,
+                  fit: BoxFit.contain,
+                ),
               ),
             ),
             if (payment.urls.isNotEmpty) ...[
               const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton.tonalIcon(
-                  key: const ValueKey('payment-pick-bank'),
-                  onPressed: () => onPickBank(payment.urls),
-                  icon: const Icon(Icons.account_balance_rounded, size: 18),
-                  label: Text(
-                    payment.urls.length == 1
-                        ? '${payment.urls.first.label}-аар төлөх'
-                        : 'Банкны аппаар төлөх',
-                  ),
+              OutlinedButton.icon(
+                key: const ValueKey('payment-pick-bank'),
+                onPressed: () => onPickBank(payment.urls),
+                icon: const Icon(Icons.account_balance_rounded, size: 18),
+                label: Text(
+                  payment.urls.length == 1
+                      ? '${payment.urls.first.label}-аар төлөх'
+                      : 'Банкны аппаар төлөх',
                 ),
               ),
             ],
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             Text(
               payment.urls.isNotEmpty
                   ? 'Банкаа сонгож апп руугаа шилжин төлнө үү, эсвэл өөр '
@@ -516,8 +592,11 @@ class _PaymentPanel extends StatelessWidget {
                   : 'Утсаараа банкны апп нээж QR-аа уншуулна уу. Төлбөр '
                         'төлөгдсөний дараа доорх товчоор шалгана уу.',
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodySmall
-                  ?.copyWith(color: scheme.onSurfaceVariant),
+              style: TextStyle(
+                fontSize: 12,
+                height: 1.4,
+                color: theme.mutedText,
+              ),
             ),
             const SizedBox(height: 16),
             FilledButton(
@@ -528,8 +607,8 @@ class _PaymentPanel extends StatelessWidget {
           ] else
             Text(
               'QR үүсэхэд хүлээнэ үү...',
-              style: Theme.of(context).textTheme.bodyMedium
-                  ?.copyWith(color: scheme.onSurfaceVariant),
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14, color: theme.mutedText),
             ),
         ],
       ),
@@ -557,7 +636,8 @@ class _BankPickerSheet extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
             child: Text(
               'Банкаа сонгоно уу',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+              style: Theme.of(context).textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w700),
             ),
           ),
           Flexible(
@@ -572,9 +652,13 @@ class _BankPickerSheet extends StatelessWidget {
                   key: ValueKey('bank-${bank.name}-$i'),
                   leading: CircleAvatar(
                     backgroundColor: scheme.surfaceContainerHighest,
-                    foregroundImage: bank.logo.isNotEmpty ? NetworkImage(bank.logo) : null,
+                    foregroundImage: bank.logo.isNotEmpty
+                        ? NetworkImage(bank.logo)
+                        : null,
                     child: Text(
-                      bank.label.isNotEmpty ? bank.label.substring(0, 1).toUpperCase() : '?',
+                      bank.label.isNotEmpty
+                          ? bank.label.substring(0, 1).toUpperCase()
+                          : '?',
                       style: TextStyle(color: scheme.onSurfaceVariant),
                     ),
                   ),
@@ -600,16 +684,20 @@ class _Banner extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     width: double.infinity,
-    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
     decoration: BoxDecoration(
-      color: color.withValues(alpha: 0.12),
-      border: Border.all(color: color.withValues(alpha: 0.3)),
-      borderRadius: BorderRadius.circular(AppRadii.medium),
+      color: color.withValues(alpha: 0.14),
+      borderRadius: BorderRadius.circular(AppRadii.large),
     ),
     child: Text(
       text,
       textAlign: TextAlign.center,
-      style: TextStyle(color: AppColors.readable(color, Theme.of(context).brightness)),
+      style: TextStyle(
+        fontSize: 13,
+        height: 1.4,
+        fontWeight: FontWeight.w500,
+        color: AppColors.readable(color, Theme.of(context).brightness),
+      ),
     ),
   );
 }

@@ -1,6 +1,7 @@
 import 'package:carservice_customer/app/app_messages.dart';
 import 'package:carservice_customer/app/theme/app_theme.dart';
-import 'package:carservice_customer/app/theme/app_surfaces.dart';
+import 'package:carservice_customer/app/theme/theme_controller.dart';
+import 'package:carservice_customer/core/widgets/cs_ui.dart';
 import 'package:carservice_customer/core/widgets/offline_banner.dart';
 import 'package:carservice_customer/core/widgets/skeletons.dart';
 import 'package:carservice_customer/features/booking/auth/domain/account.dart';
@@ -55,25 +56,24 @@ class ProfileScreen extends StatelessWidget {
               icon: const Icon(Icons.add_rounded),
               label: const Text('Машин нэмэх'),
             ),
-      body: AppShellBackground(
-        child: SafeArea(
-          child: isAuthenticated
-              ? _ProfileBody(
-                  controller: controller,
-                  account: authController.account,
-                  onSignOut: authController.signOut,
-                  onVehicleSelected: onVehicleSelected,
-                  onAccountClosureRequested: onAccountClosureRequested,
-                  onPasswordSettingsRequested: onPasswordSettingsRequested,
-                  onTermsRequested: onTermsRequested,
-                  onPrivacyRequested: onPrivacyRequested,
-                )
-              : _UnauthenticatedPrompt(
-                  onLoginRequested: onLoginRequested,
-                  onTermsRequested: onTermsRequested,
-                  onPrivacyRequested: onPrivacyRequested,
-                ),
-        ),
+      backgroundColor: CarserviceTheme.of(context).shellBackground,
+      body: SafeArea(
+        child: isAuthenticated
+            ? _ProfileBody(
+                controller: controller,
+                account: authController.account,
+                onSignOut: authController.signOut,
+                onVehicleSelected: onVehicleSelected,
+                onAccountClosureRequested: onAccountClosureRequested,
+                onPasswordSettingsRequested: onPasswordSettingsRequested,
+                onTermsRequested: onTermsRequested,
+                onPrivacyRequested: onPrivacyRequested,
+              )
+            : _UnauthenticatedPrompt(
+                onLoginRequested: onLoginRequested,
+                onTermsRequested: onTermsRequested,
+                onPrivacyRequested: onPrivacyRequested,
+              ),
       ),
     );
   }
@@ -93,59 +93,67 @@ class _UnauthenticatedPrompt extends StatelessWidget {
   final VoidCallback? onPrivacyRequested;
 
   @override
-  Widget build(BuildContext context) => Center(
-    child: SingleChildScrollView(
-      padding: const EdgeInsets.all(32),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.person_outline_rounded,
-            size: 58,
-            color: Theme.of(context).colorScheme.primary,
-          ),
-          const SizedBox(height: 18),
-          Text(
-            'Профайлаа харахын тулд нэвтэрнэ үү',
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Таны мэдээлэл болон бүртгэсэн машинууд энд харагдана.',
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyMedium
-                ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
-          ),
-          const SizedBox(height: 20),
-          FilledButton.icon(
-            key: const ValueKey('profile-login'),
-            onPressed: onLoginRequested,
-            icon: const Icon(Icons.login_rounded),
-            label: const Text('Нэвтрэх'),
-          ),
-          if (onTermsRequested != null) ...[
-            const SizedBox(height: 28),
-            _ProfileLinkTile(
-              key: const ValueKey('profile-terms-tile'),
-              icon: Icons.description_outlined,
-              label: 'Үйлчилгээний нөхцөл',
-              onTap: onTermsRequested!,
+  Widget build(BuildContext context) {
+    final theme = CarserviceTheme.of(context);
+    final rows = <Widget>[
+      if (onTermsRequested != null)
+        _SettingsRow(
+          key: const ValueKey('profile-terms-tile'),
+          icon: Icons.description_outlined,
+          label: 'Үйлчилгээний нөхцөл',
+          onTap: onTermsRequested!,
+        ),
+      if (onPrivacyRequested != null)
+        _SettingsRow(
+          key: const ValueKey('profile-privacy-tile'),
+          icon: Icons.privacy_tip_outlined,
+          label: 'Нууцлалын бодлого',
+          onTap: onPrivacyRequested!,
+        ),
+    ];
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Center(child: CsIconTile(icon: Icons.person_outline_rounded, size: 64)),
+            const SizedBox(height: 18),
+            Text(
+              'Профайлаа харахын тулд нэвтэрнэ үү',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.44,
+                color: theme.ink,
+              ),
             ),
-          ],
-          if (onPrivacyRequested != null) ...[
-            const SizedBox(height: 12),
-            _ProfileLinkTile(
-              key: const ValueKey('profile-privacy-tile'),
-              icon: Icons.privacy_tip_outlined,
-              label: 'Нууцлалын бодлого',
-              onTap: onPrivacyRequested!,
+            const SizedBox(height: 8),
+            Text(
+              'Таны мэдээлэл болон бүртгэсэн машинууд энд харагдана.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14, color: theme.mutedText),
             ),
+            const SizedBox(height: 22),
+            FilledButton.icon(
+              key: const ValueKey('profile-login'),
+              onPressed: onLoginRequested,
+              icon: const Icon(Icons.login_rounded),
+              label: const Text('Нэвтрэх'),
+            ),
+            if (rows.isNotEmpty) ...[
+              const SizedBox(height: 28),
+              const CsSectionLabel('Мэдээлэл'),
+              const SizedBox(height: 8),
+              _SettingsGroup(children: rows),
+            ],
           ],
-        ],
+        ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 class _ProfileBody extends StatelessWidget {
@@ -219,37 +227,58 @@ class _ProfileBody extends StatelessWidget {
             ),
         ],
       },
-      if (account != null && onPasswordSettingsRequested != null)
-        _ProfileLinkTile(
-          key: const ValueKey('profile-password-tile'),
-          icon: Icons.lock_outline,
-          label: 'Нууц үг',
-          onTap: onPasswordSettingsRequested!,
+      Padding(
+        padding: const EdgeInsets.only(top: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const CsSectionLabel('Тохиргоо'),
+            const SizedBox(height: 8),
+            _SettingsGroup(
+              children: [
+                if (context.watch<ThemeController?>() != null) const _AppearanceRow(),
+                if (account != null && onPasswordSettingsRequested != null)
+                  _SettingsRow(
+                    key: const ValueKey('profile-password-tile'),
+                    icon: Icons.lock_outline,
+                    label: 'Нууц үг',
+                    onTap: onPasswordSettingsRequested!,
+                  ),
+                if (onTermsRequested != null)
+                  _SettingsRow(
+                    key: const ValueKey('profile-terms-tile'),
+                    icon: Icons.description_outlined,
+                    label: 'Үйлчилгээний нөхцөл',
+                    onTap: onTermsRequested!,
+                  ),
+                if (onPrivacyRequested != null)
+                  _SettingsRow(
+                    key: const ValueKey('profile-privacy-tile'),
+                    icon: Icons.privacy_tip_outlined,
+                    label: 'Нууцлалын бодлого',
+                    onTap: onPrivacyRequested!,
+                  ),
+                if (account != null && onAccountClosureRequested != null)
+                  _SettingsRow(
+                    key: const ValueKey('profile-account-closure-tile'),
+                    icon: Icons.person_off_outlined,
+                    label: 'Бүртгэл хаах',
+                    destructive: true,
+                    onTap: onAccountClosureRequested!,
+                  ),
+              ],
+            ),
+          ],
         ),
-      if (onTermsRequested != null)
-        _ProfileLinkTile(
-          key: const ValueKey('profile-terms-tile'),
-          icon: Icons.description_outlined,
-          label: 'Үйлчилгээний нөхцөл',
-          onTap: onTermsRequested!,
-        ),
-      if (onPrivacyRequested != null)
-        _ProfileLinkTile(
-          key: const ValueKey('profile-privacy-tile'),
-          icon: Icons.privacy_tip_outlined,
-          label: 'Нууцлалын бодлого',
-          onTap: onPrivacyRequested!,
-        ),
-      if (account != null && onAccountClosureRequested != null)
-        _AccountClosureTile(onTap: onAccountClosureRequested!),
+      ),
     ];
     return RefreshIndicator(
       onRefresh: controller.load,
       child: ListView.separated(
         key: const PageStorageKey('profile-list'),
-        padding: const EdgeInsets.fromLTRB(20, 24, 20, 96),
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 112),
         itemCount: items.length,
-        separatorBuilder: (_, index) => SizedBox(height: index == 0 ? 18 : 12),
+        separatorBuilder: (_, index) => SizedBox(height: index == 0 ? 22 : 10),
         itemBuilder: (context, index) => items[index],
       ),
     );
@@ -290,19 +319,28 @@ class _ProfileHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    final theme = CarserviceTheme.of(context);
     final label = _displayLabel(account);
     final showPhoneSubtitle = label != account.phone;
-    return GlassSurface(
+    return CsHeroCard(
+      padding: const EdgeInsets.fromLTRB(16, 16, 8, 16),
       child: Row(
         children: [
-          CircleAvatar(
-            radius: 26,
-            backgroundColor: scheme.primary,
+          Container(
+            width: 52,
+            height: 52,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: AppColors.accent,
+              borderRadius: BorderRadius.circular(AppRadii.control),
+            ),
             child: Text(
-              label.substring(0, 1).toUpperCase(),
-              style: Theme.of(context).textTheme.titleLarge
-                  ?.copyWith(color: scheme.onPrimary, fontWeight: FontWeight.w800),
+              _initials(label),
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+              ),
             ),
           ),
           const SizedBox(width: 14),
@@ -312,16 +350,11 @@ class _ProfileHeader extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: Theme.of(context).textTheme.titleMedium
-                      ?.copyWith(fontWeight: FontWeight.w800),
+                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: theme.onHero),
                 ),
                 if (showPhoneSubtitle) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    account.phone,
-                    style: Theme.of(context).textTheme.bodySmall
-                        ?.copyWith(color: scheme.onSurfaceVariant),
-                  ),
+                  const SizedBox(height: 3),
+                  Text(account.phone, style: csMono(fontSize: 13, color: theme.onHeroMuted)),
                 ],
               ],
             ),
@@ -329,6 +362,7 @@ class _ProfileHeader extends StatelessWidget {
           TextButton.icon(
             key: const ValueKey('profile-sign-out'),
             onPressed: onSignOut,
+            style: TextButton.styleFrom(foregroundColor: theme.onHero),
             icon: const Icon(Icons.logout_rounded, size: 18),
             label: const Text('Гарах'),
           ),
@@ -338,45 +372,137 @@ class _ProfileHeader extends StatelessWidget {
   }
 }
 
-class _ProfileLinkTile extends StatelessWidget {
-  const _ProfileLinkTile({required this.icon, required this.label, required this.onTap, super.key});
+String _initials(String label) {
+  final words = label.trim().split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
+  if (words.isEmpty) return '?';
+  return words.take(2).map((w) => w.characters.first.toUpperCase()).join();
+}
+
+/// A grouped settings card: rows separated by hairlines.
+class _SettingsGroup extends StatelessWidget {
+  const _SettingsGroup({required this.children});
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = CarserviceTheme.of(context);
+    return CsCard(
+      padding: EdgeInsets.zero,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (var i = 0; i < children.length; i++) ...[
+            if (i > 0) Divider(height: 1, thickness: 1, color: theme.cardBorder),
+            children[i],
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _SettingsRow extends StatelessWidget {
+  const _SettingsRow({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.destructive = false,
+    super.key,
+  });
 
   final IconData icon;
   final String label;
   final VoidCallback onTap;
+  final bool destructive;
 
   @override
-  Widget build(BuildContext context) => GlassSurface(
-    onTap: onTap,
-    child: Row(
-      children: [
-        Icon(icon, color: Theme.of(context).colorScheme.onSurfaceVariant),
-        const SizedBox(width: 12),
-        Expanded(child: Text(label)),
-        Icon(Icons.chevron_right_rounded, color: Theme.of(context).colorScheme.onSurfaceVariant),
-      ],
-    ),
-  );
+  Widget build(BuildContext context) {
+    final theme = CarserviceTheme.of(context);
+    return InkWell(
+      onTap: onTap,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 52),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            children: [
+              Icon(icon, size: 20, color: destructive ? theme.link : theme.mutedText),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                    color: destructive ? theme.link : theme.ink,
+                  ),
+                ),
+              ),
+              Icon(Icons.chevron_right_rounded, color: theme.mutedText),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
-class _AccountClosureTile extends StatelessWidget {
-  const _AccountClosureTile({required this.onTap});
+/// Харагдах байдал: system / light / dark, persisted by [ThemeController]
+/// (it replaces the toggle that used to sit in the shell's app bar).
+class _AppearanceRow extends StatelessWidget {
+  const _AppearanceRow();
 
-  final VoidCallback onTap;
+  static const _options = [
+    (ThemeMode.system, 'Систем', Icons.brightness_auto_outlined),
+    (ThemeMode.light, 'Цайвар', Icons.light_mode_outlined),
+    (ThemeMode.dark, 'Бараан', Icons.dark_mode_outlined),
+  ];
 
   @override
-  Widget build(BuildContext context) => GlassSurface(
-    key: const ValueKey('profile-account-closure-tile'),
-    onTap: onTap,
-    child: Row(
-      children: [
-        Icon(Icons.person_off_outlined, color: Theme.of(context).colorScheme.onSurfaceVariant),
-        const SizedBox(width: 12),
-        const Expanded(child: Text('Бүртгэл хаах')),
-        Icon(Icons.chevron_right_rounded, color: Theme.of(context).colorScheme.onSurfaceVariant),
-      ],
-    ),
-  );
+  Widget build(BuildContext context) {
+    final controller = context.watch<ThemeController>();
+    final theme = CarserviceTheme.of(context);
+    return Padding(
+      key: const ValueKey('profile-appearance'),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.contrast_rounded, size: 20, color: theme.mutedText),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Харагдах байдал',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: theme.ink),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final (mode, label, icon) in _options)
+                Semantics(
+                  selected: controller.mode == mode,
+                  child: CsChoicePill(
+                    key: ValueKey('profile-theme-${mode.name}'),
+                    label: label,
+                    icon: icon,
+                    selected: controller.mode == mode,
+                    onTap: () => controller.setMode(mode),
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 String _displayLabel(Account account) {
@@ -390,7 +516,12 @@ class _VehiclesHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Text(
     'Миний машинууд',
-    style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900),
+    style: TextStyle(
+      fontSize: 22,
+      fontWeight: FontWeight.w700,
+      letterSpacing: -0.22,
+      color: CarserviceTheme.of(context).ink,
+    ),
   );
 }
 
@@ -408,78 +539,64 @@ class _VehicleCard extends StatelessWidget {
   final VoidCallback? onTap;
 
   @override
-  Widget build(BuildContext context) => GlassSurface(
-    onTap: onTap,
-    child: Row(
-      children: [
-        Container(
-          width: 46,
-          height: 46,
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.14),
-            borderRadius: BorderRadius.circular(AppRadii.medium),
-          ),
-          child: Icon(Icons.directions_car_outlined, color: Theme.of(context).colorScheme.primary),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
+  Widget build(BuildContext context) {
+    final theme = CarserviceTheme.of(context);
+    final facts = _vehicleFacts(vehicle);
+    return CsCard(
+      onTap: onTap,
+      padding: const EdgeInsets.fromLTRB(14, 14, 4, 14),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const CsIconTile(icon: Icons.directions_car_outlined, size: 44),
+          const SizedBox(width: 12),
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   '${vehicle.make} ${vehicle.model}',
-                  style: Theme.of(context).textTheme.titleMedium
-                      ?.copyWith(fontWeight: FontWeight.w800),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: theme.ink),
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  vehicle.year == null ? vehicle.plate : '${vehicle.plate} · ${vehicle.year}',
-                  style: Theme.of(context).textTheme.bodyMedium
-                      ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                const SizedBox(height: 6),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    CsPlate(vehicle.plate, fontSize: 12),
+                    if (vehicle.year != null)
+                      Text('${vehicle.year}', style: csMono(fontSize: 12, color: theme.mutedText)),
+                  ],
                 ),
-                if (_vehicleFacts(vehicle).isNotEmpty) ...[
+                if (facts.isNotEmpty) ...[
                   const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 4,
-                    children: [
-                      for (final fact in _vehicleFacts(vehicle))
-                        Text(
-                          fact,
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
-                        ),
-                    ],
-                  ),
+                  Text(facts.join(' · '), style: TextStyle(fontSize: 12, color: theme.mutedText)),
                 ],
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 Text(
                   '${vehicle.serviceCount} үйлчилгээ · ${vehicle.diagnosisCount} оношилгоо',
-                  style: Theme.of(context).textTheme.bodySmall
-                      ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  style: csMono(fontSize: 11, color: theme.mutedText),
                 ),
               ],
             ),
           ),
-        ),
-        Icon(Icons.chevron_right_rounded, color: Theme.of(context).colorScheme.onSurfaceVariant),
-        IconButton(
-          key: ValueKey('delete-vehicle-${vehicle.id}'),
-          onPressed: isDeleting ? null : onDelete,
-          tooltip: 'Устгах',
-          icon: isDeleting
-              ? const SizedBox.square(
-                  dimension: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : Icon(Icons.delete_outline_rounded, color: Theme.of(context).colorScheme.error),
-        ),
-      ],
-    ),
-  );
+          IconButton(
+            key: ValueKey('delete-vehicle-${vehicle.id}'),
+            onPressed: isDeleting ? null : onDelete,
+            tooltip: 'Устгах',
+            icon: isDeleting
+                ? const SizedBox.square(
+                    dimension: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : Icon(Icons.delete_outline_rounded, color: theme.link),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 List<String> _vehicleFacts(Vehicle vehicle) => [

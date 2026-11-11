@@ -1,4 +1,5 @@
 import 'package:carservice_customer/app/theme/app_theme.dart';
+import 'package:carservice_customer/core/widgets/cs_ui.dart';
 import 'package:carservice_customer/features/booking/domain/availability.dart';
 import 'package:flutter/material.dart';
 
@@ -11,8 +12,9 @@ const _periods = [
 
 /// The slot grid driven by the branch availability endpoint (booking v2):
 /// slots are sized to the selected categories' summed duration, grouped by
-/// part of the day in even four-column rows; full or past slots render
-/// disabled and struck through.
+/// part of the day in four-column rows of 42px Geist Mono buttons (CustBook
+/// "ЦАГ"); full or past slots render disabled, muted and struck through, the
+/// selected one in the accent fill.
 class TimeSlotGrid extends StatelessWidget {
   const TimeSlotGrid({
     required this.slots,
@@ -48,22 +50,21 @@ class TimeSlotGrid extends StatelessWidget {
       children: [
         for (final (index, group) in groups.indexed) ...[
           if (index > 0) const SizedBox(height: 14),
-          Text(
-            group.label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: muted,
-            ),
-          ),
-          const SizedBox(height: 8),
-          GridView.count(
-            crossAxisCount: 4,
+          // One part of the day needs no sub-heading.
+          if (groups.length > 1) ...[
+            Text(group.label, style: TextStyle(fontSize: 12, color: muted)),
+            const SizedBox(height: 8),
+          ],
+          GridView(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 8,
-            crossAxisSpacing: 8,
-            childAspectRatio: 2.1,
+            padding: EdgeInsets.zero,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 4,
+              mainAxisSpacing: 8,
+              crossAxisSpacing: 8,
+              mainAxisExtent: 42,
+            ),
             children: [
               for (final slot in group.slots)
                 _SlotCell(
@@ -100,24 +101,28 @@ class _SlotCell extends StatelessWidget {
     final theme = CarserviceTheme.of(context);
     final scheme = Theme.of(context).colorScheme;
     final foreground = selected
-        ? AppColors.onAccent
+        ? scheme.onPrimary
         : enabled
-        ? scheme.onSurface
-        : theme.mutedText.withValues(alpha: 0.6);
+        ? theme.ink
+        : theme.mutedText.withValues(alpha: 0.7);
     return Semantics(
       selected: selected,
       enabled: enabled,
       child: Material(
-        color: selected ? AppColors.accent : Colors.transparent,
+        color: selected
+            ? scheme.primary
+            : enabled
+            ? theme.card
+            : Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadii.medium),
-          side: selected
-              ? BorderSide.none
-              : BorderSide(
-                  color: enabled
-                      ? theme.glassBorder
-                      : theme.glassBorder.withValues(alpha: 0.5),
-                ),
+          side: BorderSide(
+            color: selected
+                ? scheme.primary
+                : enabled
+                ? theme.cardBorder
+                : theme.cardBorder.withValues(alpha: 0.6),
+          ),
         ),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
@@ -125,12 +130,15 @@ class _SlotCell extends StatelessWidget {
           child: Center(
             child: Text(
               label,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: foreground,
-                decoration: enabled ? null : TextDecoration.lineThrough,
-              ),
+              style:
+                  csMono(
+                    fontSize: 14,
+                    fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                    color: foreground,
+                  ).copyWith(
+                    decoration: enabled ? null : TextDecoration.lineThrough,
+                    decorationColor: foreground,
+                  ),
             ),
           ),
         ),

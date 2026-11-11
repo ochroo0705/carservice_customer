@@ -1,10 +1,12 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:carservice_customer/app/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 
 /// Rounded-square organization logo — the leading tile of the Хайх list
 /// cards and the map's branch sheet. Falls back to the name's initials
 /// ("Lexus Service" → "LS") while loading, on error, or without a logo URL.
-/// A loaded logo sits on white, since most are drawn for a light background.
+/// The fallback is the design's navy monogram; a loaded logo sits on white,
+/// since most are drawn for a light background.
 class OrganizationLogoTile extends StatelessWidget {
   const OrganizationLogoTile({
     required this.name,
@@ -19,18 +21,16 @@ class OrganizationLogoTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final radius = BorderRadius.circular(size / 4);
+    final theme = CarserviceTheme.of(context);
+    // 14px on the design's 48px tile.
+    final radius = BorderRadius.circular(size * 0.29);
     final initials = DecoratedBox(
-      decoration: BoxDecoration(
-        color: scheme.surfaceContainerHigh,
-        borderRadius: radius,
-      ),
+      decoration: BoxDecoration(color: theme.hero, borderRadius: radius),
       child: Center(
         child: Text(
           organizationInitials(name),
           style: TextStyle(
-            color: scheme.primary,
+            color: theme.onHero,
             fontSize: size * 0.32,
             fontWeight: FontWeight.w700,
           ),

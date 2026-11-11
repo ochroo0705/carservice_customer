@@ -4,15 +4,16 @@ import 'package:carservice_customer/features/notifications/presentation/controll
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-/// The soft drop shadow every control floating over the map carries, so it
-/// reads as lifted off the tiles in light mode as well as dark.
+/// The soft navy drop shadow every control floating over the map carries
+/// (the design's `0 8px 24px rgba(44,62,80,.14)`), so it reads as lifted off
+/// the tiles in light mode as well as dark.
 List<BoxShadow> floatingControlShadow(BuildContext context) => [
   BoxShadow(
-    color: Colors.black.withValues(
-      alpha: Theme.of(context).brightness == Brightness.dark ? 0.35 : 0.1,
-    ),
-    blurRadius: 16,
-    offset: const Offset(0, 4),
+    color: Theme.of(context).brightness == Brightness.dark
+        ? Colors.black.withValues(alpha: 0.35)
+        : const Color(0xFF2C3E50).withValues(alpha: 0.14),
+    blurRadius: 24,
+    offset: const Offset(0, 8),
   ),
 ];
 
@@ -28,7 +29,7 @@ class MapRefreshSpinner extends StatelessWidget {
     width: 30,
     height: 30,
     decoration: BoxDecoration(
-      color: CarserviceTheme.of(context).shellSurface,
+      color: CarserviceTheme.of(context).card,
       shape: BoxShape.circle,
       boxShadow: floatingControlShadow(context),
     ),
@@ -37,8 +38,8 @@ class MapRefreshSpinner extends StatelessWidget {
   );
 }
 
-/// A round floating control on the map (locate-me, notifications): the
-/// shell surface ringed in the shell border, with an optional count badge.
+/// A round floating control on the map (locate-me, notifications): a card
+/// circle ringed in the card border, with an optional count badge.
 class MapRoundButton extends StatelessWidget {
   const MapRoundButton({
     required this.icon,
@@ -68,8 +69,8 @@ class MapRoundButton extends StatelessWidget {
           boxShadow: floatingControlShadow(context),
         ),
         child: Material(
-          color: theme.shellSurface,
-          shape: CircleBorder(side: BorderSide(color: theme.glassBorder)),
+          color: theme.card,
+          shape: CircleBorder(side: BorderSide(color: theme.cardBorder)),
           clipBehavior: Clip.antiAlias,
           child: InkWell(
             onTap: onPressed,
@@ -81,11 +82,7 @@ class MapRoundButton extends StatelessWidget {
                   backgroundColor: AppColors.accent,
                   textColor: AppColors.onAccent,
                   label: Text(badgeCount > 9 ? '9+' : '$badgeCount'),
-                  child: Icon(
-                    icon,
-                    size: 22,
-                    color: iconColor ?? Theme.of(context).colorScheme.onSurface,
-                  ),
+                  child: Icon(icon, size: 22, color: iconColor ?? theme.ink),
                 ),
               ),
             ),
@@ -128,9 +125,9 @@ class MapNotificationsButton extends StatelessWidget {
 }
 
 /// The high-contrast pill that flips Хайх between the map and the list
-/// ("Жагсаалт" / "Газрын зураг"). Inverted against the page — near-white on
-/// the dark theme, near-black on the light one — so it stands out over map
-/// tiles and list cards alike.
+/// ("Жагсаалт" / "Газрын зураг"). The design's inverse pill — navy on the
+/// light theme, near-white on the dark one — so it stands out over map tiles
+/// and list cards alike.
 class MapViewToggleButton extends StatelessWidget {
   const MapViewToggleButton({
     required this.icon,
@@ -145,20 +142,14 @@ class MapViewToggleButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    final theme = CarserviceTheme.of(context);
     return DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppRadii.pill),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 6),
-          ),
-        ],
+        boxShadow: floatingControlShadow(context),
       ),
       child: Material(
-        color: scheme.onSurface,
+        color: theme.inverse,
         shape: const StadiumBorder(),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
@@ -170,12 +161,12 @@ class MapViewToggleButton extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(icon, size: 18, color: scheme.surface),
+                  Icon(icon, size: 18, color: theme.onInverse),
                   const SizedBox(width: 8),
                   Text(
                     label,
                     style: TextStyle(
-                      color: scheme.surface,
+                      color: theme.onInverse,
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                     ),

@@ -1,12 +1,16 @@
+import 'dart:ui' show ImageFilter;
+
 import 'package:carservice_customer/app/app_messages.dart';
 import 'package:carservice_customer/app/theme/app_surfaces.dart';
 import 'package:carservice_customer/app/theme/app_theme.dart';
+import 'package:carservice_customer/core/widgets/cs_ui.dart';
 import 'package:carservice_customer/core/widgets/skeletons.dart';
 import 'package:carservice_customer/core/widgets/state_views.dart';
 import 'package:carservice_customer/features/booking/domain/next_available_slot.dart';
 import 'package:carservice_customer/features/discovery/domain/branch.dart';
 import 'package:carservice_customer/features/discovery/domain/organization.dart';
 import 'package:carservice_customer/features/discovery/presentation/branch_actions.dart';
+import 'package:carservice_customer/features/discovery/presentation/branch_open_style.dart';
 import 'package:carservice_customer/features/discovery/presentation/controllers/organization_detail_controller.dart';
 import 'package:carservice_customer/features/discovery/presentation/widgets/branch_location_map.dart';
 import 'package:carservice_customer/features/discovery/presentation/widgets/branch_open_status_line.dart';
@@ -59,14 +63,40 @@ class OrganizationDetailScreen extends StatelessWidget {
     return organization.branches.first;
   }
 
-  /// Loading, error and empty states keep a plain AppBar; only a loaded
-  /// branch gets the full-bleed map header.
+  /// Loading, error and empty states keep a plain header (round back
+  /// button + title); only a loaded branch gets the full-bleed map header.
   Widget _plainPage(Widget body) => Scaffold(
-    appBar: AppBar(
-      leading: BackButton(onPressed: onBack),
-      title: const Text('Сервисийн мэдээлэл'),
+    body: AppShellBackground(
+      child: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
+              child: Row(
+                children: [
+                  Builder(
+                    builder: (context) =>
+                        CsCircleButton.back(context, onPressed: onBack),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Text(
+                      'Сервисийн мэдээлэл',
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(child: body),
+          ],
+        ),
+      ),
     ),
-    body: AppShellBackground(child: SafeArea(top: false, child: body)),
   );
 
   @override
@@ -134,53 +164,63 @@ class _BranchDetailView extends StatelessWidget {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: dark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
       child: Scaffold(
+        // The booking bar is translucent: the page scrolls on under it.
+        extendBody: true,
         body: AppShellBackground(
           child: Stack(
             children: [
-              CustomScrollView(
-                slivers: [
-                  SliverToBoxAdapter(
-                    child: BranchLocationMap(
-                      latitude: branch.latitude,
-                      longitude: branch.longitude,
-                      closed:
-                          branch.openStatusAt(DateTime.now()) ==
-                          BranchOpenStatus.closed,
-                      height: topInset + (located ? 156 : 60),
-                    ),
-                  ),
-                  SliverPadding(
-                    // No overlap into the map: an earlier sliver paints over
-                    // a later one, and nothing should cover the native map.
-                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
-                    sliver: SliverToBoxAdapter(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          _IdentityRow(
-                            organization: organization,
-                            branch: branch,
-                            distanceLocation: distanceLocation,
-                          ),
-                          const SizedBox(height: 20),
-                          _ActionTiles(
-                            organization: organization,
-                            branch: branch,
-                          ),
-                          const SizedBox(height: 20),
-                          _InfoGroup(
-                            organization: organization,
-                            branch: branch,
-                          ),
-                          if (branch.categories.isNotEmpty) ...[
-                            const SizedBox(height: 24),
-                            _ServicesSection(categories: branch.categories),
-                          ],
-                        ],
+              Builder(
+                builder: (context) => CustomScrollView(
+                  slivers: [
+                    SliverToBoxAdapter(
+                      child: BranchLocationMap(
+                        latitude: branch.latitude,
+                        longitude: branch.longitude,
+                        closed:
+                            branch.openStatusAt(DateTime.now()) ==
+                            BranchOpenStatus.closed,
+                        height: topInset + (located ? 156 : 60),
                       ),
                     ),
-                  ),
-                ],
+                    SliverPadding(
+                      // No overlap into the map: an earlier sliver paints over
+                      // a later one, and nothing should cover the native map.
+                      // The bottom inset is the booking bar (`extendBody`).
+                      padding: EdgeInsets.fromLTRB(
+                        20,
+                        16,
+                        20,
+                        28 + MediaQuery.paddingOf(context).bottom,
+                      ),
+                      sliver: SliverToBoxAdapter(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            _IdentityRow(
+                              organization: organization,
+                              branch: branch,
+                              distanceLocation: distanceLocation,
+                            ),
+                            const SizedBox(height: 20),
+                            _ActionTiles(
+                              organization: organization,
+                              branch: branch,
+                            ),
+                            const SizedBox(height: 20),
+                            _InfoGroup(
+                              organization: organization,
+                              branch: branch,
+                            ),
+                            if (branch.categories.isNotEmpty) ...[
+                              const SizedBox(height: 24),
+                              _ServicesSection(categories: branch.categories),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
               // Dims whatever scrolls up under the status bar.
               Positioned(
@@ -206,7 +246,7 @@ class _BranchDetailView extends StatelessWidget {
               Positioned(
                 top: topInset + 8,
                 left: 16,
-                child: _FloatingBackButton(onPressed: onBack),
+                child: CsCircleButton.back(context, onPressed: onBack),
               ),
             ],
           ),
@@ -215,35 +255,6 @@ class _BranchDetailView extends StatelessWidget {
           branch: branch,
           nextAvailableSlot: nextAvailableSlot,
           onBook: onBook,
-        ),
-      ),
-    );
-  }
-}
-
-class _FloatingBackButton extends StatelessWidget {
-  const _FloatingBackButton({required this.onPressed});
-
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = CarserviceTheme.of(context);
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: theme.shellSurface.withValues(alpha: 0.92),
-        shape: BoxShape.circle,
-        border: Border.all(color: theme.glassBorder),
-      ),
-      child: SizedBox.square(
-        dimension: 44,
-        child: BackButton(
-          onPressed: onPressed,
-          style: IconButton.styleFrom(
-            minimumSize: const Size.square(44),
-            padding: EdgeInsets.zero,
-            foregroundColor: Theme.of(context).colorScheme.onSurface,
-          ),
         ),
       ),
     );
@@ -280,8 +291,8 @@ class _IdentityRow extends StatelessWidget {
       children: [
         Container(
           foregroundDecoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadii.large),
-            border: Border.all(color: theme.glassBorder),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: theme.cardBorder),
           ),
           child: OrganizationLogoTile(
             name: organization.name,
@@ -299,7 +310,7 @@ class _IdentityRow extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w700,
-                  letterSpacing: -0.2,
+                  letterSpacing: -0.44,
                   height: 1.2,
                 ),
               ),
@@ -310,11 +321,47 @@ class _IdentityRow extends StatelessWidget {
                   style: TextStyle(fontSize: 13, color: theme.mutedText),
                 ),
               ],
-              const SizedBox(height: 4),
-              BranchOpenStatusLine(branch: branch),
+              const SizedBox(height: 8),
+              _OpenBadge(branch: branch),
             ],
           ),
         ),
+      ],
+    );
+  }
+}
+
+/// The open state as a tinted pill ("● Нээлттэй") plus when it changes next
+/// ("18:00 хүртэл"), from the branch's loaded hours.
+class _OpenBadge extends StatelessWidget {
+  const _OpenBadge({required this.branch});
+
+  final BranchDetail branch;
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final status = branch.openStatusAt(now);
+    final hint = branchOpenHint(branch, status, now);
+    final (label, tone) = switch (status) {
+      BranchOpenStatus.open => ('Нээлттэй', CsTone.success),
+      BranchOpenStatus.closed => ('Хаалттай', CsTone.accent),
+      BranchOpenStatus.unknown => ('Төлөв тодорхойгүй', CsTone.neutral),
+    };
+    return Wrap(
+      spacing: 8,
+      runSpacing: 4,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        CsBadge(label, tone: tone, dot: true),
+        if (hint != null)
+          Text(
+            hint,
+            style: TextStyle(
+              fontSize: 12,
+              color: CarserviceTheme.of(context).mutedText,
+            ),
+          ),
       ],
     );
   }
@@ -401,12 +448,11 @@ class _ActionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = CarserviceTheme.of(context);
-    final scheme = Theme.of(context).colorScheme;
     return Material(
-      color: theme.glass,
+      color: theme.card,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadii.large),
-        side: BorderSide(color: theme.glassBorder),
+        borderRadius: BorderRadius.circular(AppRadii.card),
+        side: BorderSide(color: theme.cardBorder),
       ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -423,14 +469,14 @@ class _ActionTile extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 20, color: scheme.primary),
+              Icon(icon, size: 20, color: theme.ink),
               const SizedBox(height: 6),
               Text(
                 label,
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
-                  color: scheme.onSurface,
+                  color: theme.ink,
                 ),
               ),
             ],
@@ -451,7 +497,6 @@ class _InfoGroup extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = CarserviceTheme.of(context);
-    final scheme = Theme.of(context).colorScheme;
     final street = [
       branch.district,
       branch.fullAddress,
@@ -484,7 +529,7 @@ class _InfoGroup extends StatelessWidget {
           key: const ValueKey('detail-phone-row'),
           icon: Icons.call_outlined,
           title: phone,
-          titleColor: scheme.primary,
+          titleColor: theme.link,
           semanticsHint: 'Залгах. Удаан дарж хуулна.',
           trailing: Icon(Icons.chevron_right_rounded, color: theme.mutedText),
           onTap: () => callBranchPhone(phone),
@@ -508,16 +553,16 @@ class _GroupCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = CarserviceTheme.of(context);
     return Material(
-      color: theme.glass,
+      color: theme.card,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadii.large),
-        side: BorderSide(color: theme.glassBorder),
+        borderRadius: BorderRadius.circular(AppRadii.card),
+        side: BorderSide(color: theme.cardBorder),
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
         children: [
           for (final (index, child) in children.indexed) ...[
-            if (index > 0) Divider(height: 1, color: theme.glassBorder),
+            if (index > 0) Divider(height: 1, color: theme.shellBackground),
             child,
           ],
         ],
@@ -705,8 +750,6 @@ class _ServicesSectionState extends State<_ServicesSection> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = CarserviceTheme.of(context);
-    final scheme = Theme.of(context).colorScheme;
     final categories = widget.categories;
     final overflow = categories.length > _collapsedServiceCount;
     final visible = _showAll || !overflow
@@ -715,71 +758,42 @@ class _ServicesSectionState extends State<_ServicesSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          children: [
-            const Expanded(
-              child: Text(
-                'Үйлчилгээ',
-                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
-              ),
-            ),
-            if (overflow)
-              TextButton(
-                key: const ValueKey('detail-services-all'),
-                onPressed: () => setState(() => _showAll = !_showAll),
-                child: Text(
-                  _showAll ? 'Хураах' : 'Бүгд (${categories.length})',
-                ),
-              ),
-          ],
+        CsSectionLabel(
+          'Үйлчилгээ',
+          trailing: overflow
+              ? TextButton(
+                  key: const ValueKey('detail-services-all'),
+                  onPressed: () => setState(() => _showAll = !_showAll),
+                  child: Text(
+                    _showAll ? 'Хураах' : 'Бүгд (${categories.length})',
+                  ),
+                )
+              : null,
         ),
-        const SizedBox(height: 10),
+        SizedBox(height: overflow ? 2 : 10),
         _GroupCard(
           children: [
             for (final category in visible)
               Padding(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
+                  horizontal: 14,
+                  vertical: 10,
                 ),
                 child: Row(
                   children: [
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: scheme.surfaceContainerHigh,
-                        borderRadius: BorderRadius.circular(AppRadii.medium),
-                      ),
-                      child: Icon(
-                        Icons.build_outlined,
-                        size: 20,
-                        color: scheme.primary,
-                      ),
-                    ),
+                    const CsIconTile(icon: Icons.build_outlined, size: 32),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            category.name,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            '~ ${category.durationMinutes} мин',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: theme.mutedText,
-                            ),
-                          ),
-                        ],
+                      child: Text(
+                        category.name,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
+                    const SizedBox(width: 10),
+                    CsTag('~ ${category.durationMinutes} мин'),
                   ],
                 ),
               ),
@@ -827,76 +841,80 @@ class _BookingBarState extends State<_BookingBar> {
   @override
   Widget build(BuildContext context) {
     final theme = CarserviceTheme.of(context);
-    return Container(
-      padding: EdgeInsets.fromLTRB(
-        20,
-        14,
-        20,
-        14 + MediaQuery.paddingOf(context).bottom,
-      ),
-      decoration: BoxDecoration(
-        color: theme.shellSurface,
-        border: Border(top: BorderSide(color: theme.glassBorder)),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: FutureBuilder<NextAvailableSlot?>(
-              future: _slot,
-              builder: (context, snapshot) {
-                final failed = _slot == null || snapshot.hasError;
-                if (failed) return BranchOpenStatusLine(branch: widget.branch);
-                final value = switch (snapshot.connectionState) {
-                  ConnectionState.done =>
-                    snapshot.data?.label ?? '3 хоногт сул цаг алга',
-                  _ => '…',
-                };
-                return Semantics(
-                  liveRegion: true,
-                  child: Column(
-                    key: const ValueKey('detail-next-slot'),
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'Ойрын сул цаг',
-                        style: TextStyle(fontSize: 12, color: theme.mutedText),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        value,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return ClipRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+        child: Container(
+          padding: EdgeInsets.fromLTRB(
+            20,
+            14,
+            20,
+            14 + MediaQuery.paddingOf(context).bottom,
           ),
-          const SizedBox(width: 14),
-          FilledButton.icon(
-            key: const ValueKey('detail-book-button'),
-            onPressed: widget.onBook,
-            icon: const Icon(Icons.event_available_outlined, size: 20),
-            label: const Text('Цаг захиалах'),
-            style: FilledButton.styleFrom(
-              minimumSize: const Size(0, 52),
-              padding: const EdgeInsets.symmetric(horizontal: 22),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppRadii.large),
-              ),
-              textStyle: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
+          decoration: BoxDecoration(
+            color: theme.card.withValues(alpha: dark ? 0.92 : 0.9),
+            border: Border(top: BorderSide(color: theme.cardBorder)),
           ),
-        ],
+          child: Row(
+            children: [
+              Expanded(
+                child: FutureBuilder<NextAvailableSlot?>(
+                  future: _slot,
+                  builder: (context, snapshot) {
+                    final failed = _slot == null || snapshot.hasError;
+                    if (failed) {
+                      return BranchOpenStatusLine(branch: widget.branch);
+                    }
+                    final value = switch (snapshot.connectionState) {
+                      ConnectionState.done =>
+                        snapshot.data?.label ?? '3 хоногт сул цаг алга',
+                      _ => '…',
+                    };
+                    return Semantics(
+                      liveRegion: true,
+                      child: Column(
+                        key: const ValueKey('detail-next-slot'),
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Ойрын сул цаг',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: theme.mutedText,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            value,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: csMono(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              color: theme.ink,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(width: 14),
+              FilledButton(
+                key: const ValueKey('detail-book-button'),
+                onPressed: widget.onBook,
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size(0, 54),
+                  padding: const EdgeInsets.symmetric(horizontal: 26),
+                ),
+                child: const Text('Цаг захиалах'),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

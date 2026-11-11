@@ -134,7 +134,15 @@ void main() {
     expect(find.text('Үйлчилгээний явц'), findsOneWidget);
     expect(find.text('Засварын хуудас №A-100'), findsOneWidget);
     expect(find.text('Тос солих'), findsOneWidget);
-    expect(find.text('Тоормос шалгах'), findsOneWidget);
+    // The in-progress item is also the hero's headline — count it in the
+    // item list only.
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('appointment-progress')),
+        matching: find.text('Тоормос шалгах'),
+      ),
+      findsOneWidget,
+    );
     expect(find.text('1/2 үйлчилгээ дууссан'), findsOneWidget);
     controller.dispose();
   });

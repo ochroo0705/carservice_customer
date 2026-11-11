@@ -78,7 +78,7 @@ void main() {
     await tester.pump();
     expect(find.byKey(const ValueKey('password-request-otp')), findsOneWidget);
 
-    await tester.tap(find.byType(BackButton));
+    await tester.tap(find.byTooltip('Буцах'));
     await tester.pump();
     expect(find.byKey(const ValueKey('password-status')), findsOneWidget);
   });

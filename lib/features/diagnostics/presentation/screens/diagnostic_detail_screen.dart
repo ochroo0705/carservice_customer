@@ -1,5 +1,6 @@
 import 'package:carservice_customer/app/app_messages.dart';
-import 'package:carservice_customer/app/theme/app_surfaces.dart';
+import 'package:carservice_customer/app/theme/app_theme.dart';
+import 'package:carservice_customer/core/widgets/cs_ui.dart';
 import 'package:carservice_customer/core/errors/app_failure.dart';
 import 'package:carservice_customer/core/widgets/skeletons.dart';
 import 'package:carservice_customer/features/diagnostics/domain/diagnostic_report_detail.dart';
@@ -75,9 +76,7 @@ class _DiagnosticDetailScreenState extends State<DiagnosticDetailScreen> {
   Future<void> _load() async {
     setState(() => _status = _DetailStatus.loading);
     try {
-      final detail = await widget.repository.getDiagnosticDetail(
-        widget.reportId,
-      );
+      final detail = await widget.repository.getDiagnosticDetail(widget.reportId);
       if (!mounted) return;
       setState(() {
         _detail = detail;
@@ -113,13 +112,35 @@ class _DiagnosticDetailScreenState extends State<DiagnosticDetailScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      leading: BackButton(onPressed: widget.onBack),
-      title: const Text('Оношилгооны тайлан'),
-    ),
-    body: AppShellBackground(child: SafeArea(top: false, child: _body())),
-  );
+  Widget build(BuildContext context) {
+    final theme = CarserviceTheme.of(context);
+    return Scaffold(
+      backgroundColor: theme.shellBackground,
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+              child: Row(
+                children: [
+                  CsCircleButton.back(context, onPressed: widget.onBack),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Оношилгооны тайлан',
+                      style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: theme.ink),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(child: _body()),
+          ],
+        ),
+      ),
+    );
+  }
 
   Widget _body() => switch (_status) {
     _DetailStatus.loading => const SkeletonDetail(),
@@ -129,21 +150,15 @@ class _DiagnosticDetailScreenState extends State<DiagnosticDetailScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.error_outline_rounded,
-              size: 52,
-              color: Theme.of(context).colorScheme.error,
-            ),
+            Icon(Icons.error_outline_rounded, size: 52, color: Theme.of(context).colorScheme.error),
             const SizedBox(height: 16),
             Text(
               _message ?? 'Тодорхойгүй алдаа гарлаа.',
               textAlign: TextAlign.center,
+              style: TextStyle(color: CarserviceTheme.of(context).ink),
             ),
             const SizedBox(height: 16),
-            OutlinedButton(
-              onPressed: _load,
-              child: const Text('Дахин оролдох'),
-            ),
+            OutlinedButton(onPressed: _load, child: const Text('Дахин оролдох')),
           ],
         ),
       ),
@@ -175,15 +190,15 @@ class _DetailBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = CarserviceTheme.of(context);
     final date =
         '${detail.createdAt.year}.${detail.createdAt.month.toString().padLeft(2, '0')}.${detail.createdAt.day.toString().padLeft(2, '0')}';
-    final subtitle = detail.mileageAtReport != null
-        ? '$date · ${detail.branchName} · ${detail.mileageAtReport} км'
-        : '$date · ${detail.branchName}';
+    final meta = detail.mileageAtReport != null ? '$date · ${detail.mileageAtReport} км' : date;
     return ListView(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
       children: [
-        GlassSurface(
+        CsCard(
+          padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -193,8 +208,12 @@ class _DetailBody extends StatelessWidget {
                   Expanded(
                     child: Text(
                       detail.templateName,
-                      style: Theme.of(context).textTheme.titleLarge
-                          ?.copyWith(fontWeight: FontWeight.w900),
+                      style: TextStyle(
+                        fontSize: 19,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: -0.2,
+                        color: theme.ink,
+                      ),
                     ),
                   ),
                   if (detail.severity != null) ...[
@@ -205,19 +224,22 @@ class _DetailBody extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                '${detail.vehicleMake} ${detail.vehicleModel} · ${detail.vehiclePlate}',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+                '${detail.vehicleMake} ${detail.vehicleModel} · ${detail.branchName}',
+                style: TextStyle(fontSize: 13, color: theme.mutedText),
               ),
-              const SizedBox(height: 4),
-              Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 6,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  CsPlate(detail.vehiclePlate, fontSize: 12),
+                  Text(meta, style: csMono(fontSize: 12, color: theme.mutedText)),
+                ],
+              ),
               if (detail.notes != null && detail.notes!.trim().isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Text(
-                  detail.notes!,
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
+                const SizedBox(height: 12),
+                Text(detail.notes!, style: TextStyle(fontSize: 13, color: theme.ink, height: 1.4)),
               ],
               const SizedBox(height: 16),
               SizedBox(
@@ -243,11 +265,7 @@ class _DetailBody extends StatelessWidget {
           counts: _countByTone(detail.schema, detail.data),
         ),
         const SizedBox(height: 12),
-        ReportAnswersView(
-          schema: detail.schema,
-          data: detail.data,
-          toneFilter: toneFilter,
-        ),
+        ReportAnswersView(schema: detail.schema, data: detail.data, toneFilter: toneFilter),
       ],
     );
   }
@@ -258,11 +276,7 @@ class _DetailBody extends StatelessWidget {
 /// хоёр дахь мөр рүү зөөнө (өмнө нь `SegmentedButton` хэрэглэдэг байсан ч
 /// тэр нэг мөрөнд наалдмал бөгөөд тоотой урт шошго тасрахад хүргэдэг байсан).
 class _ToneFilterRow extends StatelessWidget {
-  const _ToneFilterRow({
-    required this.selected,
-    required this.onChanged,
-    required this.counts,
-  });
+  const _ToneFilterRow({required this.selected, required this.onChanged, required this.counts});
 
   final CheckTone? selected;
   final ValueChanged<CheckTone?> onChanged;
@@ -287,7 +301,7 @@ class _ToneFilterRow extends StatelessWidget {
         for (final (tone, name) in const [
           (CheckTone.good, 'Хэвийн'),
           (CheckTone.warn, 'Анхаарах'),
-          (CheckTone.bad, 'Солих'), 
+          (CheckTone.bad, 'Солих'),
         ])
           if ((counts[tone] ?? 0) > 0)
             _ToneChip(
@@ -301,22 +315,15 @@ class _ToneFilterRow extends StatelessWidget {
 }
 
 class _ToneChip extends StatelessWidget {
-  const _ToneChip({
-    required this.label,
-    required this.isSelected,
-    required this.onTap,
-  });
+  const _ToneChip({required this.label, required this.isSelected, required this.onTap});
 
   final String label;
   final bool isSelected;
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) => FilterChip(
-    label: Text(label),
+  Widget build(BuildContext context) => Semantics(
     selected: isSelected,
-    onSelected: (_) => onTap(),
-    materialTapTargetSize: MaterialTapTargetSize.padded,
-    visualDensity: VisualDensity.compact,
+    child: CsChoicePill(label: label, selected: isSelected, onTap: onTap),
   );
 }

@@ -2,12 +2,15 @@ import 'package:carservice_customer/app/theme/app_theme.dart';
 import 'package:carservice_customer/features/discovery/domain/branch.dart';
 import 'package:flutter/material.dart';
 
-const _weekdayLabels = ['Да', 'Мя', 'Лх', 'Пү', 'Ба', 'Бя', 'Ня'];
+const _weekdayLabels = ['Дав', 'Мяг', 'Лха', 'Пүр', 'Баа', 'Бям', 'Ням'];
 
-/// Monday-first month grid for picking a booking date, mirroring the web
-/// booking flow's `BookingCalendar`. The branch's effective schedule disables
-/// weekly closures, one-off exceptions, and seasonal closures; the server's
-/// per-date availability remains authoritative at selection/submission time.
+/// Booking date picker (CustBook "ӨДӨР"): the displayed month's remaining
+/// days as a horizontally scrolling row of day chips — weekday (or
+/// "Өнөөдөр") over the day number, selected = inverse fill — with month
+/// arrows to reach later dates. Same rules as the web `BookingCalendar`:
+/// past days are not offered, and the branch's effective schedule disables
+/// weekly closures, one-off exceptions and seasonal closures; the server's
+/// per-date availability stays authoritative at selection/submission time.
 class BookingCalendar extends StatelessWidget {
   const BookingCalendar({
     required this.month,
@@ -27,170 +30,211 @@ class BookingCalendar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = CarserviceTheme.of(context);
     final today = DateTime.now();
     final todayKey = DateTime(today.year, today.month, today.day);
     final currentMonthKey = DateTime(month.year, month.month);
     final canGoBack = currentMonthKey.isAfter(
       DateTime(today.year, today.month),
     );
-    final firstWeekday = DateTime(month.year, month.month).weekday;
     final daysInMonth = DateTime(month.year, month.month + 1, 0).day;
-    final leadingBlanks = firstWeekday - 1;
-    final totalCells = ((leadingBlanks + daysInMonth) / 7).ceil() * 7;
-    final muted = CarserviceTheme.of(context).mutedText;
+    final selected = selectedDate == null
+        ? null
+        : DateTime(selectedDate!.year, selectedDate!.month, selectedDate!.day);
+    final days = [
+      for (var day = 1; day <= daysInMonth; day++)
+        DateTime(month.year, month.month, day),
+    ].where((date) => !date.isBefore(todayKey)).toList(growable: false);
+    final monthLabel = month.year == today.year
+        ? '${month.month}-р сар'
+        : '${month.year} оны ${month.month}-р сар';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Row(
           children: [
-            IconButton(
+            Expanded(
+              child: Text(
+                monthLabel,
+                style: TextStyle(fontSize: 13, color: theme.mutedText),
+              ),
+            ),
+            _MonthArrow(
               key: const ValueKey('booking-calendar-prev'),
+              icon: Icons.chevron_left_rounded,
+              tooltip: 'Өмнөх сар',
               onPressed: canGoBack
                   ? () => onMonthChanged(
                       DateTime(currentMonthKey.year, currentMonthKey.month - 1),
                     )
                   : null,
-              tooltip: 'Өмнөх сар',
-              icon: const Icon(Icons.chevron_left_rounded),
             ),
-            Expanded(
-              child: Text(
-                '${month.year} оны ${month.month}-р сар',
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-            IconButton(
+            const SizedBox(width: 6),
+            _MonthArrow(
               key: const ValueKey('booking-calendar-next'),
+              icon: Icons.chevron_right_rounded,
+              tooltip: 'Дараах сар',
               onPressed: () => onMonthChanged(
                 DateTime(currentMonthKey.year, currentMonthKey.month + 1),
               ),
-              tooltip: 'Дараах сар',
-              icon: const Icon(Icons.chevron_right_rounded),
             ),
           ],
         ),
-        const SizedBox(height: 6),
-        Row(
-          children: [
-            for (final label in _weekdayLabels)
-              Expanded(
-                child: Text(
-                  label,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: muted,
-                  ),
+        const SizedBox(height: 10),
+        SingleChildScrollView(
+          // A fresh scroll position per month, so it starts at its first day.
+          key: ValueKey('booking-days-${month.year}-${month.month}'),
+          scrollDirection: Axis.horizontal,
+          clipBehavior: Clip.none,
+          child: Row(
+            children: [
+              for (final (index, date) in days.indexed) ...[
+                if (index > 0) const SizedBox(width: 6),
+                Builder(
+                  builder: (context) {
+                    final effective = branch?.effectiveScheduleAt(
+                      DateTime.utc(date.year, date.month, date.day, 12),
+                    );
+                    final closed = effective != null && !effective.isOpen;
+                    return _DayChip(
+                      key: ValueKey(
+                        'booking-date-${date.year}-${date.month}-${date.day}',
+                      ),
+                      day: date.day,
+                      caption: date == todayKey
+                          ? 'Өнөөдөр'
+                          : _weekdayLabels[date.weekday - 1],
+                      selected: selected == date,
+                      closed: closed,
+                      onTap: () => onDateSelected(date),
+                    );
+                  },
                 ),
-              ),
-          ],
-        ),
-        const SizedBox(height: 6),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 7,
-            mainAxisSpacing: 4,
-            crossAxisSpacing: 4,
+              ],
+            ],
           ),
-          itemCount: totalCells,
-          itemBuilder: (context, index) {
-            final dayNumber = index - leadingBlanks + 1;
-            if (dayNumber < 1 || dayNumber > daysInMonth) {
-              return const SizedBox.shrink();
-            }
-            final date = DateTime(month.year, month.month, dayNumber);
-            final isPast = date.isBefore(todayKey);
-            final effective = branch?.effectiveScheduleAt(
-              DateTime.utc(date.year, date.month, date.day, 12),
-            );
-            final isClosed = effective != null && !effective.isOpen;
-            final isToday = date == todayKey;
-            final isSelected =
-                selectedDate != null &&
-                DateTime(
-                      selectedDate!.year,
-                      selectedDate!.month,
-                      selectedDate!.day,
-                    ) ==
-                    date;
-            return _DayCell(
-              key: ValueKey(
-                'booking-date-${date.year}-${date.month}-${date.day}',
-              ),
-              day: dayNumber,
-              selected: isSelected,
-              today: isToday,
-              closed: isClosed && !isPast,
-              enabled: !isPast && !isClosed,
-              onTap: () => onDateSelected(date),
-            );
-          },
         ),
       ],
     );
   }
 }
 
-class _DayCell extends StatelessWidget {
-  const _DayCell({
+class _MonthArrow extends StatelessWidget {
+  const _MonthArrow({
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
+    super.key,
+  });
+
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = CarserviceTheme.of(context);
+    final enabled = onPressed != null;
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: enabled ? theme.card : Colors.transparent,
+        shape: CircleBorder(side: BorderSide(color: theme.cardBorder)),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onPressed,
+          child: SizedBox.square(
+            dimension: 34,
+            child: Icon(
+              icon,
+              size: 20,
+              semanticLabel: tooltip,
+              color: enabled
+                  ? theme.ink
+                  : theme.mutedText.withValues(alpha: 0.4),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DayChip extends StatelessWidget {
+  const _DayChip({
     required this.day,
+    required this.caption,
     required this.selected,
-    required this.today,
     required this.closed,
-    required this.enabled,
     required this.onTap,
     super.key,
   });
 
   final int day;
-  final bool selected;
-  final bool today;
 
-  /// A future day the branch's schedule keeps closed (vs. simply past).
+  /// "Өнөөдөр" or the short weekday.
+  final String caption;
+  final bool selected;
+
+  /// A day the branch's schedule keeps closed.
   final bool closed;
-  final bool enabled;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final muted = CarserviceTheme.of(context).mutedText;
-    final scheme = Theme.of(context).colorScheme;
+    final theme = CarserviceTheme.of(context);
+    final Color foreground;
+    final Color captionColor;
+    if (selected) {
+      foreground = theme.onInverse;
+      captionColor = theme.onInverse.withValues(alpha: 0.75);
+    } else if (closed) {
+      foreground = theme.mutedText.withValues(alpha: 0.5);
+      captionColor = foreground;
+    } else {
+      foreground = theme.ink;
+      captionColor = theme.mutedText;
+    }
     return Semantics(
       selected: selected,
-      enabled: enabled,
+      enabled: !closed,
       hint: closed ? 'Хаалттай' : null,
       child: Material(
-        color: selected ? AppColors.accent : Colors.transparent,
+        color: selected
+            ? theme.inverse
+            : closed
+            ? Colors.transparent
+            : theme.card,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadii.medium),
-          side: today && !selected
-              ? const BorderSide(color: AppColors.accent, width: 1.5)
-              : BorderSide.none,
+          borderRadius: BorderRadius.circular(AppRadii.large),
+          side: BorderSide(color: selected ? theme.inverse : theme.cardBorder),
         ),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
-          onTap: enabled ? onTap : null,
-          child: Center(
-            child: Text(
-              '$day',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: selected ? FontWeight.w800 : FontWeight.w500,
-                color: selected
-                    ? AppColors.onAccent
-                    : enabled
-                    ? scheme.onSurface
-                    : muted.withValues(alpha: 0.4),
-                decoration: closed ? TextDecoration.lineThrough : null,
-              ),
+          onTap: closed ? null : onTap,
+          child: SizedBox(
+            width: 60,
+            height: 58,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  caption,
+                  maxLines: 1,
+                  style: TextStyle(fontSize: 11, color: captionColor),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '$day',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: foreground,
+                    decoration: closed ? TextDecoration.lineThrough : null,
+                  ),
+                ),
+              ],
             ),
           ),
         ),

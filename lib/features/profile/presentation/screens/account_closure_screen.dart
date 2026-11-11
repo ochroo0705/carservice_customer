@@ -1,5 +1,5 @@
-import 'package:carservice_customer/app/theme/app_surfaces.dart';
 import 'package:carservice_customer/app/theme/app_theme.dart';
+import 'package:carservice_customer/core/widgets/cs_ui.dart';
 import 'package:carservice_customer/features/booking/auth/presentation/auth_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -43,28 +43,45 @@ class _AccountClosureScreenState extends State<AccountClosureScreen> {
   @override
   Widget build(BuildContext context) {
     final controller = context.watch<AuthController>();
+    final theme = CarserviceTheme.of(context);
     return Scaffold(
-      appBar: AppBar(
-        leading: BackButton(onPressed: _selected == null ? null : _reset),
-        title: const Text('Бүртгэл хаах'),
-      ),
-      body: AppShellBackground(
-        child: SafeArea(
-          top: false,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: _selected == null
-                ? _OptionList(onSelected: _select)
-                : _ClosureStep(
-                    kind: _selected!,
-                    maskedPhone: _maskedPhone,
-                    codeController: _codeController,
-                    isBusy: controller.isBusy,
-                    errorMessage: controller.errorMessage,
-                    onRequestOtp: () => _requestOtp(controller),
-                    onConfirm: () => _confirm(controller),
+      backgroundColor: theme.shellBackground,
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+              child: Row(
+                children: [
+                  CsCircleButton.back(context, onPressed: _selected == null ? null : _reset),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Бүртгэл хаах',
+                      style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: theme.ink),
+                    ),
                   ),
-          ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+                child: _selected == null
+                    ? _OptionList(onSelected: _select)
+                    : _ClosureStep(
+                        kind: _selected!,
+                        maskedPhone: _maskedPhone,
+                        codeController: _codeController,
+                        isBusy: controller.isBusy,
+                        errorMessage: controller.errorMessage,
+                        onRequestOtp: () => _requestOtp(controller),
+                        onConfirm: () => _confirm(controller),
+                      ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -142,15 +159,17 @@ class _OptionList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
+    crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
+      const CsSectionLabel('Сонголт'),
+      const SizedBox(height: 8),
       _OptionCard(
         title: 'Идэвхгүй болгох',
         description: 'Бүртгэл нуугдаж, мэдэгдэл ирэхгүй. Хүссэн үедээ дахин нэвтэрч сэргээнэ.',
         destructive: false,
         onTap: () => onSelected(_ClosureKind.deactivate),
       ),
-      const SizedBox(height: 12),
+      const SizedBox(height: 10),
       _OptionCard(
         title: 'Бүрмөсөн устгах',
         description:
@@ -178,22 +197,40 @@ class _OptionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return GlassSurface(
+    final theme = CarserviceTheme.of(context);
+    return CsCard(
       onTap: onTap,
-      child: Column(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: Theme.of(context).textTheme.titleMedium
-                ?.copyWith(fontWeight: FontWeight.w800, color: destructive ? scheme.error : null),
+          CsIconTile(
+            icon: destructive ? Icons.delete_forever_outlined : Icons.pause_circle_outline_rounded,
+            size: 40,
+            color: destructive ? theme.link : theme.mutedText,
+            background: destructive ? theme.accentSoft : theme.shellBackground,
           ),
-          const SizedBox(height: 8),
-          Text(
-            description,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: destructive ? theme.link : theme.ink,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  description,
+                  style: TextStyle(fontSize: 13, color: theme.mutedText, height: 1.35),
+                ),
+              ],
+            ),
           ),
+          Icon(Icons.chevron_right_rounded, color: theme.mutedText),
         ],
       ),
     );
@@ -224,16 +261,22 @@ class _ClosureStep extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return GlassSurface(
+    final theme = CarserviceTheme.of(context);
+    return CsCard(
+      padding: const EdgeInsets.all(18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             _delete ? 'Бүрмөсөн устгах' : 'Идэвхгүй болгох',
-            style: Theme.of(context).textTheme.titleLarge
-                ?.copyWith(fontWeight: FontWeight.w800, color: _delete ? scheme.error : null),
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.44,
+              color: _delete ? theme.link : theme.ink,
+            ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Text(
             _delete
                 ? 'Нэр, утас, машин, мэдэгдэл устана. Үйлчилгээний түүх '
@@ -241,7 +284,7 @@ class _ClosureStep extends StatelessWidget {
                       'боломжгүй.'
                 : 'Бүртгэл нуугдаж, мэдэгдэл ирэхгүй. Хүссэн үедээ дахин '
                       'нэвтэрч сэргээнэ.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
+            style: TextStyle(fontSize: 14, color: theme.mutedText, height: 1.35),
           ),
           const SizedBox(height: 20),
           // Код авах алхамд гарсан алдаа (429 throttle, сүлжээ г.м.) — доорх
@@ -269,15 +312,14 @@ class _ClosureStep extends StatelessWidget {
               ),
             )
           else ...[
-            Text('$maskedPhone руу код илгээлээ'),
+            Text('$maskedPhone руу код илгээлээ', style: TextStyle(fontSize: 14, color: theme.ink)),
             const SizedBox(height: 12),
             TextField(
               controller: codeController,
               keyboardType: TextInputType.number,
               textAlign: TextAlign.center,
               autofillHints: const [AutofillHints.oneTimeCode],
-              style: Theme.of(context).textTheme.titleLarge
-                  ?.copyWith(letterSpacing: 8, fontWeight: FontWeight.w700),
+              style: csMono(fontSize: 22, letterSpacing: 8, fontWeight: FontWeight.w500),
               inputFormatters: [
                 FilteringTextInputFormatter.digitsOnly,
                 LengthLimitingTextInputFormatter(6),

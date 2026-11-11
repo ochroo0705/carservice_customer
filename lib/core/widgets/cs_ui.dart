@@ -37,7 +37,8 @@ class CsCircleButton extends StatelessWidget {
       CsCircleButton(
         key: key,
         icon: Icons.chevron_left_rounded,
-        tooltip: 'Буцах',
+        // Material's localized "Back" — also what `tester.pageBack()` finds.
+        tooltip: MaterialLocalizations.of(context).backButtonTooltip,
         onPressed: onPressed ?? () => Navigator.of(context).maybePop(),
       );
 

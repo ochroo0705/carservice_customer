@@ -156,7 +156,8 @@ void main() {
       nextAvailableSlot: (_) async => throw Exception('offline'),
     );
     expect(find.text('Ойрын сул цаг'), findsNothing);
-    // The status line now appears twice: identity row and booking bar.
-    expect(find.byType(BranchOpenStatusLine), findsNWidgets(2));
+    // The booking bar falls back to the status line (the identity row shows
+    // the open state as a badge instead).
+    expect(find.byType(BranchOpenStatusLine), findsOneWidget);
   });
 }

@@ -1,5 +1,5 @@
-import 'package:carservice_customer/app/theme/app_surfaces.dart';
 import 'package:carservice_customer/app/theme/app_theme.dart';
+import 'package:carservice_customer/core/widgets/cs_ui.dart';
 import 'package:carservice_customer/features/discovery/domain/branch.dart';
 import 'package:carservice_customer/features/discovery/domain/organization.dart';
 import 'package:carservice_customer/features/discovery/presentation/widgets/discovery_list_parts.dart';
@@ -31,81 +31,96 @@ class BranchCard extends StatelessWidget {
       branch.name,
       ?branch.distanceLabel,
     ].where((part) => part.trim().isNotEmpty).join(' · ');
-    return GlassSurface(
+    // The design's service row: logo/monogram, name over "branch · distance",
+    // the business types as small tags, then the location and a link-style
+    // "Захиалах →" (the whole card is the tap target). List-level branches
+    // carry no hours, so no open/closed badge is claimed here.
+    return CsCard(
       key: ValueKey('branch-${organization.slug}-${branch.id}'),
       onTap: onTap,
-      padding: const EdgeInsets.all(14),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          OrganizationLogoTile(
-            name: organization.name,
-            logoUrl: organization.logoUrl,
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  organization.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
-                  ),
+          Row(
+            children: [
+              OrganizationLogoTile(
+                name: organization.name,
+                logoUrl: organization.logoUrl,
+                size: 48,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      organization.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    if (subtitle.isNotEmpty) ...[
+                      const SizedBox(height: 3),
+                      Text(
+                        subtitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontSize: 12, color: theme.mutedText),
+                      ),
+                    ],
+                  ],
                 ),
-                if (subtitle.isNotEmpty) ...[
-                  const SizedBox(height: 3),
-                  Text(
-                    subtitle,
+              ),
+            ],
+          ),
+          if (branch.tags.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                for (final tag in branch.tags.take(_maxCardTags))
+                  DiscoveryPill(label: tag.name),
+                if (branch.tags.length > _maxCardTags)
+                  DiscoveryPill(
+                    label: '+${branch.tags.length - _maxCardTags}',
+                    muted: true,
+                  ),
+              ],
+            ),
+          ],
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              if (branch.locationLabel.isNotEmpty) ...[
+                Icon(Icons.place_outlined, size: 15, color: theme.mutedText),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    branch.locationLabel,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(fontSize: 13, color: theme.mutedText),
                   ),
-                ],
-                if (branch.locationLabel.isNotEmpty) ...[
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.place_outlined,
-                        size: 15,
-                        color: theme.mutedText,
-                      ),
-                      const SizedBox(width: 5),
-                      Expanded(
-                        child: Text(
-                          branch.locationLabel,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 13),
-                        ),
-                      ),
-                    ],
+                ),
+              ] else
+                const Spacer(),
+              const SizedBox(width: 8),
+              ExcludeSemantics(
+                child: Text(
+                  'Захиалах →',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: theme.link,
                   ),
-                ],
-                if (branch.tags.isNotEmpty) ...[
-                  const SizedBox(height: 10),
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 6,
-                    children: [
-                      for (final tag in branch.tags.take(_maxCardTags))
-                        DiscoveryPill(label: tag.name),
-                      if (branch.tags.length > _maxCardTags)
-                        DiscoveryPill(
-                          label: '+${branch.tags.length - _maxCardTags}',
-                          muted: true,
-                        ),
-                    ],
-                  ),
-                ],
-              ],
-            ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 8),
-          Icon(Icons.chevron_right_rounded, color: theme.mutedText),
         ],
       ),
     );

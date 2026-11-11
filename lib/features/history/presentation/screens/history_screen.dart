@@ -1,5 +1,5 @@
 import 'package:carservice_customer/app/theme/app_theme.dart';
-import 'package:carservice_customer/app/theme/app_surfaces.dart';
+import 'package:carservice_customer/core/widgets/cs_ui.dart';
 import 'package:carservice_customer/core/widgets/coming_soon_view.dart';
 import 'package:carservice_customer/core/widgets/animations.dart';
 import 'package:carservice_customer/core/widgets/filter_controls.dart';
@@ -14,7 +14,7 @@ import 'package:carservice_customer/features/booking/auth/presentation/auth_cont
 import 'package:carservice_customer/features/history/presentation/controllers/history_controller.dart';
 import 'package:carservice_customer/features/history/presentation/controllers/history_state.dart';
 import 'package:carservice_customer/features/history/presentation/format_amount.dart';
-import 'package:carservice_customer/features/history/presentation/widgets/service_order_status_chip.dart';
+import 'package:carservice_customer/features/history/domain/service_order_status.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:carservice_customer/core/widgets/state_views.dart';
@@ -43,8 +43,10 @@ class HistoryScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final isAuthenticated = context.select<AuthController, bool>((c) => c.isAuthenticated);
     final controller = context.watch<HistoryController>();
-    return AppShellBackground(
+    return ColoredBox(
+      color: CarserviceTheme.of(context).shellBackground,
       child: SafeArea(
+        top: false,
         child: isAuthenticated
             ? _HistoryBody(
                 controller: controller,
@@ -71,21 +73,25 @@ class _UnauthenticatedPrompt extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.receipt_long_outlined, size: 58, color: Theme.of(context).colorScheme.primary),
+          const CsIconTile(icon: Icons.receipt_long_outlined, size: 64),
           const SizedBox(height: 18),
           Text(
             'Түүхээ харахын тулд нэвтэрнэ үү',
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.44,
+              color: CarserviceTheme.of(context).ink,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             'Таны хийлгэсэн засварын түүх энд харагдана.',
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyMedium
-                ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+            style: TextStyle(fontSize: 14, color: CarserviceTheme.of(context).mutedText),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 22),
           FilledButton.icon(
             key: const ValueKey('history-login'),
             onPressed: onLoginRequested,
@@ -157,36 +163,59 @@ class _HistoryBodyState extends State<_HistoryBody> with SingleTickerProviderSta
   }
 
   @override
-  Widget build(BuildContext context) => Column(
-    children: [
-      Padding(
-        padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
-        child: TabBar(
-          key: const ValueKey('history-tab-bar'),
-          controller: _tabController,
-          tabs: const [
-            Tab(text: 'Засварын түүх'),
-            Tab(text: 'Оношилгооны жагсаалт'),
-          ],
-        ),
-      ),
-      Expanded(
-        child: TabBarView(
-          controller: _tabController,
-          children: [
-            _AppointmentHistoryTab(
-              controller: widget.controller,
-              onOrderSelected: widget.onOrderSelected,
+  Widget build(BuildContext context) {
+    final theme = CarserviceTheme.of(context);
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+          // Segmented pill control: navy fill on the active tab.
+          child: Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: theme.card,
+              borderRadius: BorderRadius.circular(AppRadii.pill),
+              border: Border.all(color: theme.cardBorder),
             ),
-            DiagnosticsListView(
-              controller: _diagnosticsController,
-              onReportSelected: widget.onDiagnosticReportSelected,
+            child: TabBar(
+              key: const ValueKey('history-tab-bar'),
+              controller: _tabController,
+              dividerHeight: 0,
+              indicatorSize: TabBarIndicatorSize.tab,
+              indicator: BoxDecoration(
+                color: theme.inverse,
+                borderRadius: BorderRadius.circular(AppRadii.pill),
+              ),
+              labelColor: theme.onInverse,
+              unselectedLabelColor: theme.mutedText,
+              labelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+              unselectedLabelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+              splashBorderRadius: BorderRadius.circular(AppRadii.pill),
+              tabs: const [
+                Tab(height: 38, text: 'Засварын түүх'),
+                Tab(height: 38, text: 'Оношилгооны жагсаалт'),
+              ],
             ),
-          ],
+          ),
         ),
-      ),
-    ],
-  );
+        Expanded(
+          child: TabBarView(
+            controller: _tabController,
+            children: [
+              _AppointmentHistoryTab(
+                controller: widget.controller,
+                onOrderSelected: widget.onOrderSelected,
+              ),
+              DiagnosticsListView(
+                controller: _diagnosticsController,
+                onReportSelected: widget.onDiagnosticReportSelected,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 /// Хайлт/шүүлтийн мөр (`SearchWithYearFilterBar`) энд, switch-ийн ГАДНА
@@ -320,8 +349,7 @@ class _HistoryListState extends State<_HistoryList> {
               child: Text(
                 'Илэрц олдсонгүй',
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium
-                    ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                style: TextStyle(fontSize: 14, color: CarserviceTheme.of(context).mutedText),
               ),
             ),
           )
@@ -332,7 +360,7 @@ class _HistoryListState extends State<_HistoryList> {
               key: const PageStorageKey('history-list'),
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
               itemCount: itemCount,
-              separatorBuilder: (_, _) => const SizedBox(height: 12),
+              separatorBuilder: (_, _) => const SizedBox(height: 10),
               itemBuilder: (context, index) {
                 final contentCount =
                     orders.length +
@@ -387,12 +415,9 @@ class _CancelledSectionHeader extends StatelessWidget {
   const _CancelledSectionHeader();
 
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(top: 6),
-    child: Text(
-      'Цуцлагдсан / ирээгүй цагууд',
-      style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
-    ),
+  Widget build(BuildContext context) => const Padding(
+    padding: EdgeInsets.only(top: 10),
+    child: CsSectionLabel('Цуцлагдсан / ирээгүй цагууд'),
   );
 }
 
@@ -402,45 +427,15 @@ class _CancelledAppointmentCard extends StatelessWidget {
   final CancelledAppointmentSummary appointment;
 
   @override
-  Widget build(BuildContext context) {
-    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
-    return GlassSurface(
-      key: ValueKey('history-cancelled-${appointment.id}'),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Text(
-                  appointment.tenantName,
-                  style: Theme.of(context).textTheme.titleMedium
-                      ?.copyWith(fontWeight: FontWeight.w800),
-                ),
-              ),
-              const SizedBox(width: 8),
-              CancelledOrderChip(label: appointment.status.localizedLabel),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(appointment.branchName, style: TextStyle(color: muted)),
-          if (appointment.categoryName != null) ...[
-            const SizedBox(height: 4),
-            Text(appointment.categoryName!, style: TextStyle(color: muted)),
-          ],
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Icon(Icons.event_outlined, size: 16, color: muted),
-              const SizedBox(width: 6),
-              Text(_formatDate(appointment.requestedAt)),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+  Widget build(BuildContext context) => CsCard(
+    key: ValueKey('history-cancelled-${appointment.id}'),
+    child: _HistoryCardBody(
+      date: appointment.requestedAt,
+      title: appointment.tenantName,
+      lines: [appointment.branchName, ?appointment.categoryName],
+      badge: CsBadge(appointment.status.localizedLabel, tone: CsTone.accent),
+    ),
+  );
 }
 
 class _OrderCard extends StatelessWidget {
@@ -450,65 +445,102 @@ class _OrderCard extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) => InkWell(
+  Widget build(BuildContext context) => CsCard(
     key: ValueKey('history-order-${order.id}'),
     onTap: onTap,
-    borderRadius: BorderRadius.circular(AppRadii.extraLarge),
-    child: GlassSurface(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Text(
-                  order.tenantName,
-                  style: Theme.of(context).textTheme.titleMedium
-                      ?.copyWith(fontWeight: FontWeight.w800),
-                ),
-              ),
-              const SizedBox(width: 8),
-              order.isCancelled
-                  ? const CancelledOrderChip()
-                  : ServiceOrderStatusChip(status: order.status),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            order.branchName,
-            style: Theme.of(context).textTheme.bodyMedium
-                ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Icon(
-                Icons.event_outlined,
-                size: 16,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-              const SizedBox(width: 6),
-              Text(_formatDate(order.completedAt)),
-            ],
-          ),
-          if (order.vehiclePlate != null) ...[
-            const SizedBox(height: 4),
-            Text(
-              'Тээврийн хэрэгсэл: ${order.vehiclePlate}',
-              style: Theme.of(context).textTheme.bodySmall,
+    child: _HistoryCardBody(
+      date: order.completedAt,
+      title: order.tenantName,
+      lines: [order.branchName],
+      plate: order.vehiclePlate,
+      badge: order.isCancelled
+          ? const CsBadge('Цуцлагдсан', tone: CsTone.accent)
+          : CsBadge(
+              order.status.localizedLabel,
+              tone: switch (order.status) {
+                ServiceOrderStatus.paid => CsTone.success,
+                ServiceOrderStatus.partiallyPaid => CsTone.info,
+                ServiceOrderStatus.unpaid => CsTone.accent,
+              },
             ),
-          ],
-          const SizedBox(height: 8),
-          Text(
-            '${formatAmount(order.totalAmount)}₮',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
-          ),
-        ],
-      ),
+      amount: '${formatAmount(order.totalAmount)}₮',
     ),
   );
 }
 
-String _formatDate(DateTime value) =>
-    '${value.year}.${value.month.toString().padLeft(2, '0')}.${value.day.toString().padLeft(2, '0')}';
+/// Mono date column · title + muted lines (+ plate) · badge and amount.
+class _HistoryCardBody extends StatelessWidget {
+  const _HistoryCardBody({
+    required this.date,
+    required this.title,
+    required this.lines,
+    required this.badge,
+    this.plate,
+    this.amount,
+  });
+
+  final DateTime date;
+  final String title;
+  final List<String> lines;
+  final Widget badge;
+  final String? plate;
+  final String? amount;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = CarserviceTheme.of(context);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Semantics(
+          label: _formatDate(date),
+          excludeSemantics: true,
+          child: SizedBox(
+            width: 44,
+            child: Column(
+              children: [
+                Text(
+                  '${_two(date.month)}/${_two(date.day)}',
+                  style: csMono(fontSize: 13, color: theme.ink),
+                ),
+                Text('${date.year}', style: csMono(fontSize: 10, color: theme.mutedText)),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: theme.ink),
+              ),
+              for (final line in lines) ...[
+                const SizedBox(height: 2),
+                Text(line, style: TextStyle(fontSize: 12, color: theme.mutedText)),
+              ],
+              if (plate != null) ...[const SizedBox(height: 8), CsPlate(plate!, fontSize: 11)],
+            ],
+          ),
+        ),
+        const SizedBox(width: 10),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            badge,
+            if (amount != null) ...[
+              const SizedBox(height: 8),
+              Text(amount!, style: csMono(fontSize: 14, color: theme.ink)),
+            ],
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+String _two(int value) => value.toString().padLeft(2, '0');
+
+String _formatDate(DateTime value) => '${value.year}.${_two(value.month)}.${_two(value.day)}';

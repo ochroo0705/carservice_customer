@@ -13,14 +13,18 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+/// Signs in from Нүүр's header login button, then opens Профайл from the
+/// avatar that replaces it (Профайл is a pushed page, not a nav tab).
 Future<void> _login(WidgetTester tester) async {
-  await tester.tap(find.byKey(const ValueKey('profile-login')));
+  await tester.tap(find.byKey(const ValueKey('shell-login')));
   await tester.pumpAndSettle();
   await tester.enterText(find.byKey(const ValueKey('login-phone')), '99112233');
   await tester.tap(find.text('Код авах →'));
   await tester.pumpAndSettle();
   await tester.enterText(find.byKey(const ValueKey('login-otp')), '123456');
   await tester.tap(find.text('Нэвтрэх →'));
+  await tester.pumpAndSettle();
+  await tester.tap(find.byKey(const ValueKey('shell-avatar')));
   await tester.pumpAndSettle();
 }
 
@@ -34,15 +38,16 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Профайл'));
-    await tester.pumpAndSettle();
-    expect(find.text('Профайлаа харахын тулд нэвтэрнэ үү'), findsOneWidget);
+    // Signed out there is no way into Профайл — only the login button.
+    expect(find.byKey(const ValueKey('shell-avatar')), findsNothing);
+    expect(find.byKey(const ValueKey('shell-login')), findsOneWidget);
 
     await _login(tester);
 
     expect(find.text('Миний машинууд'), findsOneWidget);
     expect(find.text('Hyundai Sonata'), findsOneWidget);
-    expect(find.text('9911УБЕ · 2019'), findsOneWidget);
+    expect(find.text('9911УБЕ'), findsOneWidget);
+    expect(find.text('2019'), findsOneWidget);
   });
 
   testWidgets('shows the account header with a working sign-out button', (tester) async {
@@ -51,8 +56,6 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Профайл'));
-    await tester.pumpAndSettle();
     await _login(tester);
 
     expect(find.byKey(const ValueKey('profile-sign-out')), findsOneWidget);
@@ -69,8 +72,6 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Профайл'));
-    await tester.pumpAndSettle();
     await _login(tester);
 
     await tester.tap(find.byKey(const ValueKey('profile-add-vehicle-fab')));
@@ -97,8 +98,6 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Профайл'));
-    await tester.pumpAndSettle();
     await _login(tester);
 
     final deleteButton = find.byKey(const ValueKey('delete-vehicle-seed-vehicle-1'));

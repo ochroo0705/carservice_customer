@@ -1,10 +1,10 @@
 import 'package:carservice_customer/app/theme/app_theme.dart';
-import 'package:carservice_customer/app/theme/app_surfaces.dart';
+import 'package:carservice_customer/core/widgets/cs_ui.dart';
 import 'package:carservice_customer/features/booking/domain/appointment.dart';
 import 'package:carservice_customer/features/booking/domain/appointment_status.dart';
 import 'package:carservice_customer/features/history/domain/service_order.dart';
+import 'package:carservice_customer/features/history/domain/service_order_status.dart';
 import 'package:carservice_customer/features/history/presentation/format_amount.dart';
-import 'package:carservice_customer/features/history/presentation/widgets/service_order_status_chip.dart';
 import 'package:carservice_customer/features/booking/presentation/controllers/appointments_controller.dart';
 import 'package:carservice_customer/features/history/presentation/controllers/history_controller.dart';
 import 'package:carservice_customer/features/vehicles/domain/vehicle.dart';
@@ -102,136 +102,329 @@ class _VehicleDetailView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final facts = <({String label, String value})>[
-      (label: 'Үйлдвэрлэсэн он', value: _value(vehicle.year?.toString())),
-      (label: 'VIN', value: _value(vehicle.vin)),
-      (label: 'Өнгө', value: _value(vehicle.colorName)),
-      (label: 'Моторын багтаамж', value: _capacity(vehicle.capacity)),
-      (label: 'Шатахуун', value: _value(vehicle.fuelType)),
-      (label: 'Жолооны хүрд', value: _value(vehicle.wheelPosition)),
-      (label: 'Зориулалт', value: _value(vehicle.purpose)),
+    final theme = CarserviceTheme.of(context);
+    final facts = <({String label, String value, bool mono})>[
+      (label: 'Үйлдвэрлэсэн он', value: _value(vehicle.year?.toString()), mono: true),
+      (label: 'VIN', value: _value(vehicle.vin), mono: true),
+      (label: 'Өнгө', value: _value(vehicle.colorName), mono: false),
+      (label: 'Моторын багтаамж', value: _capacity(vehicle.capacity), mono: true),
+      (label: 'Шатахуун', value: _value(vehicle.fuelType), mono: false),
+      (label: 'Жолооны хүрд', value: _value(vehicle.wheelPosition), mono: false),
+      (label: 'Зориулалт', value: _value(vehicle.purpose), mono: false),
     ];
+    final subtitle = [
+      if (vehicle.year != null) '${vehicle.year}',
+      if (vehicle.fuelType?.trim().isNotEmpty ?? false) vehicle.fuelType!.trim(),
+    ].join(' · ');
+    final lastOrder = orders.isEmpty
+        ? null
+        : orders.map((o) => o.completedAt).reduce((a, b) => a.isAfter(b) ? a : b);
 
     return Scaffold(
-      appBar: AppBar(
-        leading: BackButton(onPressed: onBack),
-        title: const Text('Машины дэлгэрэнгүй'),
-        actions: [
-          if (onRefreshHur != null)
-            IconButton(
-              key: const ValueKey('vehicle-refresh-hur'),
-              tooltip: 'HUR-аас шинэчлэх',
-              onPressed: refreshingHur ? null : onRefreshHur,
-              icon: refreshingHur
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.refresh_rounded),
-            ),
-        ],
-      ),
-      body: AppShellBackground(
-        child: SafeArea(
-          top: false,
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
-            children: [
-              GlassSurface(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 52,
-                          height: 52,
-                          decoration: BoxDecoration(
-                            color: scheme.primary.withValues(alpha: 0.14),
-                            borderRadius: BorderRadius.circular(
-                              AppRadii.medium,
+      backgroundColor: theme.shellBackground,
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+              child: Row(
+                children: [
+                  CsCircleButton.back(context, onPressed: onBack),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Машины дэлгэрэнгүй',
+                      style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: theme.ink),
+                    ),
+                  ),
+                  if (onRefreshHur != null)
+                    refreshingHur
+                        ? SizedBox(
+                            key: const ValueKey('vehicle-refresh-hur'),
+                            width: 44,
+                            height: 44,
+                            child: Center(
+                              child: SizedBox.square(
+                                dimension: 20,
+                                child: CircularProgressIndicator(strokeWidth: 2, color: theme.ink),
+                              ),
                             ),
+                          )
+                        : CsCircleButton(
+                            key: const ValueKey('vehicle-refresh-hur'),
+                            icon: Icons.refresh_rounded,
+                            tooltip: 'HUR-аас шинэчлэх',
+                            onPressed: onRefreshHur,
                           ),
-                          child: Icon(
-                            Icons.directions_car_outlined,
-                            color: scheme.primary,
-                            size: 28,
-                          ),
-                        ),
-                        const SizedBox(width: 14),
+                ],
+              ),
+            ),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
+                children: [
+                  CsHeroCard(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                vehicle.plate,
-                                style: Theme.of(context).textTheme.titleLarge
-                                    ?.copyWith(
-                                      fontWeight: FontWeight.w900,
-                                      letterSpacing: 0.4,
-                                    ),
-                              ),
-                              const SizedBox(height: 3),
-                              Text(
                                 '${vehicle.make} ${vehicle.model}',
-                                style: Theme.of(context).textTheme.bodyLarge
-                                    ?.copyWith(color: scheme.onSurfaceVariant),
+                                style: TextStyle(
+                                  fontSize: 19,
+                                  fontWeight: FontWeight.w600,
+                                  color: theme.onHero,
+                                ),
                               ),
+                              if (subtitle.isNotEmpty) ...[
+                                const SizedBox(height: 4),
+                                Text(
+                                  subtitle,
+                                  style: TextStyle(fontSize: 13, color: theme.onHeroMuted),
+                                ),
+                              ],
                             ],
                           ),
                         ),
+                        const SizedBox(width: 12),
+                        CsPlate(vehicle.plate, onHero: true),
                       ],
                     ),
-                    const SizedBox(height: 20),
-                    Text(
-                      'ХУР-ийн техникийн мэдээлэл',
-                      style: Theme.of(context).textTheme.titleMedium
-                          ?.copyWith(fontWeight: FontWeight.w800),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '${vehicle.serviceCount} үйлчилгээ · ${vehicle.diagnosisCount} оношилгоо',
-                      style: Theme.of(context).textTheme.bodySmall
-                          ?.copyWith(color: scheme.onSurfaceVariant),
-                    ),
-                    for (final fact in facts) ...[
-                      const Divider(height: 1),
-                      _FactRow(label: fact.label, value: fact.value),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _StatTile(
+                          label: 'Үйлчилгээ',
+                          value: '${vehicle.serviceCount}',
+                          mono: true,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _StatTile(
+                          label: 'Оношилгоо',
+                          value: '${vehicle.diagnosisCount}',
+                          mono: true,
+                        ),
+                      ),
+                      if (lastOrder != null) ...[
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _StatTile(
+                            label: 'Сүүлийн засвар',
+                            value: _formatDate(lastOrder),
+                            mono: true,
+                          ),
+                        ),
+                      ],
                     ],
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 22),
+                  const CsSectionLabel('ХУР-ийн техникийн мэдээлэл'),
+                  const SizedBox(height: 8),
+                  CsCard(
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    child: Column(
+                      children: [
+                        for (var i = 0; i < facts.length; i++) ...[
+                          if (i > 0) Divider(height: 1, thickness: 1, color: theme.shellBackground),
+                          _FactRow(
+                            label: facts[i].label,
+                            value: facts[i].value,
+                            mono: facts[i].mono,
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 22),
+                  _AppointmentsSection(
+                    appointments: appointments,
+                    isLoading: appointmentsLoading,
+                    onAppointmentSelected: onAppointmentSelected,
+                  ),
+                  const SizedBox(height: 22),
+                  _ServiceOrdersSection(
+                    orders: orders,
+                    isLoading: ordersLoading,
+                    onOrderSelected: onOrderSelected,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Энд харагдах мэдээлэл нь бүртгэлд хадгалагдсан HUR-ийн утгууд дээр үндэслэнэ.',
+                    style: TextStyle(fontSize: 12, color: theme.mutedText),
+                  ),
+                ],
               ),
-              const SizedBox(height: 12),
-              _AppointmentsSection(
-                appointments: appointments,
-                isLoading: appointmentsLoading,
-                onAppointmentSelected: onAppointmentSelected,
-              ),
-              const SizedBox(height: 12),
-              _ServiceOrdersSection(
-                orders: orders,
-                isLoading: ordersLoading,
-                onOrderSelected: onOrderSelected,
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Энд харагдах мэдээлэл нь бүртгэлд хадгалагдсан HUR-ийн утгууд дээр үндэслэнэ.',
-                style: Theme.of(context).textTheme.bodySmall
-                    ?.copyWith(color: scheme.onSurfaceVariant),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  static String _value(String? value) =>
-      value == null || value.trim().isEmpty ? '—' : value;
+  static String _value(String? value) => value == null || value.trim().isEmpty ? '—' : value;
 
   static String _capacity(int? value) => value == null ? '—' : '$value см³';
+}
+
+class _StatTile extends StatelessWidget {
+  const _StatTile({required this.label, required this.value, this.mono = false});
+
+  final String label;
+  final String value;
+  final bool mono;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = CarserviceTheme.of(context);
+    return CsCard(
+      radius: AppRadii.control,
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: TextStyle(fontSize: 11, color: theme.mutedText)),
+          const SizedBox(height: 2),
+          Text(
+            value,
+            style: mono
+                ? csMono(fontSize: 15, color: theme.ink)
+                : TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: theme.ink),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A mono label + one divided card: the shared shape of both history lists.
+class _HistorySection extends StatelessWidget {
+  const _HistorySection({
+    required this.label,
+    required this.count,
+    required this.isLoading,
+    required this.emptyText,
+    required this.rows,
+  });
+
+  final String label;
+  final int count;
+  final bool isLoading;
+  final String emptyText;
+  final List<Widget> rows;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = CarserviceTheme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        CsSectionLabel(
+          label,
+          trailing: Text('$count', style: csMono(fontSize: 11, color: theme.mutedText)),
+        ),
+        const SizedBox(height: 8),
+        if (isLoading)
+          const SkeletonCardColumn(itemCount: 2, showTrailing: true)
+        else
+          CsCard(
+            padding: EdgeInsets.zero,
+            child: rows.isEmpty
+                ? Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: Text(emptyText, style: TextStyle(fontSize: 13, color: theme.mutedText)),
+                  )
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      for (var i = 0; i < rows.length; i++) ...[
+                        if (i > 0) Divider(height: 1, thickness: 1, color: theme.shellBackground),
+                        rows[i],
+                      ],
+                    ],
+                  ),
+          ),
+      ],
+    );
+  }
+}
+
+/// One `.hist` row: mono date column, title + muted branch, trailing status.
+class _HistoryRow extends StatelessWidget {
+  const _HistoryRow({
+    required this.dateTop,
+    required this.dateBottom,
+    required this.title,
+    required this.subtitle,
+    required this.trailing,
+    this.extra,
+    this.onTap,
+  });
+
+  final String dateTop;
+  final String dateBottom;
+  final String title;
+  final String subtitle;
+  final String? extra;
+  final Widget trailing;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = CarserviceTheme.of(context);
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 44,
+              child: Column(
+                children: [
+                  Text(dateTop, style: csMono(fontSize: 12, color: theme.ink)),
+                  Text(dateBottom, style: csMono(fontSize: 10, color: theme.mutedText)),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: theme.ink),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(fontSize: 12, color: theme.mutedText),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (extra != null) ...[
+                    const SizedBox(height: 2),
+                    Text(extra!, style: TextStyle(fontSize: 12, color: theme.mutedText)),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(width: 10),
+            trailing,
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _ServiceOrdersSection extends StatelessWidget {
@@ -247,104 +440,48 @@ class _ServiceOrdersSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final sorted = [...orders]
-      ..sort((a, b) => b.completedAt.compareTo(a.completedAt));
-    return GlassSurface(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Үйлчилгээний түүх',
-                  style: Theme.of(context).textTheme.titleMedium
-                      ?.copyWith(fontWeight: FontWeight.w800),
+    final theme = CarserviceTheme.of(context);
+    final sorted = [...orders]..sort((a, b) => b.completedAt.compareTo(a.completedAt));
+    return _HistorySection(
+      label: 'Засварын түүх',
+      count: sorted.length,
+      isLoading: isLoading,
+      emptyText: 'Энэ машинтай холбоотой үйлчилгээний түүх байхгүй байна.',
+      rows: [
+        for (final order in sorted)
+          _HistoryRow(
+            dateTop: _monthDay(order.completedAt),
+            dateBottom: '${order.completedAt.year}',
+            title: order.tenantName,
+            subtitle: order.branchName,
+            onTap: onOrderSelected == null ? null : () => onOrderSelected!(order.id),
+            trailing: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                _paymentBadge(order),
+                const SizedBox(height: 4),
+                Text(
+                  '${formatAmount(order.totalAmount)}₮',
+                  style: csMono(fontSize: 13, color: theme.ink),
                 ),
-              ),
-              Text(
-                '${sorted.length}',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
-          ),
-          if (isLoading) ...[
-            const SizedBox(height: 12),
-            const SkeletonCardColumn(itemCount: 2, showTrailing: true),
-          ] else if (sorted.isEmpty) ...[
-            const SizedBox(height: 12),
-            Text(
-              'Энэ машинтай холбоотой үйлчилгээний түүх байхгүй байна.',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+              ],
             ),
-          ] else ...[
-            const SizedBox(height: 8),
-            for (var i = 0; i < sorted.length; i++) ...[
-              if (i > 0) const Divider(height: 1),
-              InkWell(
-                onTap: onOrderSelected == null
-                    ? null
-                    : () => onOrderSelected!(sorted[i].id),
-                borderRadius: BorderRadius.circular(AppRadii.medium),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              sorted[i].tenantName,
-                              style: Theme.of(context).textTheme.bodyLarge
-                                  ?.copyWith(fontWeight: FontWeight.w700),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 3),
-                            Text(
-                              '${_formatDate(sorted[i].completedAt)} · ${sorted[i].branchName}',
-                              style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurfaceVariant,
-                                  ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 3),
-                            Text(
-                              '${formatAmount(sorted[i].totalAmount)}₮',
-                              style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurfaceVariant,
-                                  ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      ServiceOrderStatusChip(status: sorted[i].status),
-                      const SizedBox(width: 4),
-                      Icon(
-                        Icons.chevron_right_rounded,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ],
-        ],
-      ),
+          ),
+      ],
     );
   }
+}
+
+Widget _paymentBadge(ServiceOrder order) {
+  if (order.isCancelled) return const CsBadge('Цуцлагдсан', tone: CsTone.accent);
+  return CsBadge(
+    order.status.localizedLabel,
+    tone: switch (order.status) {
+      ServiceOrderStatus.paid => CsTone.success,
+      ServiceOrderStatus.partiallyPaid => CsTone.info,
+      ServiceOrderStatus.unpaid => CsTone.accent,
+    },
+  );
 }
 
 class _AppointmentsSection extends StatelessWidget {
@@ -360,152 +497,78 @@ class _AppointmentsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final sorted = [...appointments]
-      ..sort((a, b) => b.requestedAt.compareTo(a.requestedAt));
-    return GlassSurface(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Цагийн захиалгын түүх',
-                  style: Theme.of(context).textTheme.titleMedium
-                      ?.copyWith(fontWeight: FontWeight.w800),
-                ),
-              ),
-              Text(
-                '${sorted.length}',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
-          ),
-          if (isLoading) ...[
-            const SizedBox(height: 12),
-            const SkeletonCardColumn(itemCount: 2, showTrailing: true),
-          ] else if (sorted.isEmpty) ...[
-            const SizedBox(height: 12),
-            Text(
-              'Энэ машинтай холбоотой цагийн захиалга байхгүй байна.',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+    final sorted = [...appointments]..sort((a, b) => b.requestedAt.compareTo(a.requestedAt));
+    return _HistorySection(
+      label: 'Цагийн захиалгын түүх',
+      count: sorted.length,
+      isLoading: isLoading,
+      emptyText: 'Энэ машинтай холбоотой цагийн захиалга байхгүй байна.',
+      rows: [
+        for (final appointment in sorted)
+          _HistoryRow(
+            dateTop: _monthDay(appointment.requestedAt),
+            dateBottom: _time(appointment.requestedAt),
+            title: appointment.tenantName,
+            subtitle: appointment.branchName,
+            extra: appointment.categoryNames.isEmpty ? null : appointment.categoryNames.join(' · '),
+            onTap: onAppointmentSelected == null
+                ? null
+                : () => onAppointmentSelected!(appointment.id),
+            trailing: CsBadge(
+              appointment.status.localizedLabel,
+              tone: switch (appointment.status) {
+                AppointmentStatus.confirmed => CsTone.success,
+                AppointmentStatus.pending => CsTone.warning,
+                AppointmentStatus.rejected ||
+                AppointmentStatus.cancelled ||
+                AppointmentStatus.noShow => CsTone.accent,
+                AppointmentStatus.unknown => CsTone.neutral,
+              },
             ),
-          ] else ...[
-            const SizedBox(height: 8),
-            for (var i = 0; i < sorted.length; i++) ...[
-              if (i > 0) const Divider(height: 1),
-              InkWell(
-                onTap: onAppointmentSelected == null
-                    ? null
-                    : () => onAppointmentSelected!(sorted[i].id),
-                borderRadius: BorderRadius.circular(AppRadii.medium),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              sorted[i].tenantName,
-                              style: Theme.of(context).textTheme.bodyLarge
-                                  ?.copyWith(fontWeight: FontWeight.w700),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 3),
-                            Text(
-                              '${_formatDateTime(sorted[i].requestedAt)} · ${sorted[i].branchName}',
-                              style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurfaceVariant,
-                                  ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            if (sorted[i].categoryNames.isNotEmpty) ...[
-                              const SizedBox(height: 2),
-                              Text(
-                                sorted[i].categoryNames.join(' · '),
-                                style: Theme.of(context).textTheme.bodySmall
-                                    ?.copyWith(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurfaceVariant,
-                                    ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Text(
-                        sorted[i].status.localizedLabel,
-                        style: Theme.of(context).textTheme.labelMedium
-                            ?.copyWith(
-                              color: Theme.of(context).colorScheme.primary,
-                              fontWeight: FontWeight.w700,
-                            ),
-                      ),
-                      const SizedBox(width: 4),
-                      Icon(
-                        Icons.chevron_right_rounded,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ],
-        ],
-      ),
+          ),
+      ],
     );
   }
 }
 
-String _formatDateTime(DateTime value) =>
-    '${value.year}.${value.month.toString().padLeft(2, '0')}.${value.day.toString().padLeft(2, '0')} '
-    '${value.hour.toString().padLeft(2, '0')}:${value.minute.toString().padLeft(2, '0')}';
+String _two(int value) => value.toString().padLeft(2, '0');
 
-String _formatDate(DateTime value) =>
-    '${value.year}.${value.month.toString().padLeft(2, '0')}.${value.day.toString().padLeft(2, '0')}';
+String _monthDay(DateTime value) => '${_two(value.month)}/${_two(value.day)}';
+
+String _time(DateTime value) => '${_two(value.hour)}:${_two(value.minute)}';
+
+String _formatDate(DateTime value) => '${value.year}.${_two(value.month)}.${_two(value.day)}';
 
 class _FactRow extends StatelessWidget {
-  const _FactRow({required this.label, required this.value});
+  const _FactRow({required this.label, required this.value, this.mono = false});
 
   final String label;
   final String value;
+  final bool mono;
 
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 11),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Text(
-            label,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
+  Widget build(BuildContext context) {
+    final theme = CarserviceTheme.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Text(label, style: TextStyle(fontSize: 14, color: theme.mutedText)),
+          ),
+          const SizedBox(width: 16),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              style: mono && value != '—'
+                  ? csMono(fontSize: 13, color: theme.ink)
+                  : TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: theme.ink),
             ),
           ),
-        ),
-        const SizedBox(width: 16),
-        Flexible(
-          child: Text(
-            value,
-            textAlign: TextAlign.right,
-            style: Theme.of(context).textTheme.bodyMedium
-                ?.copyWith(fontWeight: FontWeight.w700),
-          ),
-        ),
-      ],
-    ),
-  );
+        ],
+      ),
+    );
+  }
 }

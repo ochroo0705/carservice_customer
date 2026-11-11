@@ -100,6 +100,11 @@ class DiscoveryMapState extends State<DiscoveryMap>
   // The theme the pins were drawn for — their ring matches the map's
   // background, so a theme switch redraws them.
   Brightness? _pinBrightness;
+  // The selected branch's named pill, keyed by what it was drawn for
+  // (name + closed), so re-selecting or a closed-state change redraws it.
+  BitmapDescriptor? _labeledPin;
+  String? _labeledPinKey;
+  String? _labeledPinRequest;
   bool _configured = false;
   // Height of the docked selected-branch sheet, reported after layout; the
   // map is padded by it so the Google logo and the selection stay visible.
@@ -413,6 +418,30 @@ class DiscoveryMapState extends State<DiscoveryMap>
     setState(() => _pins = pins);
   }
 
+  /// The selected pin for the current selection, or null while it's drawn
+  /// (the snapshot then falls back to the plain accent circle).
+  BitmapDescriptor? _selectedLabelFor(bool closed) {
+    final selected = _selected;
+    if (selected == null || !_configured) return null;
+    final key = '${selected.organization.name}|$closed';
+    if (key == _labeledPinKey) return _labeledPin;
+    if (key != _labeledPinRequest) {
+      _labeledPinRequest = key;
+      loadLabeledPinIcon(label: selected.organization.name, closed: closed)
+          .then((icon) {
+            if (!mounted || _labeledPinRequest != key) return;
+            setState(() {
+              _labeledPin = icon;
+              _labeledPinKey = key;
+            });
+          })
+          .catchError((Object _) {
+            // The unlabeled accent pin stays in place.
+          });
+    }
+    return null;
+  }
+
   /// Whether the selected branch's loaded hours say it's closed right now.
   bool get _selectedClosed {
     final selected = _selected;
@@ -441,17 +470,20 @@ class DiscoveryMapState extends State<DiscoveryMap>
   LatLngBounds? _snapshotBounds;
   MapPinIcons? _snapshotPins;
   bool? _snapshotSelectedClosed;
+  BitmapDescriptor? _snapshotSelectedLabel;
 
   MapSnapshot _currentSnapshot() {
     final pins = _pins;
     final cached = _snapshot;
     final selectedClosed = _selectedClosed;
+    final selectedLabel = _selectedLabelFor(selectedClosed);
     if (cached != null &&
         identical(_snapshotOrganizations, widget.organizations) &&
         _snapshotSelected == _selected &&
         _snapshotBounds == _visibleBounds &&
         identical(_snapshotPins, pins) &&
-        _snapshotSelectedClosed == selectedClosed) {
+        _snapshotSelectedClosed == selectedClosed &&
+        identical(_snapshotSelectedLabel, selectedLabel)) {
       return cached;
     }
     final snapshot = buildMapSnapshot(
@@ -460,6 +492,7 @@ class DiscoveryMapState extends State<DiscoveryMap>
       visibleBounds: _visibleBounds,
       pins: pins,
       selectedClosed: selectedClosed,
+      selectedLabel: selectedLabel,
       onMarkerTap: (organization, branch) {
         setState(
           () => _selected = (organization: organization, branch: branch),
@@ -473,6 +506,7 @@ class DiscoveryMapState extends State<DiscoveryMap>
     _snapshotBounds = _visibleBounds;
     _snapshotPins = pins;
     _snapshotSelectedClosed = selectedClosed;
+    _snapshotSelectedLabel = selectedLabel;
     return snapshot;
   }
 

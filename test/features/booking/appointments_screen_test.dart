@@ -13,6 +13,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+/// Status labels inside the appointment list only — the status filter pills
+/// above the list repeat the same labels.
+Finder _inList(String text) => find.descendant(
+  of: find.byKey(const PageStorageKey('appointments-only-list')),
+  matching: find.text(text),
+);
+
 void main() {
   setUpAll(() => debugDisableAppBootstrap = true);
   setUp(() => SharedPreferences.setMockInitialValues({}));
@@ -39,21 +46,21 @@ void main() {
     expect(find.byKey(const ValueKey('appointments-tab-bar')), findsOneWidget);
     expect(find.text('Инфосистемс'), findsWidgets);
     expect(find.text('Тэсо Моторс'), findsOneWidget);
-    expect(find.text('Баталгаажсан'), findsOneWidget);
-    expect(find.text('Хүлээгдэж буй'), findsOneWidget);
+    expect(_inList('Баталгаажсан'), findsOneWidget);
+    expect(_inList('Хүлээгдэж буй'), findsOneWidget);
 
     // The cancelled seed appointment sorts last and sits below the fold in
     // the test viewport — the list is a lazily-built ListView, so it isn't
     // in the tree until scrolled into view.
     await tester.scrollUntilVisible(
-      find.text('Цуцалсан'),
+      _inList('Цуцалсан'),
       200,
       scrollable: find.descendant(
         of: find.byKey(const PageStorageKey('appointments-only-list')),
         matching: find.byType(Scrollable),
       ),
     );
-    expect(find.text('Цуцалсан'), findsOneWidget);
+    expect(_inList('Цуцалсан'), findsOneWidget);
   });
 
   testWidgets('cancels a pending appointment after confirmation', (tester) async {
@@ -90,7 +97,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const ValueKey('cancel-seed-2')), findsNothing);
-    expect(find.text('Цуцалсан'), findsNWidgets(2));
+    expect(_inList('Цуцалсан'), findsNWidgets(2));
   });
 
   testWidgets('supports large accessibility text without overflow', (tester) async {

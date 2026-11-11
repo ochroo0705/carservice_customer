@@ -287,8 +287,9 @@ void main() {
       await tester.pumpAndSettle();
 
       // A one-vehicle customer gets it pre-selected (mirrors web 27a9875),
-      // so the closed picker shows the vehicle rather than "Сонгохгүй".
-      expect(find.text('9911УБЕ · Hyundai Sonata'), findsOneWidget);
+      // so the closed picker (the header's plate chip) shows the vehicle
+      // rather than "Машин".
+      expect(find.text('9911УБЕ'), findsOneWidget);
 
       await _acceptDefaultDateTime(tester);
       await tester.tap(find.byKey(const ValueKey('submit-booking')));

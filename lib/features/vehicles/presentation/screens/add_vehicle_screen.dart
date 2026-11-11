@@ -1,7 +1,8 @@
 import 'dart:async';
 
-import 'package:carservice_customer/app/theme/app_surfaces.dart';
+import 'package:carservice_customer/app/theme/app_theme.dart';
 import 'package:carservice_customer/core/errors/app_failure.dart';
+import 'package:carservice_customer/core/widgets/cs_ui.dart';
 import 'package:carservice_customer/features/vehicles/domain/vehicle.dart';
 import 'package:carservice_customer/features/vehicles/domain/vehicle_lookup_result.dart';
 import 'package:carservice_customer/features/vehicles/domain/vehicle_repository.dart';
@@ -58,87 +59,191 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      leading: BackButton(onPressed: widget.onBack),
-      title: const Text('Машин нэмэх'),
-    ),
-    body: AppShellBackground(
-      child: SafeArea(
-        top: false,
+  Widget build(BuildContext context) {
+    final theme = CarserviceTheme.of(context);
+    return Scaffold(
+      body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
           children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: TextField(
-                    key: const ValueKey('vehicle-plate'),
-                    controller: _plateController,
-                    textCapitalization: TextCapitalization.characters,
-                    maxLength: 7,
-                    inputFormatters: const [_MongolianPlateInputFormatter()],
-                    onChanged: _scheduleLookup,
-                    decoration: InputDecoration(
-                      labelText: 'Улсын дугаар',
-                      hintText: '1234УБА',
-                      counterText: '',
-                      helperText: _lookingUp
-                          ? 'ХУР-аас хайж байна…'
-                          : '4 цифр + 3 кирилл үсэг',
+            Align(
+              alignment: Alignment.centerLeft,
+              child: CsCircleButton(
+                icon: Icons.chevron_left_rounded,
+                tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+                onPressed: widget.onBack,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Машин нэмэх',
+              style: TextStyle(
+                fontSize: 28,
+                height: 34 / 28,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 28 * -0.02,
+                color: theme.ink,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Машинаа нэмбэл захиалга хийхэд мэдээлэл автоматаар бөглөгдөнө.',
+              style: TextStyle(fontSize: 15, height: 22 / 15, color: theme.mutedText),
+            ),
+            const SizedBox(height: 18),
+            CsCard(
+              radius: 18,
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Row(
+                    children: [
+                      CsIconTile(icon: Icons.directions_car_outlined),
+                      SizedBox(width: 10),
+                      Text(
+                        'Миний машин',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  _Labeled(
+                    label: 'Улсын дугаар',
+                    child: _PlateField(
+                      child: TextField(
+                        key: const ValueKey('vehicle-plate'),
+                        controller: _plateController,
+                        textCapitalization: TextCapitalization.characters,
+                        textAlign: TextAlign.center,
+                        maxLength: 7,
+                        inputFormatters: const [_MongolianPlateInputFormatter()],
+                        onChanged: _scheduleLookup,
+                        cursorColor: theme.ink,
+                        style: csMono(
+                          fontSize: 26,
+                          letterSpacing: 26 * 0.08,
+                          color: theme.ink,
+                        ),
+                        decoration: InputDecoration(
+                          isCollapsed: true,
+                          filled: false,
+                          border: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          focusedBorder: InputBorder.none,
+                          counterText: '',
+                          hintText: '1234УБА',
+                          hintStyle: csMono(
+                            fontSize: 26,
+                            letterSpacing: 26 * 0.08,
+                            color: theme.mutedText.withValues(alpha: 0.45),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: OutlinedButton(
-                    key: const ValueKey('vehicle-lookup'),
-                    onPressed: _lookingUp || !_isPlateValid ? null : _lookup,
-                    child: _lookingUp
-                        ? const SizedBox.square(
-                            dimension: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Text('ХУР-аас хайх'),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          _lookingUp ? 'ХУР-аас хайж байна…' : '4 цифр + 3 кирилл үсэг',
+                          style: TextStyle(fontSize: 12, color: theme.mutedText),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      OutlinedButton(
+                        key: const ValueKey('vehicle-lookup'),
+                        onPressed: _lookingUp || !_isPlateValid ? null : _lookup,
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size(0, 40),
+                          padding: const EdgeInsets.symmetric(horizontal: 14),
+                          textStyle: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          shape: const StadiumBorder(),
+                        ),
+                        child: _lookingUp
+                            ? const SizedBox.square(
+                                dimension: 16,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : const Text('ХУР-аас хайх'),
+                      ),
+                    ],
                   ),
-                ),
-              ],
-            ),
-            if (_lookupMessage != null) ...[
-              const SizedBox(height: 8),
-              Text(
-                _lookupMessage!,
-                style: TextStyle(color: Theme.of(context).colorScheme.primary),
+                  if (_lookupMessage != null) ...[
+                    const SizedBox(height: 10),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: theme.successSoft,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        _lookupMessage!,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: AppColors.readable(
+                            AppColors.green,
+                            Theme.of(context).brightness,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 14),
+                  _Labeled(
+                    label: 'Марк',
+                    child: TextField(
+                      key: const ValueKey('vehicle-make'),
+                      controller: _makeController,
+                      textCapitalization: TextCapitalization.words,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: _Labeled(
+                          label: 'Загвар',
+                          child: TextField(
+                            key: const ValueKey('vehicle-model'),
+                            controller: _modelController,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      SizedBox(
+                        width: 104,
+                        child: _Labeled(
+                          label: 'Он',
+                          child: TextField(
+                            key: const ValueKey('vehicle-year'),
+                            controller: _yearController,
+                            keyboardType: TextInputType.number,
+                            style: csMono(fontSize: 16, color: theme.ink),
+                            decoration: const InputDecoration(hintText: 'Заавал биш'),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  _Labeled(
+                    label: 'VIN (заавал биш)',
+                    child: TextField(
+                      key: const ValueKey('vehicle-vin'),
+                      controller: _vinController,
+                      textCapitalization: TextCapitalization.characters,
+                      style: csMono(fontSize: 15, color: theme.ink),
+                    ),
+                  ),
+                ],
               ),
-            ],
-            const SizedBox(height: 16),
-            TextField(
-              key: const ValueKey('vehicle-make'),
-              controller: _makeController,
-              decoration: const InputDecoration(labelText: 'Марк'),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              key: const ValueKey('vehicle-model'),
-              controller: _modelController,
-              decoration: const InputDecoration(labelText: 'Загвар'),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              key: const ValueKey('vehicle-year'),
-              controller: _yearController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Оны загвар (заавал биш)',
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              key: const ValueKey('vehicle-vin'),
-              controller: _vinController,
-              decoration: const InputDecoration(labelText: 'VIN (заавал биш)'),
             ),
             if (_error != null) ...[
               const SizedBox(height: 12),
@@ -157,8 +262,8 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
           ],
         ),
       ),
-    ),
-  );
+    );
+  }
 
   void _scheduleLookup(String value) {
     setState(() => _isPlateValid = _isValidPlate(value));
@@ -248,6 +353,68 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
+  }
+}
+
+/// A field label above its control (13px, w500).
+class _Labeled extends StatelessWidget {
+  const _Labeled({required this.label, required this.child});
+
+  final String label;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+      const SizedBox(height: 6),
+      child,
+    ],
+  );
+}
+
+/// The licence-plate frame: a navy "MNG" strip and a 2px ink outline.
+class _PlateField extends StatelessWidget {
+  const _PlateField({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = CarserviceTheme.of(context);
+    return Container(
+      height: 58,
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: theme.card,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: theme.ink, width: 2),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ExcludeSemantics(
+            child: Container(
+              width: 34,
+              alignment: Alignment.center,
+              color: theme.hero,
+              child: Text(
+                'MNG',
+                style: csMono(fontSize: 9, color: theme.onHero),
+              ),
+            ),
+          ),
+          Expanded(
+            child: Padding(
+              // Balance the strip so the plate reads optically centred.
+              padding: const EdgeInsets.only(right: 34),
+              child: Center(child: child),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

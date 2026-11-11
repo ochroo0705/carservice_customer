@@ -42,6 +42,9 @@ MapSnapshot buildMapSnapshot({
   // Whether the selected branch's loaded hours say it's closed right now —
   // the selected pin turns grey then (see [MapPinIcons]).
   bool selectedClosed = false,
+  // The selected branch's named pill ([loadLabeledPinIcon]), once drawn;
+  // until then the selected pin falls back to the plain accent circle.
+  BitmapDescriptor? selectedLabel,
 }) {
   final locations = <BranchMapLocation>[];
   final positions = <LatLng>[];
@@ -87,26 +90,27 @@ MapSnapshot buildMapSnapshot({
           west: bounds.southwest.longitude,
           east: bounds.northeast.longitude,
         );
-  final markers = displayedLocations
-      .map(
-        (location) => Marker(
-          markerId: MarkerId(
-            '${location.organization.slug}:${location.branch.id}',
-          ),
-          position: location.position,
-          anchor: const Offset(0.5, 1),
-          icon:
-              (location.selected
-                  ? (selectedClosed ? pins?.selectedClosed : pins?.selected)
-                  : pins?.pin) ??
-              BitmapDescriptor.defaultMarker,
-          zIndexInt: location.selected ? 1000 : 0,
-          clusterManagerId: const ClusterManagerId('discovery'),
-          infoWindow: InfoWindow.noText,
-          onTap: () => onMarkerTap(location.organization, location.branch),
-        ),
-      )
-      .toSet();
+  final markers = displayedLocations.map((location) {
+    final labeled = location.selected && selectedLabel != null;
+    return Marker(
+      markerId: MarkerId('${location.organization.slug}:${location.branch.id}'),
+      position: location.position,
+      // Circles sit centred on the branch; the named pill points at it with
+      // its tail.
+      anchor: labeled ? const Offset(0.5, 1) : const Offset(0.5, 0.5),
+      icon:
+          (labeled
+              ? selectedLabel
+              : location.selected
+              ? (selectedClosed ? pins?.selectedClosed : pins?.selected)
+              : pins?.pin) ??
+          BitmapDescriptor.defaultMarker,
+      zIndexInt: location.selected ? 1000 : 0,
+      clusterManagerId: const ClusterManagerId('discovery'),
+      infoWindow: InfoWindow.noText,
+      onTap: () => onMarkerTap(location.organization, location.branch),
+    );
+  }).toSet();
 
   return MapSnapshot(
     hasLocations: locations.isNotEmpty,

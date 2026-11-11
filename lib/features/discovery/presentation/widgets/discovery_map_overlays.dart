@@ -1,4 +1,5 @@
 import 'package:carservice_customer/app/theme/app_theme.dart';
+import 'package:carservice_customer/core/widgets/cs_ui.dart';
 import 'package:flutter/material.dart';
 
 class MapLoadingOverlay extends StatelessWidget {
@@ -10,7 +11,7 @@ class MapLoadingOverlay extends StatelessWidget {
     liveRegion: true,
     label: 'Газрын зураг ачаалж байна',
     child: ColoredBox(
-      color: Theme.of(context).colorScheme.surface,
+      color: CarserviceTheme.of(context).shellBackground,
       child: const Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -41,31 +42,31 @@ class MapFailureOverlay extends StatelessWidget {
     liveRegion: true,
     label: 'Газрын зураг ачаалсангүй',
     child: ColoredBox(
-      color: Theme.of(context).colorScheme.surface,
+      color: CarserviceTheme.of(context).shellBackground,
       child: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(28),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                Icons.map_outlined,
-                size: 48,
-                color: Theme.of(context).colorScheme.primary,
-              ),
+              const CsIconTile(icon: Icons.map_outlined, size: 56),
               const SizedBox(height: 14),
               Text(
                 'Газрын зураг ачаалсангүй',
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.titleMedium
-                    ?.copyWith(fontWeight: FontWeight.w800),
+                style: const TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: -0.2,
+                ),
               ),
               const SizedBox(height: 7),
               Text(
                 'Сервисүүдийг жагсаалтаар харах эсвэл дахин оролдоно уу.',
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: CarserviceTheme.of(context).mutedText,
                 ),
               ),
               const SizedBox(height: 18),
@@ -100,31 +101,31 @@ class MapUnavailableOverlay extends StatelessWidget {
     liveRegion: true,
     label: 'Газрын зураг энэ хувилбарт тохируулагдаагүй байна',
     child: ColoredBox(
-      color: Theme.of(context).colorScheme.surface,
+      color: CarserviceTheme.of(context).shellBackground,
       child: Center(
         child: Padding(
           padding: const EdgeInsets.all(28),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                Icons.map_outlined,
-                size: 48,
-                color: Theme.of(context).colorScheme.primary,
-              ),
+              const CsIconTile(icon: Icons.map_outlined, size: 56),
               const SizedBox(height: 14),
               Text(
                 'Газрын зураг ашиглах боломжгүй байна',
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.titleMedium
-                    ?.copyWith(fontWeight: FontWeight.w800),
+                style: const TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: -0.2,
+                ),
               ),
               const SizedBox(height: 7),
               Text(
                 'Энэ хувилбарт газрын зургийн тохиргоо дутуу байна. Сервисүүдийг жагсаалтаар харна уу.',
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: CarserviceTheme.of(context).mutedText,
                 ),
               ),
               const SizedBox(height: 18),
@@ -158,26 +159,28 @@ class NoMapLocations extends StatelessWidget {
           margin: const EdgeInsets.symmetric(horizontal: 32),
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
           decoration: BoxDecoration(
-            color: theme.shellSurface,
-            border: Border.all(color: theme.glassBorder),
-            borderRadius: BorderRadius.circular(AppRadii.large),
+            color: theme.card,
+            border: Border.all(color: theme.cardBorder),
+            borderRadius: BorderRadius.circular(AppRadii.card),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.2),
-                blurRadius: 16,
-                offset: const Offset(0, 4),
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.black.withValues(alpha: 0.35)
+                    : const Color(0xFF2C3E50).withValues(alpha: 0.14),
+                blurRadius: 24,
+                offset: const Offset(0, 8),
               ),
             ],
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.location_off_outlined, color: theme.mutedText),
+              const CsIconTile(icon: Icons.location_off_outlined),
               const SizedBox(height: 8),
               const Text(
                 'Энэ хэсэгт сервис олдсонгүй',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontWeight: FontWeight.w700),
+                style: TextStyle(fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 4),
               Text(

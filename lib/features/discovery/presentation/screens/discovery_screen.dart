@@ -286,16 +286,21 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                 child: Container(
                   padding: const EdgeInsets.fromLTRB(14, 6, 6, 6),
                   decoration: BoxDecoration(
-                    color: CarserviceTheme.of(context).shellSurface,
+                    color: CarserviceTheme.of(context).card,
                     border: Border.all(
-                      color: CarserviceTheme.of(context).glassBorder,
+                      color: CarserviceTheme.of(context).cardBorder,
                     ),
-                    borderRadius: BorderRadius.circular(AppRadii.large),
+                    borderRadius: BorderRadius.circular(AppRadii.card),
                     boxShadow: floatingControlShadow(context),
                   ),
                   child: Row(
                     children: [
-                      Expanded(child: Text(controller.mapError!)),
+                      Expanded(
+                        child: Text(
+                          controller.mapError!,
+                          style: const TextStyle(fontSize: 13),
+                        ),
+                      ),
                       if (_lastMapViewport != null)
                         TextButton(
                           onPressed: () => controller.requestMapMarkers(
@@ -324,18 +329,34 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
     required bool mapReady,
   }) {
     final controller = context.read<DiscoveryController>();
-    final bottomInset = sheetVisible ? 0.0 : MediaQuery.paddingOf(context).bottom;
+    final bottomInset = sheetVisible
+        ? 0.0
+        : MediaQuery.paddingOf(context).bottom;
     return Padding(
       padding: EdgeInsets.fromLTRB(16, 0, 16, 16 + bottomInset),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (controller.mapTruncated && !sheetVisible)
-            const Padding(
-              padding: EdgeInsets.only(bottom: 10),
-              child: Chip(
-                label: Text(
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: CarserviceTheme.of(context).card,
+                  border: Border.all(
+                    color: CarserviceTheme.of(context).cardBorder,
+                  ),
+                  borderRadius: BorderRadius.circular(AppRadii.pill),
+                  boxShadow: floatingControlShadow(context),
+                ),
+                child: const Text(
                   'Зарим цэгийг нуусан. Газрын зургийг томруулна уу.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
                 ),
               ),
             ),
@@ -359,7 +380,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                       key: const ValueKey('discovery-map-locate-me'),
                       icon: Icons.my_location_rounded,
                       tooltip: 'Миний байршил',
-                      iconColor: Theme.of(context).colorScheme.primary,
+                      iconColor: CarserviceTheme.of(context).link,
                       onPressed: () => _mapKey.currentState?.locateMe(),
                     ),
                   ),
@@ -390,11 +411,12 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
               children: [
                 Center(
                   child: Container(
-                    width: 36,
-                    height: 4,
+                    width: 40,
+                    height: 5,
                     margin: const EdgeInsets.only(bottom: 14),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.outlineVariant,
+                      color: CarserviceTheme.of(context).mutedText
+                          .withValues(alpha: 0.45),
                       borderRadius: BorderRadius.circular(AppRadii.pill),
                     ),
                   ),
@@ -406,8 +428,11 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                     children: [
                       Text(
                         'Шүүлтүүрүүд',
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w800),
+                        style: const TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: -0.2,
+                        ),
                       ),
                       if (controller.hasActiveFilters)
                         TextButton(

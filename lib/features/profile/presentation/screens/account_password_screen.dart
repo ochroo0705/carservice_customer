@@ -1,5 +1,5 @@
-import 'package:carservice_customer/app/theme/app_surfaces.dart';
 import 'package:carservice_customer/app/theme/app_theme.dart';
+import 'package:carservice_customer/core/widgets/cs_ui.dart';
 import 'package:carservice_customer/core/widgets/state_views.dart';
 import 'package:carservice_customer/features/booking/auth/domain/auth_repository.dart';
 import 'package:carservice_customer/features/profile/presentation/controllers/account_password_controller.dart';
@@ -16,11 +16,7 @@ final _destructiveStyle = FilledButton.styleFrom(
 /// "Нууц үгээр нэвтрэх". Every change is confirmed with a code sent to the
 /// account's own phone, like account closure.
 class AccountPasswordScreen extends StatefulWidget {
-  const AccountPasswordScreen({
-    required this.repository,
-    this.onPasswordChanged,
-    super.key,
-  });
+  const AccountPasswordScreen({required this.repository, this.onPasswordChanged, super.key});
 
   final AuthRepository repository;
 
@@ -33,9 +29,8 @@ class AccountPasswordScreen extends StatefulWidget {
 }
 
 class _AccountPasswordScreenState extends State<AccountPasswordScreen> {
-  late final AccountPasswordController _controller = AccountPasswordController(
-    widget.repository,
-  )..load();
+  late final AccountPasswordController _controller = AccountPasswordController(widget.repository)
+    ..load();
   final _codeController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmationController = TextEditingController();
@@ -54,19 +49,19 @@ class _AccountPasswordScreenState extends State<AccountPasswordScreen> {
   Widget build(BuildContext context) => ListenableBuilder(
     listenable: _controller,
     builder: (context, _) => Scaffold(
-      appBar: AppBar(
-        leading: BackButton(
-          onPressed: _controller.action == null ? null : _cancel,
-        ),
-        title: const Text('Нууц үг'),
-      ),
-      body: AppShellBackground(
-        child: SafeArea(
-          top: false,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: _body(context),
-          ),
+      backgroundColor: CarserviceTheme.of(context).shellBackground,
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _PageHeader(title: 'Нууц үг', onBack: _controller.action == null ? null : _cancel),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+                child: _body(context),
+              ),
+            ),
+          ],
         ),
       ),
     ),
@@ -91,8 +86,7 @@ class _AccountPasswordScreenState extends State<AccountPasswordScreen> {
     if (action == null) return _overview(context, hasPassword);
     return _ActionStep(
       title: switch (action) {
-        PasswordAction.save =>
-          hasPassword ? 'Нууц үг солих' : 'Нууц үг тохируулах',
+        PasswordAction.save => hasPassword ? 'Нууц үг солих' : 'Нууц үг тохируулах',
         PasswordAction.remove => 'Нууц үг устгах',
       },
       destructive: action == PasswordAction.remove,
@@ -104,29 +98,33 @@ class _AccountPasswordScreenState extends State<AccountPasswordScreen> {
       passwordController: _passwordController,
       confirmationController: _confirmationController,
       obscurePassword: _obscurePassword,
-      onToggleObscure: () =>
-          setState(() => _obscurePassword = !_obscurePassword),
+      onToggleObscure: () => setState(() => _obscurePassword = !_obscurePassword),
       onRequestOtp: _controller.requestOtp,
       onConfirm: _confirm,
     );
   }
 
   Widget _overview(BuildContext context, bool hasPassword) {
-    final scheme = Theme.of(context).colorScheme;
+    final theme = CarserviceTheme.of(context);
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        GlassSurface(
+        CsCard(
           key: const ValueKey('password-status'),
           child: Row(
             children: [
-              Icon(
-                hasPassword ? Icons.lock_outline : Icons.lock_open_outlined,
-                color: scheme.onSurfaceVariant,
+              CsIconTile(
+                icon: hasPassword ? Icons.lock_outline : Icons.lock_open_outlined,
+                size: 40,
+                color: hasPassword
+                    ? AppColors.readable(AppColors.green, Theme.of(context).brightness)
+                    : theme.mutedText,
+                background: hasPassword ? theme.successSoft : theme.shellBackground,
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
+                  style: TextStyle(fontSize: 14, color: theme.ink, height: 1.35),
                   hasPassword
                       ? 'Нууц үг тохируулсан. Утасны дугаар, нууц үгээрээ эсвэл '
                             'SMS кодоор нэвтэрнэ.'
@@ -137,7 +135,9 @@ class _AccountPasswordScreenState extends State<AccountPasswordScreen> {
             ],
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 22),
+        const CsSectionLabel('Үйлдэл'),
+        const SizedBox(height: 8),
         _OptionCard(
           key: const ValueKey('password-action-save'),
           title: hasPassword ? 'Нууц үг солих' : 'Нууц үг тохируулах',
@@ -149,7 +149,7 @@ class _AccountPasswordScreenState extends State<AccountPasswordScreen> {
           onTap: () => _start(PasswordAction.save),
         ),
         if (hasPassword) ...[
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           _OptionCard(
             key: const ValueKey('password-action-remove'),
             title: 'Нууц үг устгах',
@@ -207,29 +207,66 @@ class _OptionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return GlassSurface(
+    final theme = CarserviceTheme.of(context);
+    return CsCard(
       onTap: onTap,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Text(
-            title,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w800,
-              color: destructive ? scheme.error : null,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: destructive ? theme.link : theme.ink,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  description,
+                  style: TextStyle(fontSize: 13, color: theme.mutedText, height: 1.35),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            description,
-            style: Theme.of(context).textTheme.bodyMedium
-                ?.copyWith(color: scheme.onSurfaceVariant),
-          ),
+          const SizedBox(width: 8),
+          Icon(Icons.chevron_right_rounded, color: theme.mutedText),
         ],
       ),
     );
   }
+}
+
+/// Back button + title, replacing the Material app bar.
+class _PageHeader extends StatelessWidget {
+  const _PageHeader({required this.title, this.onBack});
+
+  final String title;
+  final VoidCallback? onBack;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+    child: Row(
+      children: [
+        CsCircleButton.back(context, onPressed: onBack),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            title,
+            style: TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+              color: CarserviceTheme.of(context).ink,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 class _ActionStep extends StatelessWidget {
@@ -266,6 +303,7 @@ class _ActionStep extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final theme = CarserviceTheme.of(context);
     final error = errorMessage == null
         ? null
         : Text(
@@ -273,22 +311,24 @@ class _ActionStep extends StatelessWidget {
             key: const ValueKey('password-error'),
             style: TextStyle(color: scheme.error),
           );
-    return GlassSurface(
+    return CsCard(
+      padding: const EdgeInsets.all(18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             title,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w800,
-              color: destructive ? scheme.error : null,
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.44,
+              color: destructive ? theme.link : theme.ink,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Text(
             'Бүртгэлтэй утсанд тань баталгаажуулах код илгээнэ.',
-            style: Theme.of(context).textTheme.bodyMedium
-                ?.copyWith(color: scheme.onSurfaceVariant),
+            style: TextStyle(fontSize: 14, color: theme.mutedText),
           ),
           const SizedBox(height: 20),
           if (maskedPhone == null) ...[
@@ -303,7 +343,7 @@ class _ActionStep extends StatelessWidget {
               ),
             ),
           ] else ...[
-            Text('$maskedPhone руу код илгээлээ'),
+            Text('$maskedPhone руу код илгээлээ', style: TextStyle(fontSize: 14, color: theme.ink)),
             const SizedBox(height: 12),
             TextField(
               key: const ValueKey('password-code'),
@@ -311,8 +351,7 @@ class _ActionStep extends StatelessWidget {
               keyboardType: TextInputType.number,
               textAlign: TextAlign.center,
               autofillHints: const [AutofillHints.oneTimeCode],
-              style: Theme.of(context).textTheme.titleLarge
-                  ?.copyWith(letterSpacing: 8, fontWeight: FontWeight.w700),
+              style: csMono(fontSize: 22, letterSpacing: 8, fontWeight: FontWeight.w500),
               inputFormatters: [
                 FilteringTextInputFormatter.digitsOnly,
                 LengthLimitingTextInputFormatter(6),
@@ -333,13 +372,9 @@ class _ActionStep extends StatelessWidget {
                   labelText: 'Шинэ нууц үг',
                   helperText: '8–128 тэмдэгт, үсэг болон тоо агуулсан',
                   suffixIcon: IconButton(
-                    tooltip: obscurePassword
-                        ? 'Нууц үг харуулах'
-                        : 'Нууц үг нуух',
+                    tooltip: obscurePassword ? 'Нууц үг харуулах' : 'Нууц үг нуух',
                     icon: Icon(
-                      obscurePassword
-                          ? Icons.visibility_outlined
-                          : Icons.visibility_off_outlined,
+                      obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
                     ),
                     onPressed: onToggleObscure,
                   ),
@@ -372,9 +407,6 @@ class _ActionStep extends StatelessWidget {
   }
 
   Widget _label(bool busy, String text) => busy
-      ? const SizedBox.square(
-          dimension: 20,
-          child: CircularProgressIndicator(strokeWidth: 2),
-        )
+      ? const SizedBox.square(dimension: 20, child: CircularProgressIndicator(strokeWidth: 2))
       : Text(text);
 }

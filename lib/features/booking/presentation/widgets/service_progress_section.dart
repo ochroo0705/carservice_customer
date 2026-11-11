@@ -1,16 +1,224 @@
-import 'package:carservice_customer/app/theme/app_surfaces.dart';
 import 'package:carservice_customer/app/theme/app_theme.dart';
+import 'package:carservice_customer/core/widgets/cs_ui.dart';
 import 'package:carservice_customer/features/booking/domain/service_progress.dart';
 import 'package:carservice_customer/features/history/domain/service_order_item.dart'
     show ServiceOrderItemKind, ServiceOrderItemKindUi;
 import 'package:carservice_customer/features/history/presentation/format_amount.dart';
 import 'package:carservice_customer/features/history/presentation/widgets/diagnostic_report_row.dart';
 import 'package:flutter/material.dart';
-import 'package:carservice_customer/core/widgets/status_chip.dart';
-import 'package:carservice_customer/features/booking/presentation/widgets/appointment_status_style.dart';
+
+/// The navy "Засварын явц" status block (CustTrack design): place label,
+/// status pill, the current activity, a segmented bar of the order's items and
+/// the timing facts. Shown at the top of the appointment / walk-in detail.
+class ServiceProgressHero extends StatelessWidget {
+  const ServiceProgressHero({
+    required this.progress,
+    required this.label,
+    super.key,
+  });
+
+  final AppointmentServiceProgress progress;
+
+  /// Mono uppercase caption, e.g. "LEXUS SERVICE · БАЯНЗҮРХ".
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = CarserviceTheme.of(context);
+    return CsHeroCard(
+      key: const ValueKey('appointment-progress-hero'),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Text(
+                  label.toUpperCase(),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: csMono(
+                    fontSize: 11,
+                    letterSpacing: 0.66,
+                    color: theme.onHeroMuted,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              HeroStatusPill(
+                label: progress.status.localizedLabel,
+                emphasized: progress.status == ServiceProgressStatus.inProgress,
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            _currentActivity(progress),
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w600,
+              letterSpacing: -0.22,
+              height: 1.2,
+              color: theme.onHero,
+            ),
+          ),
+          const SizedBox(height: 12),
+          _SegmentedProgress(progress: progress),
+          ..._timingFacts(context, progress),
+        ],
+      ),
+    );
+  }
+}
+
+/// A status pill on the navy hero: solid accent while work is live,
+/// otherwise a translucent light pill.
+class HeroStatusPill extends StatelessWidget {
+  const HeroStatusPill({
+    required this.label,
+    this.emphasized = false,
+    super.key,
+  });
+
+  final String label;
+  final bool emphasized;
+
+  @override
+  Widget build(BuildContext context) {
+    if (emphasized) return CsBadge(label, solid: true);
+    final theme = CarserviceTheme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: theme.onHero.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(AppRadii.pill),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+          color: theme.onHero,
+          height: 1.2,
+        ),
+      ),
+    );
+  }
+}
+
+/// What the hero headline says: the labour item being worked on right now,
+/// else a sentence for the order's status. Never an estimate.
+String _currentActivity(AppointmentServiceProgress progress) {
+  for (final item in progress.items) {
+    if (item.status == ServiceProgressStatus.inProgress &&
+        item.kind != ServiceOrderItemKind.part) {
+      return item.name;
+    }
+  }
+  return switch (progress.status) {
+    ServiceProgressStatus.inProgress => 'Засвар хийгдэж байна',
+    ServiceProgressStatus.pending => 'Засвар эхлэхийг хүлээж байна',
+    ServiceProgressStatus.scheduled => 'Засварын цаг товлогдсон',
+    ServiceProgressStatus.postponed => 'Засвар түр хойшлогдсон',
+    ServiceProgressStatus.completed => 'Засвар дууссан',
+    ServiceProgressStatus.cancelled => 'Захиалга цуцлагдсан',
+    ServiceProgressStatus.unknown => progress.status.localizedLabel,
+  };
+}
+
+class _SegmentedProgress extends StatelessWidget {
+  const _SegmentedProgress({required this.progress});
+
+  final AppointmentServiceProgress progress;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = CarserviceTheme.of(context);
+    final statuses = progress.items.isEmpty
+        ? [progress.status]
+        : [for (final item in progress.items) item.status];
+    final done = statuses.where((s) => s.isCompleted).length;
+    return Semantics(
+      label: 'Явц: $done/${statuses.length}',
+      excludeSemantics: true,
+      child: Row(
+        children: [
+          for (var i = 0; i < statuses.length; i++) ...[
+            if (i > 0) const SizedBox(width: 4),
+            Expanded(
+              child: Container(
+                height: 5,
+                decoration: BoxDecoration(
+                  color: switch (statuses[i]) {
+                    ServiceProgressStatus.completed => theme.onHero,
+                    ServiceProgressStatus.inProgress => AppColors.accent,
+                    _ => AppColors.darkBorder,
+                  },
+                  borderRadius: BorderRadius.circular(AppRadii.pill),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Хугацааны БОДИТ баримтууд — item-completion хувиас тусад нь харуулна.
+///
+/// Урьдчилсан таамаг (`estimatedDurationMinutes`, `expectedFinishAt`) болон
+/// тэдгээрээс гарах "хожимдож байна" анхааруулгыг зориудаар харуулахгүй:
+/// үйлчлүүлэгчид улаанаар харагдах таамаг нь ажилтны хяналтаас гадуурх
+/// шалтгаанаар байнга зөрдөг тул батлагдаагүй амлалт мэт сэтгэгдэл төрүүлж
+/// байв. Оронд нь эхэлсэн/товлосон/буцах гэсэн баримтуудыг л харуулна (дизайны
+/// "Бэлэн болох хугацаа ойролцоогоор" мөрийн байранд).
+/// Талбарууд нь model/DTO-д хэвээр (API contract өөрчлөгдөөгүй).
+List<Widget> _timingFacts(
+  BuildContext context,
+  AppointmentServiceProgress progress,
+) {
+  final theme = CarserviceTheme.of(context);
+  final facts = <(String, String)>[
+    // Хараахан эхлээгүй бол товлосон огноо, эхэлсэн бол бодит эхэлсэн цаг —
+    // хоёулаа зэрэг утгатай байх тохиолдол байхгүй тул харилцан орлоно.
+    if (progress.startedAt != null)
+      ('Ажил эхэлсэн', _formatDateTime(progress.startedAt!))
+    else if (progress.scheduledAt != null)
+      ('Товлосон огноо', _formatDateTime(progress.scheduledAt!)),
+    // Засвар үргэлжлэх цаг — хойшлогдсон үеийн хамгийн чухал мэдээлэл.
+    if (progress.status == ServiceProgressStatus.postponed &&
+        progress.scheduledReturnAt != null)
+      ('Засвар үргэлжлэх цаг', _formatDateTime(progress.scheduledReturnAt!)),
+  ];
+  return [
+    for (final (label, value) in facts) ...[
+      const SizedBox(height: 10),
+      Text.rich(
+        TextSpan(
+          children: [
+            TextSpan(text: '$label: '),
+            TextSpan(
+              text: value,
+              style: TextStyle(
+                color: theme.onHero,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+        style: TextStyle(fontSize: 13, color: theme.onHeroMuted),
+      ),
+    ],
+  ];
+}
 
 /// Customer-facing read-only view of the repair progress created from an
-/// appointment. Payment status stays in its own section on the detail page.
+/// appointment: the item list with prices, totals, the status timeline and
+/// diagnostic reports. Payment status stays in its own section on the detail
+/// page; the status headline lives in [ServiceProgressHero].
 class ServiceProgressSection extends StatelessWidget {
   const ServiceProgressSection({
     required this.progress,
@@ -26,205 +234,230 @@ class ServiceProgressSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
+    final theme = CarserviceTheme.of(context);
     final hasItems = progress.items.isNotEmpty;
     final completed = progress.completedItemCount;
+    final vehicle = [
+      progress.vehiclePlate,
+      if (progress.vehicleMake != null || progress.vehicleModel != null)
+        [
+          progress.vehicleMake,
+          progress.vehicleModel,
+        ].whereType<String>().join(' '),
+      if (progress.vehicleYear != null) '${progress.vehicleYear}',
+    ].whereType<String>().where((s) => s.isNotEmpty).join(' · ');
 
-    return GlassSurface(
+    return Column(
       key: const ValueKey('appointment-progress'),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        CsCard(
+          padding: const EdgeInsets.all(16),
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Text(
-                  'Үйлчилгээний явц',
-                  style: textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
+              const Text(
+                'Үйлчилгээний явц',
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+              ),
+              if (progress.number.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text(
+                  'Засварын хуудас №${progress.number}',
+                  style: csMono(fontSize: 12, color: theme.mutedText),
                 ),
-              ),
-              StatusChip(
-                label: progress.status.localizedLabel,
-                color: serviceProgressStatusColor(progress.status, context),
-              ),
+              ],
+              if (progress.vehiclePlate != null && vehicle.isNotEmpty) ...[
+                const SizedBox(height: 2),
+                Text(
+                  vehicle,
+                  style: csMono(fontSize: 12, color: theme.mutedText),
+                ),
+              ],
+              if (hasItems) ...[
+                const SizedBox(height: 8),
+                Text(
+                  '$completed/${progress.items.length} үйлчилгээ дууссан',
+                  style: TextStyle(fontSize: 13, color: theme.mutedText),
+                ),
+                const SizedBox(height: 12),
+                Divider(height: 1, color: theme.cardBorder),
+                const SizedBox(height: 4),
+                for (final item in progress.items)
+                  _ProgressItemRow(
+                    key: ValueKey('appointment-progress-${item.id}'),
+                    item: item,
+                  ),
+              ],
+              if (progress.totalAmount != null) ...[
+                const SizedBox(height: 10),
+                _TotalsBlock(progress: progress),
+              ],
             ],
           ),
-          if (progress.number.isNotEmpty) ...[
-            const SizedBox(height: 4),
-            Text(
-              'Засварын хуудас №${progress.number}',
-              style: textTheme.bodySmall?.copyWith(color: muted),
-            ),
-          ],
-          if (progress.vehiclePlate != null) ...[
-            const SizedBox(height: 2),
-            Text(
-              [
-                progress.vehiclePlate,
-                if (progress.vehicleMake != null ||
-                    progress.vehicleModel != null)
-                  [
-                    progress.vehicleMake,
-                    progress.vehicleModel,
-                  ].whereType<String>().join(' '),
-                if (progress.vehicleYear != null) '${progress.vehicleYear}',
-              ].whereType<String>().where((s) => s.isNotEmpty).join(' · '),
-              style: textTheme.bodySmall?.copyWith(color: muted),
-            ),
-          ],
-          if ((progress.startedAt == null && progress.scheduledAt != null) ||
-              progress.startedAt != null ||
-              (progress.status == ServiceProgressStatus.postponed &&
-                  progress.scheduledReturnAt != null)) ...[
-            const SizedBox(height: 10),
-            _TimingInfo(progress: progress),
-          ],
-          const SizedBox(height: 14),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(AppRadii.pill),
-            child: LinearProgressIndicator(
-              value: progress.completionRatio.clamp(0.0, 1.0).toDouble(),
-              minHeight: 7,
-              backgroundColor: muted.withValues(alpha: 0.16),
-              valueColor: const AlwaysStoppedAnimation(AppColors.green),
+        ),
+        if (progress.statusHistory.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          CsCard(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const CsSectionLabel('Төлвийн түүх'),
+                const SizedBox(height: 14),
+                _StatusTimeline(entries: progress.statusHistory),
+              ],
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            hasItems
-                ? '$completed/${progress.items.length} үйлчилгээ дууссан'
-                : progress.status.localizedLabel,
-            style: textTheme.bodySmall?.copyWith(color: muted),
-          ),
-          if (hasItems) ...[
-            const SizedBox(height: 12),
-            const Divider(height: 1),
-            const SizedBox(height: 6),
-            for (final item in progress.items)
-              _ProgressItemRow(
-                key: ValueKey('appointment-progress-${item.id}'),
-                item: item,
-              ),
-          ],
-          if (progress.totalAmount != null) ...[
-            const SizedBox(height: 10),
-            _TotalsBlock(progress: progress),
-          ],
-          if (progress.statusHistory.isNotEmpty) ...[
-            const SizedBox(height: 14),
-            const Divider(height: 1),
-            const SizedBox(height: 10),
-            Text(
-              'Төлвийн түүх',
-              style: textTheme.labelLarge?.copyWith(
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 8),
-            _StatusHistoryList(entries: progress.statusHistory),
-          ],
-          if (progress.reports.isNotEmpty) ...[
-            const SizedBox(height: 14),
-            const Divider(height: 1),
-            const SizedBox(height: 10),
-            Text(
-              'Оношилгооны тайлан',
-              style: textTheme.labelLarge?.copyWith(
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 8),
-            for (final report in progress.reports)
-              DiagnosticReportRow(
-                key: ValueKey('appointment-progress-report-${report.id}'),
-                report: report,
-                onTap: onReportSelected == null
-                    ? null
-                    : () => onReportSelected!(report.id),
-              ),
-          ],
         ],
-      ),
+        if (progress.reports.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          CsCard(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const CsSectionLabel('Оношилгооны тайлан'),
+                const SizedBox(height: 6),
+                for (final report in progress.reports)
+                  DiagnosticReportRow(
+                    key: ValueKey('appointment-progress-report-${report.id}'),
+                    report: report,
+                    onTap: onReportSelected == null
+                        ? null
+                        : () => onReportSelected!(report.id),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ],
     );
   }
 }
 
 /// D-079: customer-safe status timeline — mirrors the staff web's history
 /// modal minus the free-text `reason` and staff identity, which the API
-/// never sends to this client.
-class _StatusHistoryList extends StatelessWidget {
-  const _StatusHistoryList({required this.entries});
+/// never sends to this client. Drawn oldest → newest as a vertical stepper:
+/// past steps are filled check dots, the latest (still open) step gets the
+/// accent ring.
+class _StatusTimeline extends StatelessWidget {
+  const _StatusTimeline({required this.entries});
 
+  /// Newest first, per the API contract.
   final List<OrderStatusHistoryEntry> entries;
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
+    final theme = CarserviceTheme.of(context);
+    final ordered = entries.reversed.toList();
+    final latest = ordered.last.toStatus;
+    // A finished/cancelled order has no "current" step left — all done.
+    final closed =
+        latest == ServiceProgressStatus.completed ||
+        latest == ServiceProgressStatus.cancelled;
+    bool isDone(int i) => closed || i < ordered.length - 1;
+
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        for (final entry in entries)
-          Padding(
-            key: ValueKey('status-history-${entry.id}'),
-            padding: const EdgeInsets.symmetric(vertical: 5),
+        for (var i = 0; i < ordered.length; i++)
+          IntrinsicHeight(
+            key: ValueKey('status-history-${ordered[i].id}'),
             child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Padding(
-                  padding: const EdgeInsets.only(top: 6),
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: AppColors.green,
-                      borderRadius: BorderRadius.circular(AppRadii.pill),
-                    ),
-                    child: const SizedBox(width: 6, height: 6),
+                SizedBox(
+                  width: 22,
+                  child: Column(
+                    children: [
+                      _TimelineDot(done: isDone(i)),
+                      if (i < ordered.length - 1)
+                        Expanded(
+                          child: Container(
+                            width: 2,
+                            margin: const EdgeInsets.symmetric(vertical: 2),
+                            color: isDone(i + 1)
+                                ? theme.inverse
+                                : theme.cardBorder,
+                          ),
+                        ),
+                    ],
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 12),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text.rich(
-                        TextSpan(
-                          children: [
-                            if (entry.fromStatus != null)
-                              TextSpan(
-                                text: '${entry.fromStatus!.localizedLabel} → ',
-                                style: textTheme.bodySmall?.copyWith(
-                                  color: muted,
-                                ),
-                              ),
-                            TextSpan(
-                              text: entry.toStatus.localizedLabel,
-                              style: textTheme.bodyMedium?.copyWith(
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (entry.reasonTag != null)
+                  child: Padding(
+                    padding: EdgeInsets.only(
+                      top: 1,
+                      bottom: i < ordered.length - 1 ? 14 : 0,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                         Text(
-                          entry.reasonTag!.localizedLabel,
-                          style: textTheme.bodySmall?.copyWith(color: muted),
+                          ordered[i].toStatus.localizedLabel,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
-                      Text(
-                        _formatDateTime(entry.createdAt),
-                        style: textTheme.bodySmall?.copyWith(color: muted),
-                      ),
-                    ],
+                        const SizedBox(height: 2),
+                        Text.rich(
+                          TextSpan(
+                            children: [
+                              if (ordered[i].reasonTag != null)
+                                TextSpan(
+                                  text:
+                                      '${ordered[i].reasonTag!.localizedLabel} · ',
+                                ),
+                              TextSpan(
+                                text: _formatDateTime(ordered[i].createdAt),
+                                style: csMono(fontSize: 12),
+                              ),
+                            ],
+                          ),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: theme.mutedText,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],
             ),
           ),
       ],
+    );
+  }
+}
+
+class _TimelineDot extends StatelessWidget {
+  const _TimelineDot({required this.done});
+
+  final bool done;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = CarserviceTheme.of(context);
+    if (done) {
+      return Container(
+        width: 22,
+        height: 22,
+        decoration: BoxDecoration(color: theme.inverse, shape: BoxShape.circle),
+        child: Icon(Icons.check_rounded, size: 13, color: theme.onInverse),
+      );
+    }
+    return Container(
+      width: 22,
+      height: 22,
+      decoration: BoxDecoration(
+        color: theme.card,
+        shape: BoxShape.circle,
+        border: Border.all(color: AppColors.accent, width: 6),
+      ),
     );
   }
 }
@@ -236,12 +469,12 @@ class _TotalsBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
+    final theme = CarserviceTheme.of(context);
+    final labelStyle = TextStyle(fontSize: 13, color: theme.mutedText);
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: muted.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(AppRadii.medium),
+        color: theme.shellBackground,
+        borderRadius: BorderRadius.circular(AppRadii.large),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -251,14 +484,13 @@ class _TotalsBlock extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Нийт дүн',
-                  style: textTheme.bodySmall?.copyWith(color: muted),
-                ),
+                Text('Нийт дүн', style: labelStyle),
                 Text(
                   '${formatAmount(progress.totalAmount!.round())}₮',
-                  style: textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
+                  style: csMono(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: theme.ink,
                   ),
                 ),
               ],
@@ -268,13 +500,10 @@ class _TotalsBlock extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'Төлсөн',
-                    style: textTheme.bodySmall?.copyWith(color: muted),
-                  ),
+                  Text('Төлсөн', style: labelStyle),
                   Text(
                     '${formatAmount(progress.paidAmount!.round())}₮',
-                    style: textTheme.bodySmall,
+                    style: csMono(fontSize: 13, color: theme.ink),
                   ),
                 ],
               ),
@@ -293,60 +522,62 @@ class _ProgressItemRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
+    final theme = CarserviceTheme.of(context);
+    final brightness = Theme.of(context).brightness;
     // Сэлбэгийн статус хажууд харуулахгүй — web dashboard дээр аль хэдийн
     // адилхан алгав (`order-items.tsx`: `g.kind !== "PART"`), учир нь
     // сэлбэгт статус солих боломж байхгүй болсон тул статус нь хоцрогдсон/
     // хамааралгүй мэдээлэл болно.
     final isPart = item.kind == ServiceOrderItemKind.part;
-    final (icon, color) = switch (item.status) {
-      ServiceProgressStatus.completed => (
-        Icons.check_circle_rounded,
+    final statusColor = switch (item.status) {
+      ServiceProgressStatus.completed => AppColors.readable(
         AppColors.green,
+        brightness,
       ),
-      ServiceProgressStatus.inProgress => (
-        Icons.play_circle_fill_rounded,
-        AppColors.blue,
-      ),
-      ServiceProgressStatus.cancelled => (Icons.cancel_rounded, AppColors.red),
-      _ => (Icons.radio_button_unchecked_rounded, muted),
+      ServiceProgressStatus.inProgress => theme.link,
+      ServiceProgressStatus.cancelled => theme.mutedText,
+      _ => theme.mutedText,
     };
 
-    final textTheme = Theme.of(context).textTheme;
     final hasPrice = item.total != null;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 7),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Сэлбэгийн мөрөнд статусын дүрс/бичиг харуулахгүй ч зэргэлдээх
+          // Сэлбэгийн мөрөнд статусын дүрс харуулахгүй ч зэргэлдээх
           // ажил/оношилгооны мөртэй эгнээ зэрэгцэн харагддаг тул зайг
           // тэнцвэржүүлж (SizedBox), зүүн эхлэл шилжихгүй байлгав.
-          if (isPart)
-            const SizedBox(width: 30)
-          else ...[
-            Icon(
-              icon,
-              size: 20,
-              color: AppColors.readable(color, Theme.of(context).brightness),
-            ),
-            const SizedBox(width: 10),
-          ],
+          SizedBox(
+            width: 22,
+            child: isPart ? null : _ItemStatusDot(status: item.status),
+          ),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   item.name,
-                  style: textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
                 if (hasPrice)
-                  Text(
-                    '${item.kind.localizedLabel} · ${item.quantity ?? 1} × '
-                    '${formatAmount((item.unitPrice ?? 0).round())}₮',
-                    style: textTheme.bodySmall?.copyWith(color: muted),
+                  Text.rich(
+                    TextSpan(
+                      children: [
+                        TextSpan(text: '${item.kind.localizedLabel} · '),
+                        TextSpan(
+                          text:
+                              '${item.quantity ?? 1} × '
+                              '${formatAmount((item.unitPrice ?? 0).round())}₮',
+                          style: csMono(fontSize: 12),
+                        ),
+                      ],
+                    ),
+                    style: TextStyle(fontSize: 12, color: theme.mutedText),
                   ),
               ],
             ),
@@ -358,20 +589,16 @@ class _ProgressItemRow extends StatelessWidget {
               if (!isPart)
                 Text(
                   item.status.localizedLabel,
-                  style: textTheme.bodySmall?.copyWith(
-                    color: AppColors.readable(
-                      color,
-                      Theme.of(context).brightness,
-                    ),
-                    fontWeight: FontWeight.w700,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: statusColor,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               if (hasPrice)
                 Text(
                   '${formatAmount(item.total!.round())}₮',
-                  style: textTheme.bodySmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: csMono(fontSize: 13, color: theme.ink),
                 ),
             ],
           ),
@@ -381,63 +608,49 @@ class _ProgressItemRow extends StatelessWidget {
   }
 }
 
-/// Хугацааны БОДИТ баримтууд — item-completion хувиас тусад нь харуулна.
-///
-/// Урьдчилсан таамаг (`estimatedDurationMinutes`, `expectedFinishAt`) болон
-/// тэдгээрээс гарах "хожимдож байна" анхааруулгыг зориудаар харуулахгүй:
-/// үйлчлүүлэгчид улаанаар харагдах таамаг нь ажилтны хяналтаас гадуурх
-/// шалтгаанаар байнга зөрдөг тул батлагдаагүй амлалт мэт сэтгэгдэл төрүүлж
-/// байв. Оронд нь эхэлсэн/товлосон/буцах гэсэн баримтуудыг л харуулна.
-/// Талбарууд нь model/DTO-д хэвээр (API contract өөрчлөгдөөгүй).
-class _TimingInfo extends StatelessWidget {
-  const _TimingInfo({required this.progress});
+/// Item status as a 22px dot, same language as the status timeline.
+class _ItemStatusDot extends StatelessWidget {
+  const _ItemStatusDot({required this.status});
 
-  final AppointmentServiceProgress progress;
+  final ServiceProgressStatus status;
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
-    final isPostponed = progress.status == ServiceProgressStatus.postponed;
-
-    final parts = <String>[];
-    // Хараахан эхлээгүй бол товлосон огноо, эхэлсэн бол бодит эхэлсэн цаг —
-    // хоёулаа зэрэг утгатай байх тохиолдол байхгүй тул харилцан орлоно.
-    if (progress.startedAt != null) {
-      parts.add('Ажил эхэлсэн: ${_formatDateTime(progress.startedAt!)}');
-    } else if (progress.scheduledAt != null) {
-      parts.add('Товлосон огноо: ${_formatDateTime(progress.scheduledAt!)}');
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        for (final part in parts)
-          Padding(
-            padding: const EdgeInsets.only(top: 2),
-            child: Text(
-              part,
-              style: textTheme.bodySmall?.copyWith(color: muted),
-            ),
-          ),
-        // Засвар үргэлжлэх цаг — хойшлогдсон үеийн хамгийн чухал мэдээлэл тул тод, том,
-        // ялгарах өнгөөр (бусад мэдээллээс илт ялгаатай) харуулна.
-        if (isPostponed && progress.scheduledReturnAt != null)
-          Padding(
-            padding: const EdgeInsets.only(top: 6),
-            child: Text(
-              'Засвар үргэлжлэх цаг: ${_formatDateTime(progress.scheduledReturnAt!)}',
-              style: textTheme.bodyMedium?.copyWith(
-                color: AppColors.readable(
-                  AppColors.purple,
-                  Theme.of(context).brightness,
-                ),
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ),
-      ],
-    );
+    final theme = CarserviceTheme.of(context);
+    return switch (status) {
+      ServiceProgressStatus.completed => Container(
+        width: 22,
+        height: 22,
+        decoration: BoxDecoration(color: theme.inverse, shape: BoxShape.circle),
+        child: Icon(Icons.check_rounded, size: 13, color: theme.onInverse),
+      ),
+      ServiceProgressStatus.inProgress => Container(
+        width: 22,
+        height: 22,
+        decoration: BoxDecoration(
+          color: theme.card,
+          shape: BoxShape.circle,
+          border: Border.all(color: AppColors.accent, width: 6),
+        ),
+      ),
+      ServiceProgressStatus.cancelled => Container(
+        width: 22,
+        height: 22,
+        decoration: BoxDecoration(
+          color: theme.shellBackground,
+          shape: BoxShape.circle,
+        ),
+        child: Icon(Icons.close_rounded, size: 13, color: theme.mutedText),
+      ),
+      _ => Container(
+        width: 22,
+        height: 22,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(color: theme.cardBorder, width: 2),
+        ),
+      ),
+    };
   }
 }
 

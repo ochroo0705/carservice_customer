@@ -1,5 +1,6 @@
 import 'package:carservice_customer/app/theme/app_surfaces.dart';
 import 'package:carservice_customer/app/theme/app_theme.dart';
+import 'package:carservice_customer/core/widgets/cs_ui.dart';
 import 'package:carservice_customer/features/booking/domain/appointment_repository.dart';
 import 'package:carservice_customer/features/booking/presentation/controllers/booking_form_controller.dart';
 import 'package:carservice_customer/features/booking/presentation/widgets/booking_calendar.dart';
@@ -150,20 +151,45 @@ class _BookingRequestScreenState extends State<BookingRequestScreen>
   Widget build(BuildContext context) => ListenableBuilder(
     listenable: _form,
     builder: (context, _) => Scaffold(
-      appBar: AppBar(
-        leading: BackButton(onPressed: widget.onBack),
-        title: const Text('Цаг хүсэх'),
-      ),
+      // The summary bar is translucent: the form scrolls on under it.
+      extendBody: true,
       body: AppShellBackground(
         child: SafeArea(
-          top: false,
           bottom: false,
           child: _form.lockedFlowBlocked
-              ? LockedFlowUnavailable(
-                  branchMissing: _form.lockedBranchMissing,
-                  onBack: widget.onBack,
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                      child: Row(
+                        children: [
+                          CsCircleButton.back(
+                            context,
+                            onPressed: widget.onBack,
+                          ),
+                          const SizedBox(width: 12),
+                          const Expanded(
+                            child: Text(
+                              'Цаг хүсэх',
+                              style: TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: LockedFlowUnavailable(
+                        branchMissing: _form.lockedBranchMissing,
+                        onBack: widget.onBack,
+                      ),
+                    ),
+                  ],
                 )
-              : _buildForm(context),
+              : Builder(builder: _buildForm),
         ),
       ),
       bottomNavigationBar: _form.lockedFlowBlocked
@@ -177,34 +203,49 @@ class _BookingRequestScreenState extends State<BookingRequestScreen>
     final muted = CarserviceTheme.of(context).mutedText;
     final showServices = form.lockCategories || form.allCategories.isNotEmpty;
     final showBranch = bookingBranchStepVisible(form);
+    // With `extendBody`, the bottom padding is the summary bar's height.
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
     var step = 0;
     // Not a lazy ListView: every step stays built, so scrolling to whichever
     // one needs attention always has a target.
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
+      padding: EdgeInsets.fromLTRB(20, 12, 20, 24 + bottomInset),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          BookingHeader(
-            organization: widget.organization,
-            selectedBranch: form.selectedBranch,
-            categoryCount: form.allCategories.length,
+          Semantics(
+            // The screen's title for assistive tech; the design shows the
+            // service's name instead of a "Цаг хүсэх" heading.
+            label: 'Цаг хүсэх',
+            container: true,
+            child: BookingHeader(
+              organization: widget.organization,
+              selectedBranch: form.selectedBranch,
+              categoryCount: form.allCategories.length,
+              onBack: widget.onBack,
+              trailing: VehiclePicker(
+                controller: form.vehiclesController,
+                selectedVehicleId: form.selectedVehicleId,
+                onChanged: form.selectVehicle,
+                onAddVehicle: widget.onAddVehicle,
+              ),
+            ),
           ),
           if (showServices) ...[
-            const SizedBox(height: 24),
+            const SizedBox(height: 22),
             KeyedSubtree(
               key: _servicesKey,
               child: BookingCategorySection(form: form, number: ++step),
             ),
           ],
           if (showBranch) ...[
-            const SizedBox(height: 24),
+            const SizedBox(height: 22),
             KeyedSubtree(
               key: _branchKey,
               child: BookingBranchSection(form: form, number: ++step),
             ),
           ],
-          const SizedBox(height: 24),
+          const SizedBox(height: 22),
           BookingStep(
             key: _dateKey,
             number: ++step,
@@ -219,58 +260,39 @@ class _BookingRequestScreenState extends State<BookingRequestScreen>
                         ? 'Эхлээд үйлчилгээ, салбараа сонгоно уу.'
                         : 'Эхлээд салбараа сонгоно уу.',
                   )
-                : GlassSurface(
-                    padding: const EdgeInsets.fromLTRB(8, 6, 8, 10),
-                    child: BookingCalendar(
-                      month: form.displayedMonth,
-                      selectedDate: form.selectedDate,
-                      branch: form.selectedBranch,
-                      onMonthChanged: form.setDisplayedMonth,
-                      onDateSelected: (date) {
-                        form.selectDate(date);
-                        _scrollTo(_slotKey);
-                      },
-                    ),
+                : BookingCalendar(
+                    month: form.displayedMonth,
+                    selectedDate: form.selectedDate,
+                    branch: form.selectedBranch,
+                    onMonthChanged: form.setDisplayedMonth,
+                    onDateSelected: (date) {
+                      form.selectDate(date);
+                      _scrollTo(_slotKey);
+                    },
                   ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 22),
           KeyedSubtree(
             key: _slotKey,
             child: BookingSlotSection(form: form, number: ++step),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 22),
           BookingStep(
             number: ++step,
-            title: 'Нэмэлт мэдээлэл',
+            title: 'Тэмдэглэл',
             complete: false,
             trailing: 'Заавал биш',
-            child: GlassSurface(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  VehiclePicker(
-                    controller: form.vehiclesController,
-                    selectedVehicleId: form.selectedVehicleId,
-                    onChanged: form.selectVehicle,
-                    onAddVehicle: widget.onAddVehicle,
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: _noteController,
-                    maxLines: 4,
-                    minLines: 2,
-                    maxLength: 500,
-                    decoration: const InputDecoration(
-                      labelText: 'Тэмдэглэл',
-                      hintText: 'Машины асуудал, хүсэлтээ товч бичнэ үү',
-                      alignLabelWithHint: true,
-                    ),
-                  ),
-                ],
+            child: TextField(
+              controller: _noteController,
+              maxLines: 4,
+              minLines: 2,
+              maxLength: 500,
+              decoration: const InputDecoration(
+                hintText: 'Жишээ: машины асуудал, хүсэлтээ товч бичнэ үү',
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

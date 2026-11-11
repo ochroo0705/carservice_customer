@@ -1,5 +1,5 @@
 import 'package:carservice_customer/app/theme/app_theme.dart';
-import 'package:carservice_customer/app/theme/app_surfaces.dart';
+import 'package:carservice_customer/core/widgets/cs_ui.dart';
 import 'package:carservice_customer/core/widgets/filter_controls.dart';
 import 'package:carservice_customer/core/widgets/skeletons.dart';
 import 'package:carservice_customer/features/diagnostics/domain/diagnostic_report_list_item.dart';
@@ -34,9 +34,7 @@ class DiagnosticsScreen extends StatefulWidget {
 }
 
 class _DiagnosticsScreenState extends State<DiagnosticsScreen> {
-  late final DiagnosticsController _controller = DiagnosticsController(
-    widget.repository,
-  )..load();
+  late final DiagnosticsController _controller = DiagnosticsController(widget.repository)..load();
 
   @override
   void dispose() {
@@ -45,32 +43,47 @@ class _DiagnosticsScreenState extends State<DiagnosticsScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      leading: BackButton(onPressed: widget.onBack),
-      title: const Text('Оношилгооны түүх'),
-    ),
-    body: AppShellBackground(
-      child: SafeArea(
-        top: false,
-        child: DiagnosticsListView(
-          controller: _controller,
-          onReportSelected: widget.onReportSelected,
+  Widget build(BuildContext context) {
+    final theme = CarserviceTheme.of(context);
+    return Scaffold(
+      backgroundColor: theme.shellBackground,
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+              child: Row(
+                children: [
+                  CsCircleButton.back(context, onPressed: widget.onBack),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Оношилгооны түүх',
+                      style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: theme.ink),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: DiagnosticsListView(
+                controller: _controller,
+                onReportSelected: widget.onReportSelected,
+              ),
+            ),
+          ],
         ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 /// The diagnostics report list, with its own search field + year-filter
 /// button above it — driven by [controller], owned by whoever embeds this
 /// (the standalone [DiagnosticsScreen], or the Түүх tab).
 class DiagnosticsListView extends StatefulWidget {
-  const DiagnosticsListView({
-    required this.controller,
-    required this.onReportSelected,
-    super.key,
-  });
+  const DiagnosticsListView({required this.controller, required this.onReportSelected, super.key});
 
   final DiagnosticsController controller;
   final ValueChanged<String> onReportSelected;
@@ -150,9 +163,7 @@ class _DiagnosticsListViewState extends State<DiagnosticsListView> {
                 child: Text(
                   'Сонгосон шүүлтэд тохирох тайлан алга.',
                   textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                  style: TextStyle(fontSize: 14, color: CarserviceTheme.of(context).mutedText),
                 ),
               ),
             )
@@ -162,9 +173,8 @@ class _DiagnosticsListViewState extends State<DiagnosticsListView> {
                 controller: _scrollController,
                 padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
                 itemCount:
-                    widget.controller.reports.length +
-                    (widget.controller.hasNextPage ? 1 : 0),
-                separatorBuilder: (_, _) => const SizedBox(height: 12),
+                    widget.controller.reports.length + (widget.controller.hasNextPage ? 1 : 0),
+                separatorBuilder: (_, _) => const SizedBox(height: 10),
                 itemBuilder: (context, index) {
                   final reports = widget.controller.reports;
                   if (index >= reports.length) {
@@ -199,51 +209,49 @@ class _ReportCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = CarserviceTheme.of(context);
     final date =
         '${report.createdAt.year}.${report.createdAt.month.toString().padLeft(2, '0')}.${report.createdAt.day.toString().padLeft(2, '0')}';
-    final subtitle = report.mileageAtReport != null
-        ? '$date · ${report.branchName} · ${report.mileageAtReport} км'
-        : '$date · ${report.branchName}';
-    return InkWell(
+    final meta = report.mileageAtReport != null ? '$date · ${report.mileageAtReport} км' : date;
+    return CsCard(
       key: ValueKey('diagnostic-report-${report.id}'),
       onTap: onTap,
-      borderRadius: BorderRadius.circular(AppRadii.extraLarge),
-      child: GlassSurface(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    report.templateName,
-                    style: Theme.of(context).textTheme.titleMedium
-                        ?.copyWith(fontWeight: FontWeight.w800),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '${report.vehicleMake} ${report.vehicleModel} · ${report.vehiclePlate}',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    subtitle,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const CsIconTile(icon: Icons.fact_check_outlined, size: 40),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  report.templateName,
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: theme.ink),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${report.vehicleMake} ${report.vehicleModel} · ${report.branchName}',
+                  style: TextStyle(fontSize: 12, color: theme.mutedText),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    CsPlate(report.vehiclePlate, fontSize: 11),
+                    Text(meta, style: csMono(fontSize: 12, color: theme.mutedText)),
+                  ],
+                ),
+              ],
             ),
-            if (report.severity != null) ...[
-              const SizedBox(width: 8),
-              SeverityChip(severity: report.severity!),
-            ],
+          ),
+          if (report.severity != null) ...[
+            const SizedBox(width: 8),
+            SeverityChip(severity: report.severity!),
           ],
-        ),
+        ],
       ),
     );
   }
