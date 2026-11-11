@@ -74,6 +74,25 @@ flutter_native_splash:
   android: true
   ios: true
 flutter:
+  fonts:
+    - family: Geist
+      fonts:
+        - asset: assets/fonts/Geist-400.ttf
+        - asset: assets/fonts/Geist-500.ttf
+          weight: 500
+        - asset: assets/fonts/Geist-600.ttf
+          weight: 600
+        - asset: assets/fonts/Geist-700.ttf
+          weight: 700
+    - family: GeistMono
+      fonts:
+        - asset: assets/fonts/GeistMono-400.ttf
+        - asset: assets/fonts/GeistMono-500.ttf
+          weight: 500
+        - asset: assets/fonts/GeistMono-600.ttf
+          weight: 600
+        - asset: assets/fonts/GeistMono-700.ttf
+          weight: 700
 
   uses-material-design: true
 

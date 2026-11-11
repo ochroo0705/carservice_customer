@@ -1,43 +1,38 @@
-import 'package:carservice_customer/app/theme/app_surfaces.dart';
-import 'package:carservice_customer/app/theme/theme_controller.dart';
+import 'package:carservice_customer/app/theme/app_theme.dart';
+import 'package:carservice_customer/core/widgets/cs_ui.dart';
 import 'package:carservice_customer/features/booking/auth/domain/account.dart';
 import 'package:carservice_customer/features/booking/auth/presentation/auth_controller.dart';
+import 'package:carservice_customer/features/booking/domain/appointment_status.dart';
+import 'package:carservice_customer/features/booking/presentation/controllers/appointments_controller.dart';
 import 'package:carservice_customer/features/discovery/presentation/controllers/discovery_controller.dart';
-import 'package:carservice_customer/features/notifications/presentation/controllers/notifications_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
+/// The four top-level tabs of the 2026-11 design: Нүүр · Сервис · Захиалга ·
+/// Машин. Profile and full history are pushed routes reached from Home /
+/// Garage, and booking starts from Home's "Цаг захиалах".
 class CustomerShell extends StatefulWidget {
-  const CustomerShell({
-    required this.destinations,
-    required this.onLoginRequested,
-    required this.onNotificationsRequested,
-    super.key,
-  });
+  const CustomerShell({required this.destinations, super.key})
+    : assert(destinations.length == 4);
 
+  /// Home, Discovery, Appointments, Garage — in that order.
   final List<Widget> destinations;
-  final VoidCallback onLoginRequested;
-  final VoidCallback onNotificationsRequested;
 
   @override
   State<CustomerShell> createState() => CustomerShellState();
 }
 
 class CustomerShellState extends State<CustomerShell> with SingleTickerProviderStateMixin {
-  static const _discoveryIndex = 0;
-  static const _profileIndex = 4;
+  static const homeIndex = 0;
+  static const discoveryIndex = 1;
+  static const appointmentsIndex = 2;
+  static const garageIndex = 3;
 
-  int _selectedIndex = 0;
+  int _selectedIndex = homeIndex;
 
-  // Drives a quick scale-in of the content area whenever the tab changes. The
-  // IndexedStack underneath keeps every tab mounted (state + offstage
-  // semantics preserved); this just eases the swap so it isn't abrupt.
-  //
-  // Transform-only (scale), never opacity: tab bodies paint glass
-  // (BackdropFilter), and fading a backdrop filter isolates it in an opacity
-  // layer that disables the blur mid-animation then snaps it back — a visible
-  // flicker of the background gradient.
+  // A quick scale-in on tab change; transform-only (no opacity) so blurred
+  // surfaces underneath keep compositing.
   late final AnimationController _tabAnim = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 220),
@@ -54,132 +49,126 @@ class CustomerShellState extends State<CustomerShell> with SingleTickerProviderS
     super.dispose();
   }
 
+  static const _items = [
+    (Icons.home_outlined, Icons.home_rounded, 'Нүүр'),
+    (Icons.search_rounded, Icons.search_rounded, 'Сервис'),
+    (Icons.receipt_long_outlined, Icons.receipt_long_rounded, 'Захиалга'),
+    (Icons.directions_car_outlined, Icons.directions_car_rounded, 'Машин'),
+  ];
+
   @override
   Widget build(BuildContext context) {
-    final themeController = context.watch<ThemeController>();
-    // Select only the slices this shell renders, so it doesn't rebuild on
-    // every unrelated change to the auth/notifications controllers (e.g. a
-    // notification's read-state flipping when the unread count is unchanged).
     final account = context.select<AuthController, Account?>((c) => c.account);
-    final unreadNotificationCount = context.select<NotificationsController, int>(
-      (c) => c.unreadCount,
-    );
+    final hasActiveBooking =
+        account != null &&
+        context.select<AppointmentsController, bool>(
+          (c) => c.sortedAppointments.any((a) => a.status.isActive),
+        );
     final discoveryMapView = context.select<DiscoveryController, bool>((c) => c.mapView);
+    final theme = CarserviceTheme.of(context);
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final useRail = constraints.maxWidth >= 720;
+        final mq = MediaQuery.of(context);
+        final navSpace = useRail ? 0.0 : CsFloatingNav.reservedHeight + mq.padding.bottom;
+
+        Widget tab(int i, Widget child) {
+          switch (i) {
+            case homeIndex:
+            case garageIndex:
+              // These screens lay out their own insets and nav clearance.
+              return child;
+            case discoveryIndex:
+              return Padding(
+                padding: EdgeInsets.only(bottom: navSpace),
+                child: discoveryMapView ? child : SafeArea(bottom: false, child: child),
+              );
+            default:
+              return Padding(
+                padding: EdgeInsets.only(bottom: navSpace),
+                child: SafeArea(
+                  bottom: false,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.fromLTRB(20, 16, 20, 4),
+                        child: Text(
+                          'Захиалгууд',
+                          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, letterSpacing: -0.2),
+                        ),
+                      ),
+                      Expanded(child: child),
+                    ],
+                  ),
+                ),
+              );
+          }
+        }
+
         final content = ScaleTransition(
           scale: _tabScale,
-          child: IndexedStack(index: _selectedIndex, children: widget.destinations),
+          child: IndexedStack(
+            index: _selectedIndex,
+            children: [
+              for (var i = 0; i < widget.destinations.length; i++) tab(i, widget.destinations[i]),
+            ],
+          ),
         );
-        // Map mode wants the whole screen (search/filters/notifications/
-        // list-toggle/locate-me all float on top of the map itself — see
-        // DiscoveryScreen), so the shell's own AppBar steps aside for it
-        // entirely rather than eating space above the map. Хайх's map/list
-        // toggle lives in DiscoveryScreen in both modes.
-        final isDiscoveryMap = _selectedIndex == _discoveryIndex && discoveryMapView;
-        return Scaffold(
-          appBar: isDiscoveryMap
-              ? null
-              : AppBar(
-                  title: const CarserviceBrand(compact: true),
-                  actions: [
-                    _ThemeModeMenu(controller: themeController),
-                    if (account != null)
-                      _NotificationBell(
-                        unreadCount: unreadNotificationCount,
-                        onTap: widget.onNotificationsRequested,
-                      ),
-                    if (account case final account?)
-                      _AvatarButton(
-                        account: account,
-                        onTap: () => _selectDestination(_profileIndex),
-                      )
-                    else
-                      Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: TextButton.icon(
-                          key: const ValueKey('shell-login'),
-                          onPressed: widget.onLoginRequested,
-                          icon: const Icon(Icons.person_outline, size: 19),
-                          label: const Text('Нэвтрэх'),
-                        ),
-                      ),
-                  ],
-                ),
-          body: useRail
-              ? Row(
-                  children: [
-                    NavigationRail(
-                      selectedIndex: _selectedIndex,
-                      onDestinationSelected: _selectDestination,
-                      labelType: NavigationRailLabelType.all,
-                      destinations: const [
-                        NavigationRailDestination(
-                          icon: Icon(Icons.explore_outlined),
-                          selectedIcon: Icon(Icons.explore_rounded),
-                          label: Text('Хайх'),
-                        ),
-                        NavigationRailDestination(
-                          icon: Icon(Icons.build_circle_outlined),
-                          selectedIcon: Icon(Icons.build_circle_rounded),
-                          label: Text('Захиалах'),
-                        ),
-                        NavigationRailDestination(
-                          icon: Icon(Icons.event_note_outlined),
-                          selectedIcon: Icon(Icons.event_note_rounded),
-                          label: Text('Захиалгууд'),
-                        ),
-                        NavigationRailDestination(
-                          icon: Icon(Icons.receipt_long_outlined),
-                          selectedIcon: Icon(Icons.receipt_long_rounded),
-                          label: Text('Түүх'),
-                        ),
-                        NavigationRailDestination(
-                          icon: Icon(Icons.person_outline_rounded),
-                          selectedIcon: Icon(Icons.person_rounded),
-                          label: Text('Профайл'),
-                        ),
-                      ],
-                    ),
-                    const VerticalDivider(width: 1),
-                    Expanded(child: content),
-                  ],
-                )
-              : content,
-          bottomNavigationBar: useRail
-              ? null
-              : NavigationBar(
+
+        if (useRail) {
+          return Scaffold(
+            body: Row(
+              children: [
+                NavigationRail(
                   selectedIndex: _selectedIndex,
                   onDestinationSelected: _selectDestination,
-                  destinations: const [
-                    NavigationDestination(
-                      icon: Icon(Icons.explore_outlined),
-                      selectedIcon: Icon(Icons.explore_rounded),
-                      label: 'Хайх',
-                    ),
-                    NavigationDestination(
-                      icon: Icon(Icons.build_circle_outlined),
-                      selectedIcon: Icon(Icons.build_circle_rounded),
-                      label: 'Захиалах',
-                    ),
-                    NavigationDestination(
-                      icon: Icon(Icons.event_note_outlined),
-                      selectedIcon: Icon(Icons.event_note_rounded),
-                      label: 'Захиалгууд',
-                    ),
-                    NavigationDestination(
-                      icon: Icon(Icons.receipt_long_outlined),
-                      selectedIcon: Icon(Icons.receipt_long_rounded),
-                      label: 'Түүх',
-                    ),
-                    NavigationDestination(
-                      icon: Icon(Icons.person_outline_rounded),
-                      selectedIcon: Icon(Icons.person_rounded),
-                      label: 'Профайл',
-                    ),
+                  labelType: NavigationRailLabelType.all,
+                  backgroundColor: theme.card,
+                  indicatorColor: theme.inverse,
+                  selectedIconTheme: IconThemeData(color: theme.onInverse),
+                  destinations: [
+                    for (final (icon, selected, label) in _items)
+                      NavigationRailDestination(
+                        icon: Icon(icon),
+                        selectedIcon: Icon(selected),
+                        label: Text(label),
+                      ),
                   ],
                 ),
+                VerticalDivider(width: 1, color: theme.cardBorder),
+                Expanded(child: content),
+              ],
+            ),
+          );
+        }
+
+        return Scaffold(
+          body: Stack(
+            children: [
+              Positioned.fill(child: content),
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: CsFloatingNav(
+                  key: const ValueKey('shell-nav'),
+                  selectedIndex: _selectedIndex,
+                  onSelected: _selectDestination,
+                  items: [
+                    for (var i = 0; i < _items.length; i++)
+                      CsNavItem(
+                        key: ValueKey('shell-tab-$i'),
+                        icon: i == _selectedIndex ? _items[i].$2 : _items[i].$1,
+                        label: _items[i].$3,
+                        badge: i == appointmentsIndex && hasActiveBooking && _selectedIndex != i,
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         );
       },
     );
@@ -195,86 +184,8 @@ class CustomerShellState extends State<CustomerShell> with SingleTickerProviderS
   }
 
   /// Lets the router imperatively switch tabs, e.g. jumping to Appointments
-  /// right after a booking succeeds — tab selection is otherwise this
-  /// widget's own private state, unreachable from outside.
+  /// right after a booking succeeds.
   void selectDestination(int index) => _selectDestination(index);
-}
 
-class _ThemeModeMenu extends StatelessWidget {
-  const _ThemeModeMenu({required this.controller});
-
-  final ThemeController controller;
-
-  @override
-  Widget build(BuildContext context) {
-    // A plain light ↔ dark flip of what's on screen now — from "system" too.
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return IconButton(
-      tooltip: isDark ? 'Гэрэлтэй горим' : 'Бараан горим',
-      onPressed: () => controller.setMode(isDark ? ThemeMode.light : ThemeMode.dark),
-      icon: Icon(isDark ? Icons.dark_mode_outlined : Icons.light_mode_outlined),
-    );
-  }
-}
-
-class _NotificationBell extends StatelessWidget {
-  const _NotificationBell({required this.unreadCount, required this.onTap});
-
-  final int unreadCount;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final icon = IconButton(
-      key: const ValueKey('shell-notifications'),
-      tooltip: 'Мэдэгдэл',
-      onPressed: onTap,
-      icon: const Icon(Icons.notifications_outlined),
-    );
-    final label = unreadCount > 9 ? '9+' : '$unreadCount';
-    return Badge(
-      isLabelVisible: unreadCount > 0,
-      label: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 220),
-        transitionBuilder: (child, animation) => ScaleTransition(scale: animation, child: child),
-        // Key by value so incrementing the count pops the new number in.
-        child: Text(label, key: ValueKey(label)),
-      ),
-      child: icon,
-    );
-  }
-}
-
-class _AvatarButton extends StatelessWidget {
-  const _AvatarButton({required this.account, required this.onTap});
-
-  final Account account;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final label = _displayLabel(account);
-    final scheme = Theme.of(context).colorScheme;
-    return InkWell(
-      key: const ValueKey('shell-avatar'),
-      onTap: onTap,
-      customBorder: const CircleBorder(),
-      child: Padding(
-        padding: const EdgeInsets.only(right: 8, left: 4),
-        child: CircleAvatar(
-          radius: 14,
-          backgroundColor: scheme.primary,
-          child: Text(
-            label.substring(0, 1).toUpperCase(),
-            style: TextStyle(color: scheme.onPrimary, fontWeight: FontWeight.w700, fontSize: 13),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-String _displayLabel(Account account) {
-  final name = account.name?.trim();
-  return (name != null && name.isNotEmpty) ? name : account.phone;
+  int get selectedIndex => _selectedIndex;
 }

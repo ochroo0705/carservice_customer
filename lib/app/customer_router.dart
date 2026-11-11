@@ -31,7 +31,10 @@ import 'package:carservice_customer/features/profile/presentation/screens/profil
 import 'package:carservice_customer/features/vehicles/domain/vehicle.dart';
 import 'package:carservice_customer/features/vehicles/presentation/screens/add_vehicle_screen.dart';
 import 'package:carservice_customer/features/vehicles/presentation/screens/vehicle_detail_screen.dart';
+import 'package:carservice_customer/core/widgets/cs_ui.dart';
 import 'package:carservice_customer/core/widgets/skeletons.dart';
+import 'package:carservice_customer/features/garage/presentation/garage_screen.dart';
+import 'package:carservice_customer/features/home/presentation/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -151,9 +154,22 @@ GoRouter buildCustomerRouter(CustomerAppServices services, CustomerNavigation na
           key: state.pageKey,
           child: CustomerShell(
             key: navigation.shellKey,
-            onLoginRequested: navigation.requestLogin,
-            onNotificationsRequested: () => context.push(CustomerRoutes.notifications),
             destinations: [
+              HomeScreen(
+                onLoginRequested: navigation.requestLogin,
+                onNotificationsRequested: () => context.push(CustomerRoutes.notifications),
+                onProfileRequested: () => context.push(CustomerRoutes.profile),
+                onBookRequested: () => context.push(CustomerRoutes.book),
+                onSearchRequested: () => navigation.shellKey.currentState
+                    ?.selectDestination(CustomerShellState.discoveryIndex),
+                onAppointmentsRequested: () => navigation.shellKey.currentState
+                    ?.selectDestination(CustomerShellState.appointmentsIndex),
+                onHistoryRequested: () => context.push(CustomerRoutes.history),
+                onAddVehicle: () => context.push(CustomerRoutes.addVehicle),
+                onAppointmentSelected: navigation.openAppointment,
+                onBranchSelected: (org, branch) =>
+                    context.push(CustomerRoutes.organization(org.slug, branchId: branch.id)),
+              ),
               DiscoveryScreen(
                 onBranchSelected: (org, branch) =>
                     context.push(CustomerRoutes.organization(org.slug, branchId: branch.id)),
@@ -161,16 +177,6 @@ GoRouter buildCustomerRouter(CustomerAppServices services, CustomerNavigation na
                   CustomerRoutes.booking(org.slug, branchId: branch.id, lockBranch: true),
                 ),
                 onNotificationsRequested: () => context.push(CustomerRoutes.notifications),
-              ),
-              ServiceKeyPickerScreen(
-                repository: services.organizationRepository,
-                onBranchSelected: (org, branch, keys) => context.push(
-                  CustomerRoutes.booking(
-                    org.slug,
-                    branchId: branch.id,
-                    serviceKeyIds: keys.map((k) => k.id).toList(),
-                  ),
-                ),
               ),
               AppointmentsScreen(
                 onLoginRequested: navigation.requestLogin,
@@ -181,23 +187,59 @@ GoRouter buildCustomerRouter(CustomerAppServices services, CustomerNavigation na
                 ),
                 onWalkInOrderSelected: (id) => context.push(CustomerRoutes.walkInOrder(id)),
               ),
-              HistoryScreen(
-                onLoginRequested: navigation.requestLogin,
-                onOrderSelected: (id) => context.push(CustomerRoutes.order(id)),
-                diagnosticsRepository: services.diagnosticsRepository,
-                reconnects: services.reconnects,
-                onDiagnosticReportSelected: (id) => context.push(CustomerRoutes.diagnostic(id)),
-              ),
-              ProfileScreen(
+              GarageScreen(
                 onLoginRequested: navigation.requestLogin,
                 onAddVehicle: () => context.push(CustomerRoutes.addVehicle),
                 onVehicleSelected: (v) => context.push(CustomerRoutes.vehicle(v.id), extra: v),
-                onAccountClosureRequested: () => context.push(CustomerRoutes.accountClosure),
-                onPasswordSettingsRequested: () => context.push(CustomerRoutes.accountPassword),
-                onTermsRequested: () => context.push(CustomerRoutes.terms),
-                onPrivacyRequested: () => context.push(CustomerRoutes.privacy),
+                onHistoryRequested: () => context.push(CustomerRoutes.history),
+                onOrderSelected: (id) => context.push(CustomerRoutes.order(id)),
+                onProfileRequested: () => context.push(CustomerRoutes.profile),
               ),
             ],
+          ),
+        ),
+      ),
+      GoRoute(
+        path: CustomerRoutes.book,
+        builder: (context, state) => _TitledPage(
+          title: 'Цаг захиалах',
+          child: ServiceKeyPickerScreen(
+            repository: services.organizationRepository,
+            onBranchSelected: (org, branch, keys) => context.push(
+              CustomerRoutes.booking(
+                org.slug,
+                branchId: branch.id,
+                serviceKeyIds: keys.map((k) => k.id).toList(),
+              ),
+            ),
+          ),
+        ),
+      ),
+      GoRoute(
+        path: CustomerRoutes.history,
+        builder: (context, state) => _TitledPage(
+          title: 'Засварын түүх',
+          child: HistoryScreen(
+            onLoginRequested: navigation.requestLogin,
+            onOrderSelected: (id) => context.push(CustomerRoutes.order(id)),
+            diagnosticsRepository: services.diagnosticsRepository,
+            reconnects: services.reconnects,
+            onDiagnosticReportSelected: (id) => context.push(CustomerRoutes.diagnostic(id)),
+          ),
+        ),
+      ),
+      GoRoute(
+        path: CustomerRoutes.profile,
+        builder: (context, state) => _TitledPage(
+          title: 'Профайл',
+          child: ProfileScreen(
+            onLoginRequested: navigation.requestLogin,
+            onAddVehicle: () => context.push(CustomerRoutes.addVehicle),
+            onVehicleSelected: (v) => context.push(CustomerRoutes.vehicle(v.id), extra: v),
+            onAccountClosureRequested: () => context.push(CustomerRoutes.accountClosure),
+            onPasswordSettingsRequested: () => context.push(CustomerRoutes.accountPassword),
+            onTermsRequested: () => context.push(CustomerRoutes.terms),
+            onPrivacyRequested: () => context.push(CustomerRoutes.privacy),
           ),
         ),
       ),
@@ -688,5 +730,45 @@ class _OrganizationScopeState extends State<_OrganizationScope> {
       status: controller.status,
       message: controller.message,
     ), _reload);
+  }
+}
+
+
+/// A former tab body pushed as its own page: the design's header (round back
+/// button + title) over the body.
+class _TitledPage extends StatelessWidget {
+  const _TitledPage({required this.title, required this.child});
+
+  final String title;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+              child: Row(
+                children: [
+                  CsCircleButton.back(context),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(child: child),
+          ],
+        ),
+      ),
+    );
   }
 }

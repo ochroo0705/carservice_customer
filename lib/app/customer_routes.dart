@@ -26,6 +26,9 @@ abstract final class CustomerRoutes {
   static String login({String? from}) =>
       Uri(path: '/login', queryParameters: {'from': ?from}).toString();
 
+  static const book = '/book';
+  static const history = '/history';
+  static const profile = '/profile';
   static const addVehicle = '/vehicles/add';
   static String vehicle(String id) => '/vehicles/$id';
   static String appointment(String id) => '/appointments/$id';
