@@ -57,7 +57,12 @@ class AppointmentPayment {
     this.qrText,
     this.urls = const [],
     this.underpaidAmount,
+    this.payBy,
   });
+
+  /// Төлөх эцсийн мөч (API `payBy` — захиалга үүссэн + 15 мин). Хэтэрвэл
+  /// цаг чөлөөлөгдөнө. PAID/REFUNDED эсвэл хуучин сервер дээр `null`.
+  final DateTime? payBy;
 
   final AppointmentFeeStatus status;
   final num amount;

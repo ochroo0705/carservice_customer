@@ -40,9 +40,9 @@ class AppointmentPaymentScreen extends StatefulWidget {
     super.key,
   });
 
-  /// Хураамжийг төлөх эцсийн мөч (захиалга үүссэн + `ttlMinutes`). Мэдэгдэж
-  /// байвал PENDING үед «HH:mm-аас өмнө төлнө үү» харуулж, хугацаа дуусах
-  /// сануулгыг яг тэр мөчид гаргана; `null` бол дэлгэц нээгдсэнээс 15 минут.
+  /// Хуучин серверт зориулсан нөөц: захиалга илгээсэн мөчөөс клиент талд
+  /// тооцсон эцсийн хугацаа. Серверийн `payment.payBy` байвал түүнийг л
+  /// ашиглана (харах: [_AppointmentPaymentScreenState._deadline]).
   final DateTime? payBy;
 
   final String appointmentId;
@@ -80,7 +80,12 @@ class _AppointmentPaymentScreenState extends State<AppointmentPaymentScreen>
   // when this screen opened (it is opened right after booking); when it fires
   // a notice tells the user a late payment is recorded but may cancel the booking.
   Timer? _holdTimer;
+  DateTime? _holdDeadline;
   bool _holdExpired = false;
+
+  /// Төлөх эцсийн мөч: серверийн `payment.payBy`, байхгүй бол (хуучин
+  /// сервер) захиалгын дараах клиент талын тооцоо [AppointmentPaymentScreen.payBy].
+  DateTime? get _deadline => _payment?.payBy ?? widget.payBy;
   static const _holdDuration = Duration(minutes: 15);
 
   // Auto-confirm (A): while the fee is still open, quietly poll the same
@@ -141,13 +146,26 @@ class _AppointmentPaymentScreenState extends State<AppointmentPaymentScreen>
       _holdTimer = null;
       return;
     }
-    final payBy = widget.payBy;
-    final holdLeft = payBy == null
-        ? _holdDuration
-        : payBy.difference(DateTime.now());
-    _holdTimer ??= Timer(holdLeft.isNegative ? Duration.zero : holdLeft, () {
-      if (mounted && _isPollable) setState(() => _holdExpired = true);
-    });
+    // Эцсийн хугацаа өөрчлөгдвөл (жишээ нь retry шинэ `payBy` авчирвал)
+    // сануулгын таймерыг дахин тавина.
+    final deadline = _deadline;
+    if (_holdTimer != null && deadline != _holdDeadline) {
+      _holdTimer!.cancel();
+      _holdTimer = null;
+    }
+    if (_holdTimer == null) {
+      _holdDeadline = deadline;
+      final holdLeft = deadline == null
+          ? _holdDuration
+          : deadline.difference(DateTime.now());
+      // Аль хэдийн хэтэрсэн (жагсаалтаас хожуу нээсэн) — эхний frame-ээс л
+      // сануулгыг харуулна. Дуудагчид бүгд setState-ийн дараа (эсвэл
+      // initState-д) дууддаг тул дараагийн build үүнийг авна.
+      if (holdLeft <= Duration.zero) _holdExpired = true;
+      _holdTimer = Timer(holdLeft.isNegative ? Duration.zero : holdLeft, () {
+        if (mounted && _isPollable) setState(() => _holdExpired = true);
+      });
+    }
     if (_pollTimer != null) return; // already polling
     _pollDeadline = DateTime.now().add(_pollMaxDuration);
     _pollTimer = Timer.periodic(_pollInterval, (_) => _autoPoll());
@@ -242,6 +260,7 @@ class _AppointmentPaymentScreenState extends State<AppointmentPaymentScreen>
               qrText: current.qrText,
               urls: current.urls,
               underpaidAmount: result.underpaidAmount,
+              payBy: current.payBy,
             );
           });
         }
@@ -417,7 +436,7 @@ class _AppointmentPaymentScreenState extends State<AppointmentPaymentScreen>
                   onPickBank: _pickBank,
                   onDone: widget.onBack,
                   holdExpired: _holdExpired,
-                  payBy: widget.payBy,
+                  payBy: _deadline,
                 ),
               ],
             ),
@@ -531,7 +550,10 @@ class _PaymentPanel extends StatelessWidget {
             ),
           if (payBy != null &&
               !holdExpired &&
-              payment.status == AppointmentFeeStatus.pending)
+              payBy!.isAfter(DateTime.now()) &&
+              (payment.status == AppointmentFeeStatus.pending ||
+                  payment.status == AppointmentFeeStatus.underpaid ||
+                  payment.status == AppointmentFeeStatus.failed))
             Padding(
               padding: const EdgeInsets.only(bottom: 16),
               child: _Banner(
@@ -543,12 +565,13 @@ class _PaymentPanel extends StatelessWidget {
               ),
             ),
           if (holdExpired && payment.status != AppointmentFeeStatus.paid)
-            const Padding(
-              padding: EdgeInsets.only(bottom: 16),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
               child: _Banner(
+                key: const ValueKey('payment-hold-expired'),
                 color: AppColors.warning,
                 text:
-                    'Төлбөрийн 15 минутын хугацаа дууссан байж магадгүй. '
+                    '${payBy == null ? 'Төлбөрийн 15 минутын хугацаа дууссан байж магадгүй.' : 'Төлбөрийн хугацаа (${ulaanbaatarClock(payBy!)}) дууссан.'} '
                     'Төлсөн бол «Төлбөр шалгах» дарна уу; хожуу ирсэн төлбөр '
                     'бүртгэгдэх боловч цаг цуцлагдсан байж болно.',
               ),

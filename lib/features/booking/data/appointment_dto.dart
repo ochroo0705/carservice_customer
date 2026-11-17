@@ -288,6 +288,9 @@ AppointmentPayment? appointmentPaymentFromJson(Object? value) {
     underpaidAmount: value['underpaidAmount'] is num
         ? value['underpaidAmount'] as num
         : null,
+    payBy: value['payBy'] is String
+        ? DateTime.tryParse(value['payBy'] as String)?.toUtc()
+        : null,
   );
 }
 

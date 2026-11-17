@@ -2,6 +2,7 @@ import 'package:carservice_customer/app/app_messages.dart';
 import 'package:carservice_customer/app/theme/app_theme.dart';
 import 'package:carservice_customer/core/errors/app_failure.dart';
 import 'package:carservice_customer/core/network/api_client.dart';
+import 'package:carservice_customer/features/booking/data/appointment_dto.dart';
 import 'package:carservice_customer/features/booking/data/remote_appointment_repository.dart';
 import 'package:carservice_customer/features/booking/domain/appointment_payment.dart';
 import 'package:carservice_customer/features/booking/domain/appointment_repository.dart';
@@ -92,6 +93,127 @@ void main() {
       findsOneWidget,
     );
     // Dispose before the polling/hold timers fire.
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  test('appointmentPaymentFromJson parses the optional payBy', () {
+    final withDeadline = appointmentPaymentFromJson({
+      'status': 'PENDING',
+      'amount': 1000,
+      'payBy': '2026-11-17T06:45:00.000Z',
+    });
+    expect(withDeadline?.payBy, DateTime.utc(2026, 11, 17, 6, 45));
+    expect(ulaanbaatarClock(withDeadline!.payBy!), '14:45');
+    final older = appointmentPaymentFromJson({
+      'status': 'PENDING',
+      'amount': 1000,
+    });
+    expect(older?.payBy, isNull);
+    final paid = appointmentPaymentFromJson({
+      'status': 'PAID',
+      'amount': 1000,
+      'payBy': null,
+    });
+    expect(paid?.payBy, isNull);
+  });
+
+  Future<void> pumpPayment(
+    WidgetTester tester, {
+    required AppointmentPayment payment,
+    DateTime? fallbackPayBy,
+  }) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light,
+        scaffoldMessengerKey: AppMessages.messengerKey,
+        home: AppointmentPaymentScreen(
+          appointmentId: 'apt-1',
+          repository: _NoopRepository(),
+          initialPayment: payment,
+          payBy: fallbackPayBy,
+          onBack: () {},
+        ),
+      ),
+    );
+    await tester.pump();
+  }
+
+  testWidgets('reopened from the list: the server payBy drives the deadline', (
+    tester,
+  ) async {
+    final serverPayBy = DateTime.now().add(const Duration(minutes: 9));
+    await pumpPayment(
+      tester,
+      payment: AppointmentPayment(
+        status: AppointmentFeeStatus.underpaid,
+        amount: 1000,
+        currency: 'MNT',
+        underpaidAmount: 500,
+        payBy: serverPayBy,
+      ),
+    );
+    expect(
+      find.textContaining('${ulaanbaatarClock(serverPayBy)}-аас өмнө төлнө үү'),
+      findsOneWidget,
+    );
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('the server payBy wins over the client-side fallback', (
+    tester,
+  ) async {
+    final serverPayBy = DateTime.now().add(const Duration(minutes: 5));
+    final fallback = DateTime.now().add(const Duration(minutes: 40));
+    await pumpPayment(
+      tester,
+      payment: AppointmentPayment(
+        status: AppointmentFeeStatus.pending,
+        amount: 1000,
+        currency: 'MNT',
+        payBy: serverPayBy,
+      ),
+      fallbackPayBy: fallback,
+    );
+    expect(
+      find.textContaining('${ulaanbaatarClock(serverPayBy)}-аас өмнө'),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining('${ulaanbaatarClock(fallback)}-аас өмнө'),
+      findsNothing,
+    );
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('a past payBy shows the time-is-up warning, not the deadline', (
+    tester,
+  ) async {
+    await pumpPayment(
+      tester,
+      payment: AppointmentPayment(
+        status: AppointmentFeeStatus.pending,
+        amount: 1000,
+        currency: 'MNT',
+        payBy: DateTime.now().subtract(const Duration(minutes: 1)),
+      ),
+    );
+    await tester.pump(); // the zero-length hold timer fires
+    expect(find.byKey(const ValueKey('payment-pay-by')), findsNothing);
+    expect(find.byKey(const ValueKey('payment-hold-expired')), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('a paid fee shows no deadline', (tester) async {
+    await pumpPayment(
+      tester,
+      payment: AppointmentPayment(
+        status: AppointmentFeeStatus.paid,
+        amount: 1000,
+        currency: 'MNT',
+        payBy: DateTime.now().add(const Duration(minutes: 5)),
+      ),
+    );
+    expect(find.byKey(const ValueKey('payment-pay-by')), findsNothing);
     await tester.pumpWidget(const SizedBox());
   });
 }
