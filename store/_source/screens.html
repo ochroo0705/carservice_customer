@@ -1,0 +1,238 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500;600&display=swap&subset=cyrillic" rel="stylesheet">
+<style>
+/* Store screenshots — demo data rendered in the 2026-11 app canvas (light theme).
+   ?device=phone|tablet&s=1..6  · phone 540x960 @2x, tablet 720x1280 @2x (both 9:16). */
+:root{--carbon:#1e2b38;--line:#3b5167;--line2:#314559;--mk-ink:#ecf0f1;--mk-muted:#bdc6c8;
+--bg:#ecf0f1;--card:#fff;--border:#d5dcdf;--ink:#2c3e50;--muted:#5f6b6d;--hero:#2c3e50;--onHero:#ecf0f1;--onHeroMuted:#a9b4b6;
+--accent:#e74c3c;--accentText:#c0392b;--link:#b03a2e;--accentSoft:#fbeae8;--okSoft:#e3f2e9;--ok:#1e8449;--warnSoft:#fcf3d9;--warn:#9a6700;--infoSoft:rgba(93,173,226,.16);--info:#2471a3}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100vw;height:100vh;overflow:hidden;font-family:Geist,Arial,sans-serif;-webkit-font-smoothing:antialiased;background:var(--carbon)}
+.mono{font-family:'Geist Mono',monospace}
+svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none}
+/* marketing canvas */
+.grid{position:absolute;inset:0;background-image:linear-gradient(var(--line2) 1px,transparent 1px),linear-gradient(90deg,var(--line2) 1px,transparent 1px);background-size:40px 40px;opacity:.3;mask-image:radial-gradient(ellipse at 50% 60%,#000 25%,transparent 70%)}
+.glow{position:absolute;left:50%;top:62%;width:120%;aspect-ratio:1;transform:translate(-50%,-50%);background:radial-gradient(circle,rgba(231,76,60,.26),rgba(231,76,60,.06) 40%,transparent 65%)}
+.mk{position:absolute;left:0;right:0;text-align:center;color:var(--mk-ink)}
+.mk h1{font-weight:800;letter-spacing:-.025em;line-height:1.1;text-wrap:balance}
+.mk h1 em{font-style:normal;color:var(--accent)}
+.mk p{color:var(--mk-muted);margin-top:12px;text-wrap:balance}
+.phone .mk{top:50px;padding:0 30px}.phone .mk h1{font-size:34px}.phone .mk p{font-size:15px}
+.tablet .mk{top:70px;padding:0 48px}.tablet .mk h1{font-size:46px}.tablet .mk p{font-size:19px;margin-top:16px}
+.dev{position:absolute;left:50%;background:#0f171f;border:1px solid var(--line);box-shadow:0 30px 80px rgba(0,0,0,.5),inset 0 0 0 2px #26374a}
+.phone .dev{top:196px;padding:9px;border-radius:46px;transform:translateX(-50%) scale(.95);transform-origin:top center}
+.tablet .dev{top:248px;padding:16px;border-radius:38px;transform:translateX(-50%)}
+.scr{position:relative;overflow:hidden;background:var(--bg);color:var(--ink)}
+.phone .scr{width:360px;height:740px;border-radius:37px}
+.tablet .scr{width:600px;height:912px;border-radius:22px}
+/* app chrome */
+.sb{height:34px;display:flex;align-items:center;justify-content:space-between;padding:4px 26px 0;font-size:13px;font-weight:600}
+.tablet .sb{height:28px;padding:2px 20px 0;font-size:12px}
+.sb .ic{display:flex;gap:5px;align-items:center}.sb svg{width:15px;height:15px;fill:currentColor}
+.cam{position:absolute;left:50%;top:12px;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:#0f171f}
+.tablet .cam{display:none}
+.pad{padding:0 16px}.tablet .pad{padding:0 24px}
+.top{display:flex;align-items:center;justify-content:space-between;padding:10px 16px 14px}.tablet .top{padding:14px 24px 16px}
+.hi{font-size:13px;color:var(--muted)}.who{font-size:20px;font-weight:600;margin-top:1px;letter-spacing:-.01em}
+.ttl{font-size:26px;font-weight:700;letter-spacing:-.02em}
+.acts{display:flex;gap:8px;align-items:center}
+.cb{position:relative;width:40px;height:40px;border-radius:50%;background:var(--card);border:1px solid var(--border);display:grid;place-items:center;color:var(--ink)}
+.cb .nd{position:absolute;top:9px;right:10px;width:8px;height:8px;border-radius:50%;background:var(--accent);border:1.5px solid var(--card)}
+.av{width:40px;height:40px;border-radius:12px;background:var(--hero);color:var(--onHero);display:grid;place-items:center;font-weight:700;font-size:13px}
+.bar{display:flex;align-items:center;gap:12px;padding:8px 16px 14px;font-size:17px;font-weight:600}.tablet .bar{padding:12px 24px 16px}
+.bar .sp{flex:1}
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px}
+.hero{position:relative;overflow:hidden;background:var(--hero);color:var(--onHero);border-radius:20px;padding:18px}
+.hero .ghost{position:absolute;right:-14px;top:2px;width:96px;height:96px;fill:var(--onHero);opacity:.1}
+.lbl{font-family:'Geist Mono',monospace;font-size:11px;font-weight:500;letter-spacing:.66px;text-transform:uppercase;color:var(--muted)}
+.hero .lbl{color:var(--onHeroMuted)}
+.h20{font-size:20px;font-weight:600;letter-spacing:-.01em}
+.sub{font-size:12.5px;color:var(--muted)}.hero .sub{color:var(--onHeroMuted)}
+.plate{display:inline-block;padding:4px 8px;border-radius:7px;font-family:'Geist Mono',monospace;font-size:13px;background:var(--card);border:1px solid var(--border);color:var(--ink)}
+.hero .plate{background:var(--onHero);border-color:var(--onHero);color:#2c3e50}
+.inset{display:flex;align-items:center;gap:12px;margin-top:14px;padding:12px;border-radius:14px;background:#ecf0f1;color:#2c3e50}
+.inset b{display:block;font-size:14px;font-weight:600}.inset small{display:block;font-size:12px;color:#5f6b6d;margin-top:1px}
+.inset .f1{flex:1;min-width:0}
+.live{flex:none;width:10px;height:10px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px #fbeae8}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:99px;font-size:12px;font-weight:500;line-height:1.2;white-space:nowrap;background:var(--bg);color:var(--ink)}
+.badge.ok{background:var(--okSoft);color:var(--ok)}.badge.warn{background:var(--warnSoft);color:var(--warn)}.badge.acc{background:var(--accentSoft);color:var(--link)}.badge.info{background:var(--infoSoft);color:var(--info)}
+.badge.solid{background:var(--accent);color:#fff}
+.badge i{width:6px;height:6px;border-radius:50%;background:currentColor}
+.tag{display:inline-block;padding:3px 8px;border-radius:6px;background:var(--bg);font-size:11px;color:var(--ink)}
+.tags{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.tile{flex:none;width:36px;height:36px;border-radius:11px;background:var(--accentSoft);color:var(--link);display:grid;place-items:center}
+.tile svg.i{width:20px;height:20px}
+.tile.ok{background:var(--okSoft);color:var(--ok)}.tile.warn{background:var(--warnSoft);color:var(--warn)}.tile.plain{background:var(--bg);color:var(--ink)}
+.mg{flex:none;width:52px;height:52px;border-radius:14px;background:var(--hero);color:var(--onHero);display:grid;place-items:center;font-weight:700;font-size:16px}
+.sh{display:flex;align-items:center;justify-content:space-between;margin:22px 0 10px}
+.sh span{font-size:17px;font-weight:600}.sh a{font-size:13px;font-weight:500;color:var(--link)}
+.qa{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}
+.qa div{display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 4px;border-radius:16px;background:var(--card);border:1px solid var(--border);font-size:12px;font-weight:500;text-align:center}
+.qa div.on{background:var(--accentText);border-color:var(--accentText);color:#fff}.qa div.on .tile{background:rgba(255,255,255,.18);color:#fff}
+.list{display:grid;gap:10px}.tablet .list.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.tablet .g2 .svc .row{flex-wrap:wrap;justify-content:flex-start;row-gap:4px}.tablet .g2 .svc b{overflow:visible;margin-right:auto}
+.svc{display:flex;gap:12px;align-items:flex-start}
+.svc .f1{flex:1;min-width:0}.row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.svc b{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.svc .sub{margin-top:3px}.star{color:#f5a524}
+.rows{padding:2px 14px}.rows>div{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--border)}.rows>div:first-child{border-top:0}
+.rows .f1{flex:1;min-width:0}.rows b{display:block;font-size:14px;font-weight:600}.rows small{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+.pills{display:flex;gap:8px;flex-wrap:nowrap;overflow:hidden;margin-top:12px}
+.pill{display:inline-flex;align-items:center;gap:6px;flex:none;height:36px;padding:0 14px;border-radius:99px;background:var(--card);border:1px solid var(--border);font-size:13px;font-weight:500}
+.pill.on{background:var(--hero);border-color:var(--hero);color:#fff}.pill svg.i{width:16px;height:16px}
+.search{display:flex;align-items:center;gap:10px;height:48px;padding:0 6px 0 14px;margin-top:12px;border-radius:14px;background:var(--card);border:1px solid var(--border);font-size:14px;color:var(--muted)}
+.search .sp{flex:1}.search .fb{width:36px;height:36px;border-radius:10px;background:var(--hero);color:#fff;display:grid;place-items:center}
+.map{position:relative;height:262px;margin-top:14px;border-radius:20px;overflow:hidden;background:#e4e9eb;border:1px solid var(--border)}
+.tablet .map{height:360px}
+svg.m{position:absolute;inset:0;width:100%;height:100%}
+.pin{position:absolute;transform:translate(-50%,-100%);display:flex;align-items:center;gap:4px;padding:5px 9px;border-radius:99px;background:var(--hero);color:#fff;font-size:11.5px;font-weight:600;box-shadow:0 4px 12px rgba(44,62,80,.28);white-space:nowrap}
+.pin:after{content:'';position:absolute;left:50%;bottom:-5px;margin-left:-5px;border:5px solid transparent;border-bottom:0;border-top-color:inherit}
+.pin{border-color:var(--hero)}.pin.on{background:var(--accent);border-color:var(--accent);padding:7px 12px;font-size:13px;z-index:2}
+.pin.off{background:#95a5a6;border-color:#95a5a6}
+.me{position:absolute;width:16px;height:16px;margin:-8px;border-radius:50%;background:#2e86de;border:3px solid #fff;box-shadow:0 0 0 10px rgba(46,134,222,.2)}
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:10px}
+.days div{display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 0;border-radius:14px;background:var(--card);border:1px solid var(--border);font-size:11px;color:var(--muted)}
+.days b{font-size:17px;font-weight:600;color:var(--ink)}
+.days .on{background:var(--hero);border-color:var(--hero);color:var(--onHeroMuted)}.days .on b{color:#fff}
+.days .x{opacity:.45}
+.slots{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+.tablet .slots{grid-template-columns:repeat(6,1fr)}
+.slots span{height:40px;display:grid;place-items:center;border-radius:12px;background:var(--card);border:1px solid var(--border);font-family:'Geist Mono',monospace;font-size:13px;font-weight:500}
+.slots .on{background:var(--accentText);border-color:var(--accentText);color:#fff}
+.slots .x{color:#aab4b6;text-decoration:line-through;background:transparent}
+.sec{margin-top:18px}
+.cta{position:absolute;left:0;right:0;bottom:0;padding:12px 16px 26px;background:var(--card);border-top:1px solid var(--border)}
+.tablet .cta{padding:14px 24px 22px}
+.cta .row{font-size:13px;color:var(--muted);margin-bottom:10px}.cta .row b{color:var(--ink);font-weight:600}
+.btn{height:52px;border-radius:14px;background:var(--accentText);color:#fff;display:grid;place-items:center;font-size:15px;font-weight:600}
+.prog{height:8px;border-radius:99px;background:rgba(236,240,241,.18);margin-top:16px;overflow:hidden}.prog i{display:block;height:100%;width:66%;border-radius:99px;background:var(--accent)}
+.seg{display:grid;grid-template-columns:1fr 1fr;padding:4px;border-radius:14px;background:#dfe5e7;margin-top:4px}
+.seg span{height:36px;display:grid;place-items:center;border-radius:11px;font-size:13px;font-weight:600;color:var(--muted)}.seg .on{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(44,62,80,.12)}
+.st{flex:none;width:28px;height:28px;border-radius:50%;display:grid;place-items:center}
+.st svg.i{width:16px;height:16px;stroke-width:2.4}
+.st.ok{background:var(--okSoft);color:var(--ok)}.st.acc{background:var(--accentSoft);color:var(--link)}.st.wait{background:var(--bg);color:var(--muted)}
+.note{margin-top:10px;font-size:13.5px;line-height:1.45}
+.sum3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.sum3 div{padding:12px;border-radius:16px;background:var(--card);border:1px solid var(--border)}
+.sum3 b{display:block;font-size:24px;font-weight:700;letter-spacing:-.02em}.sum3 small{font-size:11.5px;color:var(--muted)}
+.sum3 .ok b{color:var(--ok)}.sum3 .warn b{color:var(--warn)}.sum3 .acc b{color:var(--accentText)}
+.meta3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
+.meta3 small{display:block;font-size:11px;color:var(--onHeroMuted)}.meta3 b{display:block;font-size:13px;font-weight:600;margin-top:2px}
+.when{flex:none;width:46px;text-align:center;padding:6px 0;border-radius:12px;background:var(--bg)}
+.when b{display:block;font-size:16px;font-weight:700}.when small{display:block;font-size:10.5px;color:var(--muted);margin-top:0}
+.price{font-family:'Geist Mono',monospace;font-size:13px;font-weight:600;white-space:nowrap}
+.nav{position:absolute;left:16px;right:16px;bottom:24px;height:64px;padding:0 8px;display:flex;align-items:center;justify-content:space-between;border-radius:99px;background:rgba(255,255,255,.82);border:1px solid rgba(213,220,223,.9);backdrop-filter:blur(18px);box-shadow:0 10px 30px rgba(44,62,80,.16)}
+.tablet .nav{left:96px;right:96px;bottom:20px}
+.nav span{height:48px;min-width:48px;padding:0 12px;display:flex;align-items:center;justify-content:center;gap:6px;border-radius:99px;color:var(--muted);font-size:13px;font-weight:600}
+.nav span svg.i{width:22px;height:22px}
+.nav span.on{background:var(--hero);color:#fff;padding:0 16px}.nav span.on svg.i{width:20px;height:20px}
+.t10 .mk{top:80px;padding:0 70px}.t10 .mk h1{font-size:52px}.t10 .mk p{font-size:21px;margin-top:16px}
+.t10 .dev{top:296px;padding:18px;border-radius:44px;transform:translateX(-50%) scale(.95);transform-origin:top center}
+.t10 .scr{width:800px;height:1240px;border-radius:26px}
+.t10row{display:flex;height:calc(100% - 28px)}
+.t10 .main{flex:1;min-width:0;position:relative;height:calc(100% - 28px);overflow:hidden}.t10row .main{height:100%}
+.rail{flex:none;width:80px;background:var(--card);border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;gap:16px;padding-top:18px}
+.rail div{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12px;font-weight:500;color:var(--muted)}
+.rail i{width:56px;height:32px;border-radius:99px;display:grid;place-items:center}
+.rail .on{color:var(--ink);font-weight:600}.rail .on i{background:var(--hero);color:#fff}
+.t10 .map{height:540px}
+.iphone .mk{top:76px;padding:0 36px}.iphone .mk h1{font-size:40px}.iphone .mk p{font-size:17px;margin-top:14px}
+.iphone .dev{top:262px;padding:12px;border-radius:60px;transform:translateX(-50%) scale(1.1);transform-origin:top center}
+.iphone .scr{width:393px;height:852px;border-radius:48px}
+.iphone .cam{top:11px;width:124px;height:36px;margin-left:-62px;border-radius:20px;background:#000}
+.iphone .sb{height:54px;padding:8px 40px 0 46px;font-size:16px}
+.ios .scr:after{content:'';position:absolute;left:50%;bottom:8px;width:134px;height:5px;margin-left:-67px;border-radius:3px;background:#111;z-index:9}
+.ios .nav{bottom:34px}.ios .cta{padding-bottom:40px}
+.ipad .mk{top:84px;padding:0 90px}.ipad .mk h1{font-size:56px}.ipad .mk p{font-size:22px;margin-top:16px}
+.ipad .dev{top:282px;padding:18px;border-radius:44px;transform:translateX(-50%) scale(.9);transform-origin:top center}
+.ipad .scr{width:834px;height:1112px;border-radius:24px}
+.ipad .scr:after{width:300px;margin-left:-150px}
+.fade{position:absolute;left:0;right:0;bottom:0;height:120px;background:linear-gradient(transparent,rgba(236,240,241,.9))}
+</style></head>
+<body><div id="r"></div>
+<script>
+const q=new URLSearchParams(location.search), dev=q.get('device')||'phone', n=+(q.get('s')||1), t10=dev==='tablet10'||dev==='ipad', wide=!['phone','iphone'].includes(dev), tall=dev==='iphone';
+document.body.className={phone:'phone',tablet:'tablet',tablet10:'tablet t10',iphone:'phone ios iphone',ipad:'tablet t10 ios ipad'}[dev];
+const P={home:'<path d="M4 11l8-7 8 7v8.5a1 1 0 0 1-1 1h-4.5V15h-5v5.5H5a1 1 0 0 1-1-1z"/>',search:'<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/>',receipt:'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h3"/>',car:'<path d="M4.5 17V12.5L6.8 7h10.4l2.3 5.5V17z"/><path d="M4.5 12.5h15M6.5 17v2.2M17.5 17v2.2"/><circle cx="8" cy="14.8" r=".4"/><circle cx="16" cy="14.8" r=".4"/>',bell:'<path d="M6 16v-5a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/>',gear:'<circle cx="12" cy="12" r="3"/><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M5.6 18.4l1.8-1.8M16.6 7.4l1.8-1.8"/>',cal:'<rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',pin:'<path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>',doc:'<path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4M10 12h5M10 16h5"/>',clock:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',chev:'<path d="M9 6l6 6-6 6"/>',back:'<path d="M15 6l-6 6 6 6"/>',check:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',plus:'<path d="M12 5v14M5 12h14"/>',phone:'<path d="M6.5 3.5h2.8l1.5 4.2-2 1.4a11 11 0 0 0 6.1 6.1l1.4-2 4.2 1.5v2.8a2 2 0 0 1-2 2A15.5 15.5 0 0 1 4.5 5.5a2 2 0 0 1 2-2z"/>',filter:'<path d="M4 6h16M7 12h10M10 18h4"/>',oil:'<path d="M12 3.5s6 6.3 6 10.5a6 6 0 0 1-12 0c0-4.2 6-10.5 6-10.5z"/>',disc:'<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3"/>',tire:'<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><path d="M12 3.5v4M12 16.5v4M3.5 12h4M16.5 12h4"/>',bat:'<rect x="3.5" y="7" width="17" height="12" rx="2"/><path d="M7 7V5h3v2M14 7V5h3v2M7.5 13h3M15.5 11.5v3M14 13h3"/>',temp:'<path d="M10 14.5V5a2 2 0 0 1 4 0v9.5a4 4 0 1 1-4 0z"/><path d="M12 10v6"/>',bulb:'<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/>',wrench:'<path d="M14.7 6.3a4 4 0 0 0 5 5L11 20a2.1 2.1 0 0 1-3-3z"/><path d="M14.7 6.3L17.5 3.5l3 3-2.8 2.8"/>',spin:'<path d="M12 3.5a8.5 8.5 0 1 0 8.5 8.5"/>',share:'<path d="M12 15V4M8 8l4-4 4 4"/><path d="M5 13v6a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-6"/>',pause:'<path d="M9 6v12M15 6v12"/>'};
+const ic=(k,c='')=>`<svg class="i ${c}" viewBox="0 0 24 24">${P[k]}</svg>`;
+const CAR='<svg class="ghost" viewBox="0 0 24 24"><path d="M18.9 6c-.2-.6-.8-1-1.4-1h-11c-.7 0-1.2.4-1.4 1L3 12v8c0 .6.4 1 1 1h1c.6 0 1-.4 1-1v-1h12v1c0 .6.4 1 1 1h1c.6 0 1-.4 1-1v-8zM6.5 16c-.8 0-1.5-.7-1.5-1.5S5.7 13 6.5 13s1.5.7 1.5 1.5S7.3 16 6.5 16m11 0c-.8 0-1.5-.7-1.5-1.5s.7-1.5 1.5-1.5 1.5.7 1.5 1.5-.7 1.5-1.5 1.5M5 11l1.5-4.5h11L19 11z"/></svg>';
+const SB=`<div class="cam"></div><div class="sb"><span>9:41</span><span class="ic"><svg viewBox="0 0 24 24"><path d="M3 18h3v3H3zM8 14h3v7H8zM13 10h3v11h-3zM18 5h3v16h-3z"/></svg><svg viewBox="0 0 24 24"><path d="M12 20.5l-3.2-3.9a5 5 0 0 1 6.4 0zM5.6 12.7a10 10 0 0 1 12.8 0l-1.9 2.3a7 7 0 0 0-9 0zM2.4 8.8a15 15 0 0 1 19.2 0l-1.9 2.3a12 12 0 0 0-15.4 0z"/></svg><svg viewBox="0 0 28 24"><rect x="1" y="6" width="22" height="12" rx="3" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="3.5" y="8.5" width="15" height="7" rx="1.5"/><path d="M25 10v4"stroke="currentColor" stroke-width="2"/></svg></span></div>`;
+const sb=t10?'':SB;
+const rail=a=>`<div class="rail">${[['home','Нүүр'],['search','Сервис'],['receipt','Захиалга'],['car','Машин']].map((x,i)=>`<div class="${i===a?'on':''}"><i>${ic(x[0])}</i>${x[1]}</div>`).join('')}</div>`;
+const nav=a=>t10?'':`<div class="nav">${[['home','Нүүр'],['search','Сервис'],['receipt','Захиалга'],['car','Машин']].map((x,i)=>`<span class="${i===a?'on':''}">${ic(x[0])}${i===a?x[1]:''}</span>`).join('')}</div>`;
+const S=[['AutoFix Сервис','AF','4.8','126','1.2 км','Хан-Уул','Нээлттэй','ok',['Тос солих','Оношилгоо','Хайбрид']],['Мото Тех','МТ','4.6','88','2.4 км','Сүхбаатар','Нээлттэй','ok',['Тоормос','Явах эд анги']],['Prius Мастер','PM','4.9','212','3.1 км','Баянзүрх','21:00 хүртэл','warn',['Хайбрид','Цахилгаан']],['Дугуй Плюс','ДП','4.5','64','3.8 км','Чингэлтэй','Нээлттэй','ok',['Дугуй','Тэнхлэг']],['Гранд Моторс','ГМ','4.7','153','4.2 км','Баянгол','Нээлттэй','ok',['Кузов','Будаг']],['Эко Сервис','ЭС','4.4','41','5.0 км','Хан-Уул','20:00 хүртэл','warn',['Тос солих','Угаалга']]];
+const svc=s=>`<div class="card svc"><div class="mg">${s[1]}</div><div class="f1"><div class="row"><b>${s[0]}</b><span class="badge ${s[7]}"><i></i>${s[6]}</span></div><div class="sub"><span class="star">★</span> ${s[2]} (${s[3]}) · ${s[4]} · ${s[5]}</div><div class="tags">${s[8].map(t=>`<span class="tag">${t}</span>`).join('')}</div></div></div>`;
+const head=(t,r='')=>`<div class="bar"><span class="cb">${ic('back')}</span><span class="sp">${t}</span>${r}</div>`;
+
+const MAP=`<svg class="m" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice">
+<rect x="-10" y="-10" width="420" height="320" fill="#e4e9eb"/><rect x="250" y="160" width="120" height="90" rx="14" fill="#d6e6d8"/><rect x="20" y="20" width="80" height="60" rx="12" fill="#d6e6d8"/>
+<path d="M-10 250 C 90 220 160 280 260 250 S 380 200 420 215" fill="none" stroke="#cfe2ec" stroke-width="22"/>
+<g fill="none" stroke="#fff" stroke-linecap="round"><path d="M-10 130 H420" stroke-width="12"/><path d="M150 -10 V320" stroke-width="12"/><path d="M-10 40 L420 190" stroke-width="7"/>
+<path d="M300 -10 V150" stroke-width="7"/><path d="M60 100 V320" stroke-width="5"/><path d="M220 130 V320" stroke-width="5"/><path d="M150 200 H420" stroke-width="5"/><path d="M-10 190 H150" stroke-width="5"/></g>
+<g fill="none" stroke="#f5c97a" stroke-width="3" stroke-linecap="round"><path d="M-10 130 H420"/><path d="M150 -10 V320"/></g></svg>`;
+const H=[['10','11-р','Оношилгоо, Тос солих','AutoFix Сервис','185,000₮'],['14','08-р','Дугуй солих','Дугуй Плюс','640,000₮'],['21','06-р','Тэнхлэг тохируулга','Дугуй Плюс','70,000₮'],['02','05-р','Тоормосны шингэн','Мото Тех','95,000₮'],['19','02-р','Хайбрид батарей шалгах','Prius Мастер','120,000₮'],['08','10-р','Тос солих','AutoFix Сервис','160,000₮'],['15','09-р','Агаар шүүр солих','Мото Тех','45,000₮'],['03','07-р','Оношилгоо','AutoFix Сервис','65,000₮']];
+const when=x=>`<div class="when"><b class="mono">${x[0]}</b><small>${x[1]} сар</small></div><div class="f1"><b>${x[2]}</b><small>${x[3]}</small></div>`;
+const hrow=x=>`<div>${when(x)}<span class="price">${x[4]}</span></div>`;
+const prev=()=>`<div class="sh"><span>Өмнөх захиалгууд</span><a>Бүгд</a></div><div class="card rows">${H.slice(1,4).map(x=>`<div>${when(x)}<span class="badge ok">Дууссан</span></div>`).join('')}</div>`;
+const loc=()=>`<div class="sec"><div class="lbl">Салбарын байршил</div><div class="card" style="margin-top:10px;padding:0;overflow:hidden"><div style="position:relative;height:132px">${MAP}<span class="pin on" style="left:50%;top:58%">${ic('wrench')}AutoFix</span></div><div style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-top:1px solid var(--border)"><span class="tile">${ic('pin')}</span><div style="flex:1"><b style="font-size:14px;font-weight:600">Хан-Уул, 15-р хороо</b><div class="sub">Даваа–Бямба · 09:00–19:00</div></div><span class="badge ok"><i></i>Нээлттэй</span></div></div></div>`;
+const screens={
+home:()=>`${sb}<div class="top"><div><div class="hi">Сайн уу,</div><div class="who">Бат-Эрдэнэ</div></div><div class="acts"><span class="cb">${ic('bell')}<i class="nd"></i></span><span class="cb">${ic('gear')}</span><span class="av">БЭ</span></div></div>
+<div class="pad"><div class="hero">${CAR}<div class="lbl">Миний машин</div><div class="h20" style="margin-top:10px">Toyota Prius</div><div style="margin-top:6px"><span class="plate">1234 УБА</span></div>
+<div class="inset"><span class="live"></span><div class="f1"><b>Хийгдэж байна · 2/3</b><small>AUTOFIX СЕРВИС · Тос солих</small></div>${ic('chev')}</div></div>
+<div class="qa"><div class="on"><span class="tile">${ic('cal')}</span>Цаг захиалах</div><div><span class="tile">${ic('search')}</span>Сервис хайх</div><div><span class="tile">${ic('receipt')}</span>Захиалгууд</div><div><span class="tile">${ic('clock')}</span>Түүх</div></div>
+<div class="sh"><span>Ойролцоох сервис</span><a>Бүгд</a></div><div class="list g2">${S.slice(0,wide?6:tall?3:2).map(svc).join('')}</div>${t10?`<div class="sh"><span>Сүүлийн засварууд</span><a>Бүгд</a></div><div class="card rows">${H.slice(0,3).map(hrow).join('')}</div>`:''}</div>${nav(0)}`,
+
+search:()=>{const pins=[[30,30,'4.6',''],[56,47,'AutoFix · 4.8','on'],[78,24,'4.9',''],[20,70,'4.5',''],[70,74,'4.3','off'],[86,58,'4.7','']];
+return `${sb}<div class="pad" style="padding-top:8px"><div class="ttl">Сервис хайх</div>
+<div class="search">${ic('search')}<span class="sp">Сервис, үйлчилгээ хайх</span><span class="fb">${ic('filter')}</span></div>
+<div class="pills"><span class="pill on">${ic('pin')}Ойрхон</span><span class="pill">Нээлттэй</span><span class="pill">Тос солих</span><span class="pill">Оношилгоо</span><span class="pill">Дугуй</span></div>
+<div class="map">${MAP}
+<span class="me" style="left:44%;top:60%"></span>${pins.map(p=>`<span class="pin ${p[3]}" style="left:${p[0]}%;top:${p[1]}%">${p[3]==='on'?ic('wrench'):''}${p[2]}</span>`).join('')}</div>
+<div class="sh"><span>12 сервис олдлоо</span><a>Жагсаалт</a></div><div class="list g2">${S.slice(0,t10?6:wide?4:tall?3:2).map(svc).join('')}</div></div>${nav(1)}`;},
+
+book:()=>{const d=[['Лх',11,''],['Пү',12,'on'],['Ба',13,''],['Бя',14,''],['Ня',15,'x'],['Да',16,''],['Мя',17,'']];
+const t=[['09:00',''],['09:30','x'],['10:00',''],['10:30','on'],['11:00','x'],['11:30',''],['13:00',''],['13:30',''],['14:00','x'],['15:00',''],['15:30',''],['16:00',''],['16:30',''],['17:00','x'],['17:30',''],['18:00',''],['18:30',''],['19:00','']];
+return `${sb}${head('Цаг захиалах')}<div class="pad"><div class="card svc" style="align-items:center"><div class="mg" style="width:44px;height:44px;border-radius:12px;font-size:14px">AF</div><div class="f1"><b>AutoFix Сервис</b><div class="sub"><span class="star">★</span> 4.8 · Хан-Уул, 15-р хороо</div></div><span class="cb">${ic('phone')}</span></div>
+<div class="sec"><div class="lbl">Үйлчилгээ</div><div class="pills" style="margin-top:10px"><span class="pill on">${ic('check')}Тос солих</span><span class="pill on">${ic('check')}Оношилгоо</span><span class="pill">Тоормос</span><span class="pill">Дугуй</span></div></div>
+<div class="sec"><div class="lbl">Огноо · 2026 оны 11-р сар</div><div class="days">${d.map(x=>`<div class="${x[2]}">${x[0]}<b>${x[1]}</b></div>`).join('')}</div></div>
+<div class="sec"><div class="lbl">Цаг</div><div class="slots">${t.slice(0,wide?18:tall?12:8).map(x=>`<span class="${x[1]}">${x[0]}</span>`).join('')}</div></div>
+<div class="sec"><div class="lbl">Машин</div><div class="card" style="display:flex;align-items:center;gap:12px;margin-top:10px;padding:12px 14px"><span class="tile plain">${ic('car')}</span><div style="flex:1"><b style="font-size:14px;font-weight:600">Toyota Prius</b><div class="sub">2018 · Хайбрид</div></div><span class="plate">1234 УБА</span></div></div>${wide?`<div class="sec"><div class="lbl">Тэмдэглэл</div><div class="card" style="margin-top:10px;height:${t10?72:96}px;font-size:14px;color:var(--muted)">Урд тоормосноос чахрах дуу гардаг, давхар шалгаж өгнө үү.</div></div>`:''}${t10?loc():''}</div>
+<div class="cta"><div class="row"><span>Тос солих, Оношилгоо</span><b>Пүрэв, 11/12 · 10:30</b></div><div class="btn">Захиалга илгээх</div></div>`;},
+
+track:()=>`${sb}<div class="pad" style="padding-top:8px"><div class="ttl">Захиалга</div><div class="seg" style="margin-top:12px"><span class="on">Идэвхтэй</span><span>Өмнөх</span></div>
+<div class="hero" style="margin-top:14px">${CAR}<div class="lbl">AutoFix Сервис · #0248</div><div class="h20" style="margin-top:10px">Засвар хийгдэж байна</div><div class="sub" style="margin-top:4px">Toyota Prius · <span class="mono">1234 УБА</span></div>
+<div class="prog"><i></i></div><div class="row" style="margin-top:10px;font-size:12.5px"><span>2/3 ажил дууссан</span><span class="mono" style="color:var(--onHeroMuted)">≈ 15:30 бэлэн</span></div></div>
+<div class="sh"><span>Ажлууд</span><span class="badge acc"><i></i>Шууд</span></div>
+<div class="card rows"><div><span class="st ok">${ic('check')}</span><div class="f1"><b>Тос солих</b><small>Б.Ганбат · 10:52</small></div><span class="badge ok">Дууссан</span></div>
+<div><span class="st ok">${ic('check')}</span><div class="f1"><b>Агаар шүүр солих</b><small>Б.Ганбат · 11:10</small></div><span class="badge ok">Дууссан</span></div>
+<div><span class="st acc">${ic('spin')}</span><div class="f1"><b>Наалт солих</b><small>Э.Тэмүүлэн · 11:25-аас</small></div><span class="badge acc"><i></i>Хийгдэж байна</span></div></div>
+<div class="card" style="margin-top:10px"><div class="lbl">Механикийн тэмдэглэл</div><div class="note">Урд наалт 2 мм үлдсэн тул сольж байна. Тоормосны диск хэвийн.</div><div class="sub" style="margin-top:8px">Э.Тэмүүлэн · 11:32</div></div>${wide?`<div class="card rows" style="margin-top:10px"><div><span class="tile plain">${ic('cal')}</span><div class="f1"><b>Пүрэв, 11/12 · 10:30</b><small>Хүлээн авсан цаг</small></div></div><div><span class="tile plain">${ic('pin')}</span><div class="f1"><b>AutoFix Сервис</b><small>Хан-Уул, 15-р хороо</small></div><span class="cb">${ic('phone')}</span></div></div>`:''}${t10?prev():''}</div>${nav(2)}`,
+
+diag:()=>{const r=[['oil','Хөдөлгүүрийн тос','Түвшин, өнгө хэвийн','ok','Хэвийн'],['disc','Тоормос','Урд наалт · 2 мм','acc','Солих шаардлагатай'],['tire','Дугуйн хээ','Арын · 3.5 мм','warn','Анхаарах'],['bat','Аккумлятор','12.6 В · 540 CCA','ok','Хэвийн'],['temp','Хөргөлтийн шингэн','Түвшин хэвийн','ok','Хэвийн'],['bulb','Гэрэлтүүлэг','Бүх гэрэл ажиллаж байна','ok','Хэвийн'],['filter','Агаар шүүр','Бохирдолт 60%','warn','Анхаарах'],['wrench','Амортизатор','Урд, хойд хэвийн','ok','Хэвийн']];
+return `${sb}${head('Оношилгооны тайлан',`<span class="cb">${ic('share')}</span>`)}<div class="pad">
+<div class="hero"><div class="lbl">Хүлээн авах үеийн оношилгоо</div><div class="h20" style="margin-top:10px">Toyota Prius · <span class="mono" style="font-size:17px">1234 УБА</span></div>
+<div class="meta3"><div><small>Огноо</small><b class="mono">2026.11.10</b></div><div><small>Гүйлт</small><b class="mono">124,560 км</b></div><div><small>Салбар</small><b>AutoFix</b></div></div></div>
+<div class="sum3"><div class="ok"><b>18</b><small>Хэвийн</small></div><div class="warn"><b>3</b><small>Анхаарах</small></div><div class="acc"><b>1</b><small>Солих шаардлагатай</small></div></div>
+<div class="sh"><span>Шалгалтын үр дүн</span><a>Бүгд (22)</a></div>
+<div class="card rows">${r.slice(0,t10?8:wide||tall?6:5).map(x=>`<div><span class="tile ${x[3]==='acc'?'':x[3]}">${ic(x[0])}</span><div class="f1"><b>${x[1]}</b><small>${x[2]}</small></div><span class="badge ${x[3]}">${x[4]}</span></div>`).join('')}</div>
+<div class="card" style="margin-top:10px"><div class="lbl">Дүгнэлт</div><div class="note">Урд тоормосны наалтыг ойрын хугацаанд солихыг зөвлөж байна. Бусад үзүүлэлт хэвийн.</div></div></div><div class="fade"></div>`;},
+
+garage:()=>{const h=H;
+return `${sb}<div class="top"><div class="ttl">Машин</div><span class="cb">${ic('plus')}</span></div><div class="pad">
+<div class="hero">${CAR}<div class="lbl">Үндсэн машин</div><div class="h20" style="margin-top:10px">Toyota Prius</div><div class="sub" style="margin-top:3px">2018 · Хайбрид · 124,560 км</div><div style="margin-top:10px"><span class="plate">1234 УБА</span></div>
+<div class="inset">${ic('wrench')}<div class="f1"><b>6 удаа засвар хийлгэсэн</b><small>Сүүлд: 2026.11.10 · AutoFix Сервис</small></div>${ic('chev')}</div></div>
+<div class="card" style="display:flex;align-items:center;gap:12px;margin-top:10px"><span class="tile plain" style="width:44px;height:44px;border-radius:13px">${ic('car')}</span><div style="flex:1"><b style="font-size:15px;font-weight:600">Hyundai Tucson</b><div class="sub">2021 · Бензин · 2 засвар</div></div><span class="plate">5678 УНА</span></div>${t10?`<div class="card" style="display:flex;align-items:center;gap:12px;margin-top:10px;border-style:dashed;background:transparent"><span class="tile" style="width:44px;height:44px;border-radius:13px">${ic('plus')}</span><div><b style="font-size:15px;font-weight:600">Машин нэмэх</b><div class="sub">Улсын дугаараар хайж бөглөнө</div></div></div>`:''}
+<div class="sh"><span>Засварын түүх</span><a>Бүгд</a></div>
+<div class="card rows">${h.slice(0,t10?8:wide?5:tall?4:3).map(hrow).join('')}</div></div>${nav(3)}`;}
+};
+
+const M=[['home','Машинаа <em>нэг дороос</em> хяна','Захиалга, засварын явц, түүх — бүгд утсанд'],
+['search','Ойролцоох засварыг <em>олоорой</em>','Газрын зураг, үнэлгээ, ажиллах цагаар нь харьцуул'],
+['book','Цагаа <em>онлайнаар</em> захиал','Утсаар залгаж, дараалал хүлээх шаардлагагүй'],
+['track','Засварын явцыг <em>бодит цагаар</em> хар','Ажил бүрийн төлөв, механикийн тэмдэглэл шууд ирнэ'],
+['diag','Оношилгооны <em>тайлан</em> утсанд','Хүлээн авах үеийн шалгалт, дүгнэлт нэг дор'],
+['garage','Бүх машин, <em>бүх түүх</em>','Хэдэн машинтай ч засварын түүх нь хадгалагдана']][n-1];
+const body=()=>{const h=screens[M[0]]();if(!t10)return h;const ti={home:0,search:1,track:2,garage:3}[M[0]];return SB+(ti===undefined?`<div class="main">${h}</div>`:`<div class="t10row">${rail(ti)}<div class="main">${h}</div></div>`);};
+document.getElementById('r').innerHTML=`<div class="grid"></div><div class="glow"></div><div class="mk"><h1>${M[1]}</h1><p>${M[2]}</p></div><div class="dev"><div class="scr">${body()}</div></div>`;
+</script></body></html>

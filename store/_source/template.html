@@ -28,6 +28,25 @@ body.clear{background:transparent}
 .fg h1 em{font-style:normal;color:var(--accent)}
 .fg p{font-size:calc(var(--u)*1.9);color:var(--muted);margin-top:calc(var(--u)*1.6)}
 .badge{display:inline-block;margin-left:calc(var(--u)*1.2);padding:.25em .7em;border-radius:calc(var(--u)*.8);background:var(--accent);color:#fff;font-weight:700;font-size:calc(var(--u)*1.6);vertical-align:middle;letter-spacing:.02em}
+/* showcase — 2026-11 app canvas: hero card r20, cards r16, controls r14 */
+.sc .card{border-radius:calc(var(--u)*1.6);z-index:3}
+.sc .ic{border-radius:calc(var(--u)*1.4)}
+.sc .fg h1{font-size:calc(var(--u)*4.3);margin-top:calc(var(--u)*3)}
+.qa{display:flex;gap:calc(var(--u)*.8);margin-top:calc(var(--u)*3)}
+.qa span{display:inline-flex;align-items:center;gap:calc(var(--u)*.6);padding:calc(var(--u)*.85) calc(var(--u)*1.25);border-radius:calc(var(--u)*1.4);background:rgba(44,62,80,.92);border:1px solid var(--line);font-weight:600;font-size:calc(var(--u)*1.35);white-space:nowrap}
+.qa svg{width:calc(var(--u)*1.7);height:calc(var(--u)*1.7);stroke:var(--accentHi);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.qa span.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.qa span.on svg{stroke:#fff}
+.hero{position:absolute;z-index:2;width:calc(var(--u)*33);padding:calc(var(--u)*2.2);background:#17222d;border:1px solid var(--line);border-radius:calc(var(--u)*2);color:var(--ink);box-shadow:0 calc(var(--u)*2.5) calc(var(--u)*6) rgba(0,0,0,.45);overflow:hidden}
+.hero .bg{position:absolute;right:calc(var(--u)*-1.6);top:calc(var(--u)*.6);width:calc(var(--u)*11);fill:var(--ink);opacity:.08}
+.hero .lbl{font-size:calc(var(--u)*1.1);font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:#a9b4b6}
+.hero .nm{font-size:calc(var(--u)*2.5);font-weight:600;letter-spacing:-.01em;margin-top:calc(var(--u)*1.1)}
+.plate{display:inline-block;margin-top:calc(var(--u)*.7);padding:calc(var(--u)*.4) calc(var(--u)*.85);border-radius:calc(var(--u)*.7);background:var(--ink);color:var(--panel);font:600 calc(var(--u)*1.4) 'Geist Mono',monospace}
+.inset{display:flex;align-items:center;gap:calc(var(--u)*1.2);margin-top:calc(var(--u)*1.8);padding:calc(var(--u)*1.3);border-radius:calc(var(--u)*1.4);background:var(--ink);color:var(--panel)}
+.dot{flex:none;width:calc(var(--u)*1);height:calc(var(--u)*1);border-radius:50%;background:var(--accent);box-shadow:0 0 0 calc(var(--u)*.4) #fbeae8}
+.inset .t{font-size:calc(var(--u)*1.45);font-weight:600}
+.inset .s{font-size:calc(var(--u)*1.2);color:#5f6b6d;margin-top:calc(var(--u)*.2)}
+.inset svg{margin-left:auto;width:calc(var(--u)*2);height:calc(var(--u)*2);stroke:var(--panel);fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 /* logo */
 .logo{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:calc(var(--u)*3)}
 .logo img{height:100%}
@@ -54,6 +73,18 @@ if(kind==='feature'){document.body.className='dark';
   <img class="mark" src="${B}/mark.svg" style="left:78%;width:calc(var(--u)*17)">
   ${card(C[app][1],78,22)}${card(C[app][3],80,80)}
   <div class="fg"><div class="left"><img class="wm" src="${B}/carservice_mn_logo_dark.svg">${app==='business'?'<span class="badge">Business</span>':''}<h1>${head[0]}</h1><p>${head[1]}</p></div></div>`;
+}
+if(kind==='showcase'){document.body.className='dark';
+  const qa=[['cal','Цаг захиалах','on'],['pin','Сервис хайх',''],['doc','Захиалгууд',''],['clock','Түүх','']];
+  s.innerHTML=`<div class="sc"><div class="grid" style="mask-image:radial-gradient(ellipse at 78% 50%,#000 20%,transparent 70%)"></div><div class="glow" style="left:78%"></div>
+  <div class="hero" style="left:78%;top:52%;transform:translate(-50%,-50%)">
+    <svg class="bg" viewBox="0 0 24 24"><path d="M18.9 6c-.2-.6-.8-1-1.4-1h-11c-.7 0-1.2.4-1.4 1L3 12v8c0 .6.4 1 1 1h1c.6 0 1-.4 1-1v-1h12v1c0 .6.4 1 1 1h1c.6 0 1-.4 1-1v-8zM6.5 16c-.8 0-1.5-.7-1.5-1.5S5.7 13 6.5 13s1.5.7 1.5 1.5S7.3 16 6.5 16m11 0c-.8 0-1.5-.7-1.5-1.5s.7-1.5 1.5-1.5 1.5.7 1.5 1.5-.7 1.5-1.5 1.5M5 11l1.5-4.5h11L19 11z"/></svg>
+    <div class="lbl">Миний машин</div><div class="nm">Toyota Prius</div><div class="plate">1234 УБА</div>
+    <div class="inset"><span class="dot"></span><div><div class="t">Засвар хийгдэж байна · 2/3</div><div class="s">AUTOFIX · Тос солих</div></div><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></div>
+  </div>
+  ${card(C.customer[1],70,13)}${card(C.customer[0],86,88)}
+  <div class="fg"><div class="left"><img class="wm" src="${B}/carservice_mn_logo_dark.svg"><h1>Ойролцоох засварыг <em>олж</em>,<br>цагаа онлайнаар захиал</h1><p>Засвар, оношилгоо, түүх — нэг аппад</p>
+  <div class="qa">${qa.map(a=>`<span class="${a[2]}"><svg viewBox="0 0 24 24">${I[a[0]]}</svg>${a[1]}</span>`).join('')}</div></div></div></div>`;
 }
 if(kind==='mark'){document.body.className='clear';s.innerHTML=`<img src="${B}/mark.svg" style="position:absolute;inset:0;width:100%;height:100%">`;}
 if(kind==='logo'){document.body.className='clear';
