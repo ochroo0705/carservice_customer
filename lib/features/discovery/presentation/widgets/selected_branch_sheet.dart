@@ -286,11 +286,19 @@ class SelectedBranchSheet extends StatelessWidget {
                         const SizedBox(width: 10),
                       ],
                       Expanded(
-                        child: FilledButton(
-                          key: const ValueKey('selected-branch-book'),
-                          onPressed: onBook,
-                          child: const Text('Цаг захиалах'),
-                        ),
+                        // Онлайн захиалга авдаггүй газарт (вэбийн popup-тай
+                        // адил) захиалгын оронд дэлгэрэнгүй рүү.
+                        child: organization.bookable
+                            ? FilledButton(
+                                key: const ValueKey('selected-branch-book'),
+                                onPressed: onBook,
+                                child: const Text('Цаг захиалах'),
+                              )
+                            : FilledButton.tonal(
+                                key: const ValueKey('selected-branch-details'),
+                                onPressed: onDetails,
+                                child: const Text('Дэлгэрэнгүй'),
+                              ),
                       ),
                     ],
                   ),

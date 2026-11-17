@@ -1,6 +1,7 @@
 import 'package:carservice_customer/core/errors/app_failure.dart';
 import 'package:carservice_customer/features/booking/domain/appointment_repository.dart';
 import 'package:carservice_customer/features/booking/domain/availability.dart';
+import 'package:carservice_customer/features/booking/domain/booking_fee_notice.dart';
 import 'package:carservice_customer/features/discovery/domain/branch.dart';
 import 'package:carservice_customer/features/discovery/domain/organization.dart';
 import 'package:carservice_customer/features/vehicles/presentation/controllers/vehicles_controller.dart';
@@ -51,6 +52,7 @@ class BookingFormController extends ChangeNotifier {
       // (no listener is attached to the widget tree yet).
       selectedVehicleId = state.vehicles.single.id;
     }
+    _loadBookingFee();
   }
 
   final OrganizationDetail organization;
@@ -86,6 +88,22 @@ class BookingFormController extends ChangeNotifier {
   /// `loadAvailability` дуудлагын хариу л хэрэглэгдэнэ.
   int _availabilityRequestId = 0;
   bool _disposed = false;
+
+  /// Захиалга илгээхээс өмнө харуулах хураамж (вэбийн маягттай адил). `null`
+  /// бол үнэгүй, эсвэл endpoint-гүй/алдаатай — мэдэгдэлгүй үргэлжилнэ.
+  BookingFeeNotice? bookingFee;
+
+  Future<void> _loadBookingFee() async {
+    try {
+      final fee = await repository.getBookingFee();
+      if (_disposed) return;
+      bookingFee = fee;
+      _notify();
+    } catch (_) {
+      // Мэдэгдэл нь зөвхөн мэдээллийн чанартай: алдаа гарвал (сүлжээ, хуучин
+      // сервер, тестийн Fake) захиалгын урсгалыг саатуулахгүй.
+    }
+  }
 
   /// [lockCategories] үед: `initialBranchId` энэ байгууллагын салбарын
   /// жагсаалтад олдсонгүй — аюулгүй орлуулагч байхгүй; хэрэглэгчийг буцаана.
@@ -356,14 +374,21 @@ class BookingFormController extends ChangeNotifier {
     submitting = true;
     error = null;
     _notify();
+    // Сервер `createdAt`-ийг буцаадаггүй — илгээхийн өмнөх мөч нь түүнээс
+    // үргэлж эрт тул тооцсон эцсийн хугацаа бодит хугацаанаас хойш гарахгүй.
+    final sentAt = _clock();
     try {
-      final result = await repository.createAppointment(
+      final created = await repository.createAppointment(
         branchId: branch.id,
         requestedAt: at,
         note: note,
         accountVehicleId: selectedVehicleId,
         categoryIds: selectedCategoryIds.toList(),
       );
+      final fee = bookingFee;
+      final result = created.payment != null && fee != null
+          ? created.withPayBy(fee.payByFrom(sentAt))
+          : created;
       return BookingSubmitOutcome(BookingSubmitStatus.completed, result);
     } on UnauthenticatedFailure {
       return const BookingSubmitOutcome(BookingSubmitStatus.unauthenticated);

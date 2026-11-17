@@ -4,6 +4,7 @@ import 'package:carservice_customer/features/booking/domain/appointment_payment.
 import 'package:carservice_customer/features/booking/domain/appointment_repository.dart';
 import 'package:carservice_customer/features/booking/domain/appointment_status.dart';
 import 'package:carservice_customer/features/booking/domain/availability.dart';
+import 'package:carservice_customer/features/booking/domain/booking_fee_notice.dart';
 import 'package:carservice_customer/features/booking/domain/service_progress.dart';
 import 'package:carservice_customer/features/booking/domain/walk_in_order.dart';
 
@@ -125,6 +126,11 @@ class FakeAppointmentRepository implements AppointmentRepository {
     }
     return DayAvailability(open: true, durationMinutes: duration, slots: slots);
   }
+
+  /// [_pendingPayment]-тэй ижил дүн — fake нь хураамж идэвхтэй сервер мэт.
+  @override
+  Future<BookingFeeNotice?> getBookingFee() async =>
+      const BookingFeeNotice(amount: 1000, ttlMinutes: 15);
 
   @override
   Future<CreatedAppointment> createAppointment({

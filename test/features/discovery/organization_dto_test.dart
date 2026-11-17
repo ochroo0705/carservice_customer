@@ -3,6 +3,35 @@ import 'package:carservice_customer/features/discovery/domain/branch.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('bookable is optional (defaults to true) on orgs and map markers', () {
+    Map<String, dynamic> org([Object? bookable]) => {
+      'slug': 's',
+      'name': 'N',
+      'bookable': ?bookable,
+      'branches': const [],
+    };
+    expect(OrganizationSummaryDto.fromJson(org()).toDomain().bookable, isTrue);
+    expect(
+      OrganizationSummaryDto.fromJson(org(false)).toDomain().bookable,
+      isFalse,
+    );
+    Map<String, dynamic> marker([Object? bookable]) => {
+      'id': 'b1',
+      'orgSlug': 's',
+      'orgName': 'N',
+      'branchName': 'B',
+      'latitude': 47.9,
+      'longitude': 106.9,
+      'bookable': ?bookable,
+    };
+    final page = organizationMapPageFromJson({
+      'markers': [marker(), marker(false)],
+    });
+    expect(page.markers.first.bookable, isTrue);
+    expect(page.markers.last.bookable, isFalse);
+    expect(page.markers.last.toOrganization().bookable, isFalse);
+  });
+
   test('parses the sparse organization list without detail-only fields', () {
     final organization = OrganizationSummaryDto.fromJson({
       'slug': 'infosystems',

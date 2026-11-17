@@ -39,10 +39,15 @@ class AppointmentDetailScreen extends StatefulWidget {
     required this.onPay,
     this.onReportSelected,
     this.historyRepository,
+    this.justCreated = false,
     super.key,
   });
 
   final String appointmentId;
+
+  /// Төлбөргүй захиалга дөнгөж илгээгдсэн — дээд талд «✓ Цаг захиалга
+  /// илгээгдлээ» баталгаажуулалтыг харуулна (`/appointments/:id?created=1`).
+  final bool justCreated;
 
   /// Used to fetch the branch's location/hours/contact — none of which the
   /// appointment payload carries (it has only the branch *name*).
@@ -152,6 +157,7 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen>
                         : null,
                     onReportSelected: widget.onReportSelected,
                     historyRepository: widget.historyRepository,
+                    justCreated: widget.justCreated,
                   ),
                   (null, true) => const SkeletonDetail(),
                   (null, false) => _NotFound(onBack: widget.onBack),
@@ -273,8 +279,10 @@ class _AppointmentDetailBody extends StatelessWidget {
     this.onPay,
     this.onReportSelected,
     this.historyRepository,
+    this.justCreated = false,
   });
 
+  final bool justCreated;
   final Appointment appointment;
   final OrganizationRepository organizationRepository;
   final bool isCancelling;
@@ -326,6 +334,10 @@ class _AppointmentDetailBody extends StatelessWidget {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
         children: [
+          if (justCreated) ...[
+            const _CreatedConfirmation(),
+            const SizedBox(height: 12),
+          ],
           if (progress != null)
             ServiceProgressHero(
               progress: progress,
@@ -519,6 +531,54 @@ class _AppointmentHero extends StatelessWidget {
 }
 
 /// A tinted full-width notice (unpaid fee, refunded fee).
+/// Төлбөргүй захиалга илгээсний дараах баталгаажуулалт (вэбийн
+/// `/account/appointments/[id]?created=1`-тэй адил).
+class _CreatedConfirmation extends StatelessWidget {
+  const _CreatedConfirmation();
+
+  @override
+  Widget build(BuildContext context) {
+    final color = AppColors.readable(
+      AppColors.green,
+      Theme.of(context).brightness,
+    );
+    return Semantics(
+      liveRegion: true,
+      child: _Notice(
+        key: const ValueKey('appointment-created-confirmation'),
+        tint: AppColors.green,
+        background: AppColors.green.withValues(alpha: 0.12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(Icons.check_circle_rounded, size: 20, color: color),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Цаг захиалга илгээгдлээ',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: color,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Газар баталгаажуулахад мэдэгдэл ирнэ.',
+                    style: TextStyle(fontSize: 13, color: color),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _Notice extends StatelessWidget {
   const _Notice({
     required this.tint,

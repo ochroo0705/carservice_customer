@@ -2,10 +2,12 @@ import 'dart:ui' show ImageFilter;
 
 import 'package:carservice_customer/app/theme/app_theme.dart';
 import 'package:carservice_customer/core/widgets/cs_ui.dart';
+import 'package:carservice_customer/features/booking/domain/booking_fee_notice.dart';
 import 'package:carservice_customer/features/booking/presentation/controllers/booking_form_controller.dart';
 import 'package:carservice_customer/features/booking/presentation/widgets/booking_locked_notices.dart';
 import 'package:carservice_customer/features/booking/presentation/widgets/time_slot_grid.dart';
 import 'package:carservice_customer/features/discovery/domain/branch.dart';
+import 'package:carservice_customer/features/history/presentation/format_amount.dart';
 import 'package:flutter/material.dart';
 
 const _weekdayShort = ['Да', 'Мя', 'Лх', 'Пү', 'Ба', 'Бя', 'Ня'];
@@ -631,14 +633,71 @@ class BookingSummaryBar extends StatelessWidget {
                             ],
                           )
                         // Still a request: the service confirms it later, as
-                        // the footnote above the bar says.
-                        : const Text('Захиалах'),
+                        // the footnote above the bar says. With a booking fee
+                        // the amount is on the button (web parity).
+                        : Text(
+                            form.bookingFee == null
+                                ? 'Захиалах'
+                                : 'Цаг захиалах · '
+                                      '${formatAmount(form.bookingFee!.amount)}₮ төлөх',
+                          ),
                   ),
                 ],
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// «Захиалгын хураамж X₮ — илгээсний дараа QPay-ээр N минутын дотор төлнө.»
+/// Захиалга илгээхээс ӨМНӨ харуулна (вэбийн BookingForm-той адил).
+class BookingFeeNoticeCard extends StatelessWidget {
+  const BookingFeeNoticeCard({required this.fee, super.key});
+
+  final BookingFeeNotice fee;
+
+  @override
+  Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    final tint = AppColors.readable(AppColors.warning, brightness);
+    return Container(
+      key: const ValueKey('booking-fee-notice'),
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.warning.withValues(alpha: 0.14),
+        border: Border.all(color: AppColors.warning.withValues(alpha: 0.4)),
+        borderRadius: BorderRadius.circular(AppRadii.card),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.qr_code_2_rounded, size: 18, color: tint),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(
+                    text:
+                        'Захиалгын хураамж ${formatAmount(fee.amount)}₮',
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  TextSpan(
+                    text:
+                        ' — илгээсний дараа QPay-ээр ${fee.ttlMinutes} минутын '
+                        'дотор төлнө. Хугацаандаа төлөхгүй бол цаг '
+                        'чөлөөлөгдөнө.',
+                  ),
+                ],
+              ),
+              style: TextStyle(fontSize: 13, height: 1.4, color: tint),
+            ),
+          ),
+        ],
       ),
     );
   }

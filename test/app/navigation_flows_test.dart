@@ -53,6 +53,32 @@ class _UnauthenticatedOnceAppointmentRepository extends FakeAppointmentRepositor
   }
 }
 
+/// A server with the booking fee switched off: the created appointment
+/// carries no `payment`.
+class _FreeBookingRepository extends FakeAppointmentRepository {
+  @override
+  Future<CreatedAppointment> createAppointment({
+    required String branchId,
+    required DateTime requestedAt,
+    String? note,
+    String? accountVehicleId,
+    List<String> categoryIds = const [],
+  }) async {
+    final created = await super.createAppointment(
+      branchId: branchId,
+      requestedAt: requestedAt,
+      note: note,
+      accountVehicleId: accountVehicleId,
+      categoryIds: categoryIds,
+    );
+    return CreatedAppointment(
+      id: created.id,
+      status: created.status,
+      requestedAt: created.requestedAt,
+    );
+  }
+}
+
 void main() {
   setUpAll(() => debugDisableAppBootstrap = true);
   setUp(() => SharedPreferences.setMockInitialValues({}));
@@ -262,6 +288,35 @@ void main() {
       await tester.pageBack();
       await tester.pumpAndSettle();
       expect(find.byType(AppointmentDetailScreen), findsOneWidget);
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('appointments-tab-bar')), findsOneWidget);
+    });
+  });
+
+  group('Free booking completion', () {
+    testWidgets('no fee → lands on the new appointment with a confirmation', (
+      tester,
+    ) async {
+      await pumpApp(tester, appointments: _FreeBookingRepository());
+      await openOrganization(tester);
+      await tester.tap(find.byKey(const ValueKey('detail-book-button')));
+      await tester.pumpAndSettle();
+
+      await fillMinimalBookingForm(tester);
+
+      final submit = find.byKey(const ValueKey('submit-booking'));
+      await tester.ensureVisible(submit);
+      await tester.tap(submit);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AppointmentPaymentScreen), findsNothing);
+      expect(find.byType(AppointmentDetailScreen), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('appointment-created-confirmation')),
+        findsOneWidget,
+      );
+      expect(find.text('Цаг захиалга илгээгдлээ'), findsOneWidget);
       await tester.pageBack();
       await tester.pumpAndSettle();
       expect(find.byKey(const ValueKey('appointments-tab-bar')), findsOneWidget);

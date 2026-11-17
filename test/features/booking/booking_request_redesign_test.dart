@@ -3,6 +3,7 @@ import 'package:carservice_customer/core/errors/app_failure.dart';
 import 'package:carservice_customer/features/booking/data/fake_appointment_repository.dart';
 import 'package:carservice_customer/features/booking/domain/appointment_repository.dart';
 import 'package:carservice_customer/features/booking/domain/availability.dart';
+import 'package:carservice_customer/features/booking/domain/booking_fee_notice.dart';
 import 'package:carservice_customer/features/booking/presentation/screens/booking_request_screen.dart';
 import 'package:carservice_customer/features/booking/presentation/widgets/booking_form_sections.dart';
 import 'package:carservice_customer/features/discovery/domain/branch.dart';
@@ -109,7 +110,38 @@ Future<DateTime> _pickFirstOfNextMonth(WidgetTester tester) async {
   return date;
 }
 
+/// A server with the fee switched off.
+class _FreeBooking extends FakeAppointmentRepository {
+  @override
+  Future<BookingFeeNotice?> getBookingFee() async => null;
+}
+
 void main() {
+  testWidgets('shows the booking fee before submitting, with it on the button', (
+    tester,
+  ) async {
+    await _pump(
+      tester,
+      OrganizationDetail(slug: 'o', name: 'Org', branches: [_branch('a')]),
+    );
+    expect(find.byKey(const ValueKey('booking-fee-notice')), findsOneWidget);
+    expect(
+      find.textContaining('QPay-ээр 15 минутын дотор төлнө', findRichText: true),
+      findsOneWidget,
+    );
+    expect(find.text("Цаг захиалах · 1'000₮ төлөх"), findsOneWidget);
+  });
+
+  testWidgets('a free booking shows no fee notice', (tester) async {
+    await _pump(
+      tester,
+      OrganizationDetail(slug: 'o', name: 'Org', branches: [_branch('a')]),
+      repository: _FreeBooking(),
+    );
+    expect(find.byKey(const ValueKey('booking-fee-notice')), findsNothing);
+    expect(find.text('Захиалах'), findsOneWidget);
+  });
+
   test('bookingDateLabel names today and tomorrow, then the date', () {
     final now = DateTime(2026, 10, 23, 15);
     expect(bookingDateLabel(DateTime(2026, 10, 23), now), 'Өнөөдөр');

@@ -205,6 +205,11 @@ GoRouter buildCustomerRouter(CustomerAppServices services, CustomerNavigation na
           title: 'Цаг захиалах',
           child: ServiceKeyPickerScreen(
             repository: services.organizationRepository,
+            onBrowseMap: () {
+              navigation.shellKey.currentState
+                  ?.selectDestination(CustomerShellState.discoveryIndex);
+              context.go(CustomerRoutes.shell);
+            },
             onBranchSelected: (org, branch, keys) => context.push(
               CustomerRoutes.booking(
                 org.slug,
@@ -428,6 +433,7 @@ GoRouter buildCustomerRouter(CustomerAppServices services, CustomerNavigation na
             onSessionEnded: (context) => context.go(CustomerRoutes.shell),
             child: AppointmentDetailScreen(
               appointmentId: state.pathParameters['id']!,
+              justCreated: state.uri.queryParameters['created'] == '1',
               organizationRepository: services.organizationRepository,
               onBack: () => context.pop(),
               historyRepository: services.historyRepository,
@@ -448,7 +454,15 @@ GoRouter buildCustomerRouter(CustomerAppServices services, CustomerNavigation na
             child: AppointmentPaymentScreen(
               appointmentId: state.pathParameters['id']!,
               repository: services.appointmentRepository,
-              initialPayment: state.extra as AppointmentPayment?,
+              initialPayment: switch (state.extra) {
+                final AppointmentPaymentRouteExtra extra => extra.payment,
+                final AppointmentPayment payment => payment,
+                _ => null,
+              },
+              payBy: switch (state.extra) {
+                final AppointmentPaymentRouteExtra extra => extra.payBy,
+                _ => null,
+              },
               onBack: () => context.pop(),
               onPaymentUpdated: services.appointmentsController.load,
             ),

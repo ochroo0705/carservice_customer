@@ -10,9 +10,20 @@ import 'package:carservice_customer/core/widgets/cs_ui.dart';
 import 'package:carservice_customer/core/errors/app_failure.dart';
 import 'package:carservice_customer/features/booking/domain/appointment_payment.dart';
 import 'package:carservice_customer/features/booking/domain/appointment_repository.dart';
+import 'package:carservice_customer/features/booking/domain/booking_fee_notice.dart';
 import 'package:carservice_customer/features/history/presentation/format_amount.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+/// `/appointments/:id/pay`-ийн `extra`: шинэ захиалгын хариунаас мэдэгдэж
+/// буй төлбөр + төлөх эцсийн мөч. Жагсаалт/дэлгэрэнгүйгээс нээхэд `extra` нь
+/// ердийн [AppointmentPayment] хэвээр (тэнд `createdAt` ирдэггүй).
+class AppointmentPaymentRouteExtra {
+  const AppointmentPaymentRouteExtra({required this.payment, this.payBy});
+
+  final AppointmentPayment? payment;
+  final DateTime? payBy;
+}
 
 /// The QPay booking-fee flow — mirrors the web `AppointmentPaymentPanel`
 /// (`carservice.mn/app/(app)/account/appointments/[id]/pay/payment-panel.tsx`):
@@ -24,9 +35,15 @@ class AppointmentPaymentScreen extends StatefulWidget {
     required this.repository,
     required this.onBack,
     this.initialPayment,
+    this.payBy,
     this.onPaymentUpdated,
     super.key,
   });
+
+  /// Хураамжийг төлөх эцсийн мөч (захиалга үүссэн + `ttlMinutes`). Мэдэгдэж
+  /// байвал PENDING үед «HH:mm-аас өмнө төлнө үү» харуулж, хугацаа дуусах
+  /// сануулгыг яг тэр мөчид гаргана; `null` бол дэлгэц нээгдсэнээс 15 минут.
+  final DateTime? payBy;
 
   final String appointmentId;
   final AppointmentRepository repository;
@@ -124,7 +141,11 @@ class _AppointmentPaymentScreenState extends State<AppointmentPaymentScreen>
       _holdTimer = null;
       return;
     }
-    _holdTimer ??= Timer(_holdDuration, () {
+    final payBy = widget.payBy;
+    final holdLeft = payBy == null
+        ? _holdDuration
+        : payBy.difference(DateTime.now());
+    _holdTimer ??= Timer(holdLeft.isNegative ? Duration.zero : holdLeft, () {
       if (mounted && _isPollable) setState(() => _holdExpired = true);
     });
     if (_pollTimer != null) return; // already polling
@@ -396,6 +417,7 @@ class _AppointmentPaymentScreenState extends State<AppointmentPaymentScreen>
                   onPickBank: _pickBank,
                   onDone: widget.onBack,
                   holdExpired: _holdExpired,
+                  payBy: widget.payBy,
                 ),
               ],
             ),
@@ -445,9 +467,11 @@ class _PaymentPanel extends StatelessWidget {
     required this.onPickBank,
     required this.onDone,
     this.holdExpired = false,
+    this.payBy,
   });
 
   final bool holdExpired;
+  final DateTime? payBy;
   final AppointmentPayment payment;
   final bool checking;
   final bool retrying;
@@ -503,6 +527,19 @@ class _PaymentPanel extends StatelessWidget {
                     '${formatAmount((payment.underpaidAmount ?? 0).round())}${payment.currency} / '
                     '${formatAmount(payment.amount.round())}${payment.currency}. '
                     'Үлдэгдлийг дахин уншуулж нөхнө үү.',
+              ),
+            ),
+          if (payBy != null &&
+              !holdExpired &&
+              payment.status == AppointmentFeeStatus.pending)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: _Banner(
+                key: const ValueKey('payment-pay-by'),
+                color: AppColors.warning,
+                text:
+                    '${ulaanbaatarClock(payBy!)}-аас өмнө төлнө үү. '
+                    'Хугацаандаа төлөхгүй бол цаг чөлөөлөгдөнө.',
               ),
             ),
           if (holdExpired && payment.status != AppointmentFeeStatus.paid)
@@ -676,7 +713,7 @@ class _BankPickerSheet extends StatelessWidget {
 }
 
 class _Banner extends StatelessWidget {
-  const _Banner({required this.color, required this.text});
+  const _Banner({required this.color, required this.text, super.key});
 
   final Color color;
   final String text;

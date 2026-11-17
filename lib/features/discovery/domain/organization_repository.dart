@@ -50,12 +50,16 @@ class OrganizationMapMarker {
     required this.latitude,
     required this.longitude,
     this.logoUrl,
+    this.bookable = true,
     this.city,
     this.district,
     this.distanceKm,
     this.serviceKeyIds = const [],
     this.tagIds = const [],
   });
+
+  /// Онлайн захиалга авдаг эсэх — [Organization.bookable]-ийг үз.
+  final bool bookable;
 
   final String id;
   final String orgSlug;
@@ -74,6 +78,7 @@ class OrganizationMapMarker {
     slug: orgSlug,
     name: orgName,
     logoUrl: logoUrl,
+    bookable: bookable,
     branches: [
       Branch(
         id: id,

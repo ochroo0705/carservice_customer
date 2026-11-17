@@ -1,6 +1,7 @@
 import 'package:carservice_customer/features/booking/domain/appointment.dart';
 import 'package:carservice_customer/features/booking/domain/appointment_payment.dart';
 import 'package:carservice_customer/features/booking/domain/availability.dart';
+import 'package:carservice_customer/features/booking/domain/booking_fee_notice.dart';
 import 'package:carservice_customer/features/booking/domain/walk_in_order.dart';
 
 class CreatedAppointment {
@@ -9,12 +10,25 @@ class CreatedAppointment {
     required this.status,
     required this.requestedAt,
     this.payment,
+    this.payBy,
   });
 
   final String id;
   final String status;
   final DateTime requestedAt;
   final AppointmentPayment? payment;
+
+  /// Хураамжийг төлөх эцсийн мөч (үүссэн мөч + `ttlMinutes`) — хураамжийн
+  /// мэдээлэл ([BookingFeeNotice]) мэдэгдэж байвал л тавигдана.
+  final DateTime? payBy;
+
+  CreatedAppointment withPayBy(DateTime? value) => CreatedAppointment(
+    id: id,
+    status: status,
+    requestedAt: requestedAt,
+    payment: payment,
+    payBy: value,
+  );
 }
 
 abstract interface class AppointmentRepository {
@@ -26,6 +40,10 @@ abstract interface class AppointmentRepository {
     required DateTime date,
     List<String> categoryIds,
   });
+
+  /// Захиалга илгээхээс өмнө харуулах хураамж (`GET /booking-fee`), `null`
+  /// бол үнэгүй. Хуучин сервер (404) дээр ч `null` буцаана.
+  Future<BookingFeeNotice?> getBookingFee();
 
   Future<CreatedAppointment> createAppointment({
     required String branchId,

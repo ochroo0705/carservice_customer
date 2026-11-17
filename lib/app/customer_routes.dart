@@ -31,7 +31,12 @@ abstract final class CustomerRoutes {
   static const profile = '/profile';
   static const addVehicle = '/vehicles/add';
   static String vehicle(String id) => '/vehicles/$id';
-  static String appointment(String id) => '/appointments/$id';
+  /// [created] — шинээр илгээсэн (төлбөргүй) захиалгын баталгаажуулалтыг
+  /// дэлгэрэнгүйн дээд талд харуулна (вэбийн `?created=1`-тэй адил).
+  static String appointment(String id, {bool created = false}) => Uri(
+    path: '/appointments/$id',
+    queryParameters: created ? const {'created': '1'} : null,
+  ).toString();
   static String payment(String appointmentId) =>
       '/appointments/$appointmentId/pay';
   static String walkInOrder(String id) => '/walk-in-orders/$id';

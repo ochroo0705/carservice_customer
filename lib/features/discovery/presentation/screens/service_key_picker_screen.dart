@@ -28,10 +28,15 @@ class ServiceKeyPickerScreen extends StatefulWidget {
     required this.repository,
     required this.onBranchSelected,
     this.locationService = const GeolocatorDeviceLocationService(),
+    this.onBrowseMap,
     super.key,
   });
 
   final OrganizationRepository repository;
+
+  /// Ажлын төрөл/салбар олдоогүй үед мухардахгүйн тулд Хайх (газрын зураг,
+  /// жагсаалт) таб руу шилжүүлнэ. `null` бол товч харагдахгүй.
+  final VoidCallback? onBrowseMap;
 
   /// Device location for the "near me" filter; injectable for tests.
   final DeviceLocationService locationService;
@@ -371,6 +376,12 @@ class _ServiceKeyPickerScreenState extends State<ServiceKeyPickerScreen> {
         keys: _keys,
         initialSelected: _selectedIds,
         onRetry: _loadKeys,
+        onBrowseMap: widget.onBrowseMap == null
+            ? null
+            : () {
+                Navigator.of(context).pop();
+                widget.onBrowseMap!();
+              },
       ),
     );
     if (applied != null) _applySelection(applied);
@@ -540,7 +551,7 @@ class _ServiceKeyPickerScreenState extends State<ServiceKeyPickerScreen> {
             ),
           ];
         }
-        return const [
+        return [
           SliverFillRemaining(
             hasScrollBody: false,
             child: EmptyView(
@@ -549,6 +560,9 @@ class _ServiceKeyPickerScreenState extends State<ServiceKeyPickerScreen> {
               message:
                   'Сонгосон ажлуудыг зэрэг гүйцэтгэдэг салбар олдсонгүй. '
                   'Ажлын төрлөөсөө хасаад дахин үзнэ үү.',
+              action: widget.onBrowseMap == null
+                  ? null
+                  : _BrowseMapButton(onPressed: widget.onBrowseMap!),
             ),
           ),
         ];
@@ -604,6 +618,20 @@ class _ServiceKeyPickerScreenState extends State<ServiceKeyPickerScreen> {
         ];
     }
   }
+}
+
+class _BrowseMapButton extends StatelessWidget {
+  const _BrowseMapButton({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) => OutlinedButton.icon(
+    key: const ValueKey('service-key-browse-map'),
+    onPressed: onPressed,
+    icon: const Icon(Icons.map_outlined, size: 18),
+    label: const Text('Газрын зургаас хайх'),
+  );
 }
 
 class _TagsBar extends StatelessWidget {
@@ -767,8 +795,10 @@ class _CategoryPickerSheet extends StatefulWidget {
     required this.keys,
     required this.initialSelected,
     required this.onRetry,
+    this.onBrowseMap,
   });
 
+  final VoidCallback? onBrowseMap;
   final _LoadStatus keysStatus;
   final String? keysError;
   final List<ServiceKey> keys;
@@ -886,10 +916,17 @@ class _CategoryPickerSheetState extends State<_CategoryPickerSheet> {
           onRetry: widget.onRetry,
         );
       case _LoadStatus.empty:
-        return const EmptyView(
+        // Онлайн захиалга авдаг газарт байгаа төрөл л ирдэг тул хоосон байж
+        // болно — мухардахгүйн тулд газрын зураг/жагсаалт руу чиглүүлнэ.
+        return EmptyView(
           icon: Icons.build_outlined,
           title: 'Ажлын төрөл алга байна',
-          message: 'Одоогоор сонгох ажлын төрөл бүртгэгдээгүй байна.',
+          message:
+              'Одоогоор онлайн захиалах ажлын төрөл алга. Газрын зураг, '
+              'жагсаалтаас засварын газраа хайж болно.',
+          action: widget.onBrowseMap == null
+              ? null
+              : _BrowseMapButton(onPressed: widget.onBrowseMap!),
         );
       case _LoadStatus.data:
         final filtered = _filtered;

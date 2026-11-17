@@ -49,12 +49,16 @@ void main() {
     expect(image.imageUrl, 'https://cdn.example.test/logo.png');
   });
 
-  testWidgets('falls back to the initial letter when no logoUrl is published',
+  testWidgets('falls back to the Carservice mark when no logoUrl is published',
       (tester) async {
     await _pump(tester, logoUrl: null);
 
     expect(find.byType(CachedNetworkImage), findsNothing);
-    // The hero shows the org's first letter ("И" from "Инфосистемс").
-    expect(find.text('И'), findsOneWidget);
+    // Web parity (2026-11-17): the brand mark, not the org's first letter.
+    expect(
+      find.byKey(const ValueKey('organization-logo-fallback')),
+      findsOneWidget,
+    );
+    expect(find.text('И'), findsNothing);
   });
 }

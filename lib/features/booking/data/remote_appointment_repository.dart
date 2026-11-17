@@ -5,6 +5,7 @@ import 'package:carservice_customer/features/booking/domain/appointment.dart';
 import 'package:carservice_customer/features/booking/domain/appointment_payment.dart';
 import 'package:carservice_customer/features/booking/domain/appointment_repository.dart';
 import 'package:carservice_customer/features/booking/domain/availability.dart';
+import 'package:carservice_customer/features/booking/domain/booking_fee_notice.dart';
 import 'package:carservice_customer/features/booking/domain/walk_in_order.dart';
 
 /// Customer appointment API adapter.
@@ -71,6 +72,20 @@ class RemoteAppointmentRepository implements AppointmentRepository {
       reason: json['reason'] is String ? json['reason'] as String : null,
       slots: slots,
     );
+  }
+
+  @override
+  /// Нийтэд нээлттэй. Энэ endpoint-гүй хуучин сервер 404 буцаавал хураамжийн
+  /// мэдэгдэлгүй (үнэгүй мэт) үргэлжилнэ — төлбөр шаардлагатай эсэхийг
+  /// захиалгын хариуны `payment` эцэслэн шийднэ.
+  Future<BookingFeeNotice?> getBookingFee() async {
+    final Map<String, dynamic> json;
+    try {
+      json = await _client.getJson('/booking-fee');
+    } on NotFoundFailure {
+      return null;
+    }
+    return bookingFeeNoticeFromJson(json['fee']);
   }
 
   @override
@@ -173,4 +188,17 @@ class RemoteAppointmentRepository implements AppointmentRepository {
     );
     return appointmentPaymentFromJson(json['payment']);
   }
+}
+
+/// `{ amount, ttlMinutes }` → [BookingFeeNotice]; `null`, буруу хэлбэр эсвэл
+/// 0 дүн бол `null` (үнэгүй).
+BookingFeeNotice? bookingFeeNoticeFromJson(Object? value) {
+  if (value is! Map) return null;
+  final amount = value['amount'];
+  final ttl = value['ttlMinutes'];
+  if (amount is! num || amount <= 0) return null;
+  return BookingFeeNotice(
+    amount: amount.round(),
+    ttlMinutes: ttl is num && ttl > 0 ? ttl.round() : 15,
+  );
 }

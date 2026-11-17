@@ -251,11 +251,15 @@ class _BranchDetailView extends StatelessWidget {
             ],
           ),
         ),
-        bottomNavigationBar: _BookingBar(
-          branch: branch,
-          nextAvailableSlot: nextAvailableSlot,
-          onBook: onBook,
-        ),
+        // `bookable` нь additive (одоогоор үргэлж true) — false ирвэл
+        // захиалгын мөрийг нуух урьдчилсан бэлтгэл.
+        bottomNavigationBar: organization.bookable
+            ? _BookingBar(
+                branch: branch,
+                nextAvailableSlot: nextAvailableSlot,
+                onBook: onBook,
+              )
+            : null,
       ),
     );
   }

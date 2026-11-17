@@ -3,6 +3,7 @@ import 'package:carservice_customer/app/customer_router.dart';
 import 'package:carservice_customer/app/customer_routes.dart';
 import 'package:carservice_customer/app/customer_shell.dart';
 import 'package:carservice_customer/features/booking/domain/appointment_repository.dart';
+import 'package:carservice_customer/features/booking/presentation/screens/appointment_payment_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -98,8 +99,8 @@ class CustomerNavigation {
   /// Opens an appointment's detail page and reloads the appointments list so
   /// the detail page resolves against the freshest state — same reasoning as
   /// the old delegate's `_openAppointmentDetail` (router.dart:582-592).
-  void openAppointment(String id) {
-    router.push(CustomerRoutes.appointment(id));
+  void openAppointment(String id, {bool created = false}) {
+    router.push(CustomerRoutes.appointment(id, created: created));
     services.appointmentsController.load();
   }
 
@@ -150,8 +151,10 @@ class CustomerNavigation {
 
   /// Same sequence as the old delegate's `onCompleted` (router.dart:365-398):
   /// haptic, reload appointments, clear back to the shell, jump to the
-  /// Appointments tab, open the new appointment's detail, show the snackbar,
-  /// and — when the appointment carries a booking fee — open payment on top.
+  /// Appointments tab, open the new appointment's detail, and — when the
+  /// appointment carries a booking fee — show the snackbar and open payment
+  /// on top (with the pay-by deadline when known). Without a fee the detail
+  /// itself shows the «✓ Цаг захиалга илгээгдлээ» confirmation instead.
   /// Takes `CreatedAppointment` — `BookingRequestScreen.onCompleted`'s actual
   /// payload type, not the list/detail `Appointment` domain model the brief's
   /// snippet used. Both carry `id` and `payment`, which is all this needs.
@@ -160,12 +163,16 @@ class CustomerNavigation {
     services.appointmentsController.load();
     router.go(CustomerRoutes.shell);
     shellKey.currentState?.selectDestination(appointmentsTabIndex);
-    openAppointment(appointment.id);
-    services.showMessage?.call('Цагийн хүсэлт амжилттай илгээгдлээ.');
-    if (appointment.payment != null) {
+    final needsPayment = appointment.payment != null;
+    openAppointment(appointment.id, created: !needsPayment);
+    if (needsPayment) {
+      services.showMessage?.call('Цагийн хүсэлт амжилттай илгээгдлээ.');
       router.push(
         CustomerRoutes.payment(appointment.id),
-        extra: appointment.payment,
+        extra: AppointmentPaymentRouteExtra(
+          payment: appointment.payment,
+          payBy: appointment.payBy,
+        ),
       );
     }
   }

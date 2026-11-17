@@ -292,6 +292,10 @@ class _BookingRequestScreenState extends State<BookingRequestScreen>
               ),
             ),
           ),
+          if (form.bookingFee != null) ...[
+            const SizedBox(height: 12),
+            BookingFeeNoticeCard(fee: form.bookingFee!),
+          ],
           const SizedBox(height: 12),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,

@@ -3,10 +3,11 @@ import 'package:carservice_customer/app/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 
 /// Rounded-square organization logo — the leading tile of the Хайх list
-/// cards and the map's branch sheet. Falls back to the name's initials
-/// ("Lexus Service" → "LS") while loading, on error, or without a logo URL.
-/// The fallback is the design's navy monogram; a loaded logo sits on white,
-/// since most are drawn for a light background.
+/// cards and the map's branch sheet. Falls back to the Carservice mark
+/// (`assets/brand/mark.png`, web `/brand/mark.svg`) while loading, on error,
+/// or without a logo URL — same as the web discover pins/cards since
+/// 2026-11-17. Both sit on white, since most logos are drawn for a light
+/// background.
 class OrganizationLogoTile extends StatelessWidget {
   const OrganizationLogoTile({
     required this.name,
@@ -24,15 +25,22 @@ class OrganizationLogoTile extends StatelessWidget {
     final theme = CarserviceTheme.of(context);
     // 14px on the design's 48px tile.
     final radius = BorderRadius.circular(size * 0.29);
-    final initials = DecoratedBox(
-      decoration: BoxDecoration(color: theme.hero, borderRadius: radius),
-      child: Center(
-        child: Text(
-          organizationInitials(name),
-          style: TextStyle(
-            color: theme.onHero,
-            fontSize: size * 0.32,
-            fontWeight: FontWeight.w700,
+    final fallback = Semantics(
+      label: name,
+      child: DecoratedBox(
+        key: const ValueKey('organization-logo-fallback'),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: radius,
+          border: Border.all(color: theme.cardBorder),
+        ),
+        child: Padding(
+          // Web: the mark at ~70% of the tile.
+          padding: EdgeInsets.all(size * 0.17),
+          child: Image.asset(
+            'assets/brand/mark.png',
+            fit: BoxFit.contain,
+            excludeFromSemantics: true,
           ),
         ),
       ),
@@ -41,7 +49,7 @@ class OrganizationLogoTile extends StatelessWidget {
     return SizedBox.square(
       dimension: size,
       child: url == null || url.isEmpty
-          ? initials
+          ? fallback
           : CachedNetworkImage(
               imageUrl: url,
               imageBuilder: (_, image) => DecoratedBox(
@@ -51,8 +59,8 @@ class OrganizationLogoTile extends StatelessWidget {
                   image: DecorationImage(image: image, fit: BoxFit.cover),
                 ),
               ),
-              placeholder: (_, _) => initials,
-              errorWidget: (_, _, _) => initials,
+              placeholder: (_, _) => fallback,
+              errorWidget: (_, _, _) => fallback,
             ),
     );
   }

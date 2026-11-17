@@ -75,6 +75,7 @@ OrganizationMapPage organizationMapPageFromJson(Map<String, dynamic> json) {
             orgName: _requiredString(Map<String, dynamic>.from(item), 'orgName'),
             branchName: _requiredString(Map<String, dynamic>.from(item), 'branchName'),
             logoUrl: _optionalString(item['logoUrl']),
+            bookable: _bookable(item['bookable']),
             city: _optionalString(item['city']),
             district: _optionalString(item['district']),
             latitude: _requiredDouble(Map<String, dynamic>.from(item), 'latitude'),
@@ -114,6 +115,9 @@ int _nonNegativeInt(Object? value, int fallback) {
   return parsed != null && parsed >= 0 ? parsed : fallback;
 }
 
+/// `bookable` нь additive талбар — байхгүй (хуучин сервер) бол `true`.
+bool _bookable(Object? value) => value is bool ? value : true;
+
 List<String> _stringList(Object? value) => value is List
     ? value.whereType<String>().map((item) => item.trim()).where((item) => item.isNotEmpty).toList(growable: false)
     : const [];
@@ -124,6 +128,7 @@ class OrganizationSummaryDto {
     required this.name,
     required this.branches,
     this.logoUrl,
+    this.bookable = true,
   });
 
   factory OrganizationSummaryDto.fromJson(Map<String, dynamic> json) =>
@@ -131,18 +136,21 @@ class OrganizationSummaryDto {
         slug: _requiredString(json, 'slug'),
         name: _requiredString(json, 'name'),
         logoUrl: _optionalString(json['logoUrl']),
+        bookable: _bookable(json['bookable']),
         branches: _mapList(json['branches'], BranchSummaryDto.fromJson),
       );
 
   final String slug;
   final String name;
   final String? logoUrl;
+  final bool bookable;
   final List<BranchSummaryDto> branches;
 
   Organization toDomain() => Organization(
     slug: slug,
     name: name,
     logoUrl: logoUrl,
+    bookable: bookable,
     branches: branches.map((branch) => branch.toDomain()).toList(),
   );
 }
@@ -203,6 +211,7 @@ class OrganizationDetailDto {
     required this.branches,
     this.logoUrl,
     this.phone,
+    this.bookable = true,
   });
 
   factory OrganizationDetailDto.fromJson(Map<String, dynamic> json) =>
@@ -211,6 +220,7 @@ class OrganizationDetailDto {
         name: _requiredString(json, 'name'),
         logoUrl: _optionalString(json['logoUrl']),
         phone: _optionalString(json['phone1']),
+        bookable: _bookable(json['bookable']),
         branches: _mapList(json['branches'], BranchDetailDto.fromJson),
       );
 
@@ -218,6 +228,7 @@ class OrganizationDetailDto {
   final String name;
   final String? logoUrl;
   final String? phone;
+  final bool bookable;
   final List<BranchDetailDto> branches;
 
   OrganizationDetail toDomain() => OrganizationDetail(
@@ -225,6 +236,7 @@ class OrganizationDetailDto {
     name: name,
     logoUrl: logoUrl,
     phone: phone,
+    bookable: bookable,
     branches: branches.map((branch) => branch.toDomain()).toList(),
   );
 }

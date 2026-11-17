@@ -159,7 +159,11 @@ void main() {
       ),
     );
 
-    expect(find.text('LS'), findsOneWidget);
+    // Logo-less orgs show the Carservice mark (web parity), not initials.
+    expect(
+      find.byKey(const ValueKey('organization-logo-fallback')),
+      findsOneWidget,
+    );
     expect(find.text('Lexus Service'), findsOneWidget);
     expect(find.text('Үндсэн салбар · 1.3 км'), findsOneWidget);
     expect(find.text('Улаанбаатар · Сүхбаатар'), findsOneWidget);
